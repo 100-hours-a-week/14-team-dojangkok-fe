@@ -1,0 +1,66 @@
+.container {
+  padding: 16px 20px;
+}
+
+.uploadButton {
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-radius: 16px;
+  border: 2px dashed #dbe0e6;
+  background: none;
+  padding: 48px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadButton:hover {
+  border-color: #10b981;
+  background-color: #f6f7f8;
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-radius: 50%;
+  color: #10b981;
+  transition: transform 0.3s;
+}
+
+.uploadButton:hover .iconWrapper {
+  transform: scale(1.1);
+}
+
+.icon {
+  font-size: 30px;
+}
+
+.textWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mainText {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111418;
+}
+
+.subText {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.hiddenInput {
+  display: none;
+}
