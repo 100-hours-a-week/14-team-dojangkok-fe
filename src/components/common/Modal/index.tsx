@@ -9,6 +9,7 @@ interface ModalProps {
   title?: string;
   confirmText?: string;
   cancelText?: string;
+  confirmDisabled?: boolean;
   children: React.ReactNode;
 }
 
@@ -19,6 +20,7 @@ export default function Modal({
   title,
   confirmText = '확인',
   cancelText = '취소',
+  confirmDisabled = false,
   children,
 }: ModalProps) {
   if (!isOpen) return null;
@@ -33,7 +35,11 @@ export default function Modal({
         )}
         <div className={styles.content}>{children}</div>
         <div className={styles.footer}>
-          <button className={styles.confirmButton} onClick={onConfirm}>
+          <button
+            className={styles.confirmButton}
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+          >
             {confirmText}
           </button>
           <button className={styles.cancelButton} onClick={onClose}>

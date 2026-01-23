@@ -69,8 +69,13 @@
   transition: background-color 0.2s;
 }
 
-.confirmButton:hover {
+.confirmButton:hover:not(:disabled) {
   background-color: #059669;
+}
+
+.confirmButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
 }
 
 .cancelButton {
