@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from './TextFieldModal.module.css';
 
 interface TextFieldModalProps {
@@ -33,20 +33,18 @@ export default function TextFieldModal({
   validate,
 }: TextFieldModalProps) {
   const [value, setValue] = useState(initialValue);
-  const [isValid, setIsValid] = useState(true);
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setValue(initialValue);
-      setIsValid(true);
-    }
-  }, [isOpen, initialValue]);
+  // 모달이 열릴 때 값 초기화 (렌더링 중 상태 업데이트 패턴)
+  if (isOpen && !prevIsOpen) {
+    setValue(initialValue);
+    setPrevIsOpen(true);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+  }
 
-  useEffect(() => {
-    if (validate) {
-      setIsValid(validate(value));
-    }
-  }, [value, validate]);
+  // 유효성 검사 결과를 직접 계산 (파생 상태)
+  const isValid = validate ? validate(value) : true;
 
   if (!isOpen) return null;
 
