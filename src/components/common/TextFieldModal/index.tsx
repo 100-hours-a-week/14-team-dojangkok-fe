@@ -1,7 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Modal from '../Modal';
 import styles from './TextFieldModal.module.css';
+
+interface ValidationConfig {
+  validate: (value: string) => boolean;
+  successMessage: string;
+  errorMessage: string;
+}
 
 interface TextFieldModalProps {
   isOpen: boolean;
@@ -13,9 +20,7 @@ interface TextFieldModalProps {
   maxLength?: number;
   confirmText?: string;
   cancelText?: string;
-  successMessage?: string;
-  errorMessage?: string;
-  validate?: (value: string) => boolean;
+  validation?: ValidationConfig;
 }
 
 export default function TextFieldModal({
@@ -28,9 +33,7 @@ export default function TextFieldModal({
   maxLength = 10,
   confirmText = '저장하기',
   cancelText = '취소',
-  successMessage,
-  errorMessage,
-  validate,
+  validation,
 }: TextFieldModalProps) {
   const [value, setValue] = useState(initialValue);
   const [prevIsOpen, setPrevIsOpen] = useState(false);
@@ -44,57 +47,54 @@ export default function TextFieldModal({
   }
 
   // 유효성 검사 결과를 직접 계산 (파생 상태)
-  const isValid = validate ? validate(value) : true;
-
-  if (!isOpen) return null;
+  const isValid = validation ? validation.validate(value) : true;
+  const canSubmit = isValid && value.trim().length > 0;
 
   const handleSubmit = () => {
-    if (isValid && value.trim()) {
+    if (canSubmit) {
       onSubmit(value);
     }
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h3 className={styles.title}>{title}</h3>
-        <div className={styles.inputWrapper}>
-          <div className={styles.inputContainer}>
-            <input
-              type="text"
-              className={styles.input}
-              value={value}
-              onChange={(e) => setValue(e.target.value.slice(0, maxLength))}
-              placeholder={placeholder}
-            />
-            <span className={styles.charCount}>
-              {value.length}/{maxLength}
-            </span>
-          </div>
-          {(successMessage || errorMessage) && value.trim() && (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      onConfirm={handleSubmit}
+      title={title}
+      confirmText={confirmText}
+      cancelText={cancelText}
+      confirmDisabled={!canSubmit}
+    >
+      <div className={styles.inputWrapper}>
+        <div className={styles.inputContainer}>
+          <input
+            type="text"
+            className={styles.input}
+            value={value}
+            onChange={(e) => setValue(e.target.value.slice(0, maxLength))}
+            placeholder={placeholder}
+          />
+          <span className={styles.charCount}>
+            {value.length}/{maxLength}
+          </span>
+        </div>
+        {validation &&
+          value.trim() &&
+          (isValid ? validation.successMessage : validation.errorMessage) && (
             <p
               className={`${styles.message} ${isValid ? styles.messageSuccess : styles.messageError}`}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 14 }}
+              >
                 {isValid ? 'check_circle' : 'error'}
               </span>
-              {isValid ? successMessage : errorMessage}
+              {isValid ? validation.successMessage : validation.errorMessage}
             </p>
           )}
-        </div>
-        <div className={styles.footer}>
-          <button
-            className={styles.confirmButton}
-            onClick={handleSubmit}
-            disabled={!isValid || !value.trim()}
-          >
-            {confirmText}
-          </button>
-          <button className={styles.cancelButton} onClick={onClose}>
-            {cancelText}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }
