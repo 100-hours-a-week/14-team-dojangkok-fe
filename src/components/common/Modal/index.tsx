@@ -10,6 +10,7 @@ interface ModalProps {
   confirmText?: string;
   cancelText?: string;
   confirmDisabled?: boolean;
+  variant?: 'default' | 'destructive';
   children: React.ReactNode;
 }
 
@@ -21,9 +22,15 @@ export default function Modal({
   confirmText = '확인',
   cancelText = '취소',
   confirmDisabled = false,
+  variant = 'default',
   children,
 }: ModalProps) {
   if (!isOpen) return null;
+
+  const confirmButtonClass =
+    variant === 'destructive'
+      ? styles.confirmButtonDestructive
+      : styles.confirmButton;
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -36,7 +43,7 @@ export default function Modal({
         <div className={styles.content}>{children}</div>
         <div className={styles.footer}>
           <button
-            className={styles.confirmButton}
+            className={confirmButtonClass}
             onClick={onConfirm}
             disabled={confirmDisabled}
           >
