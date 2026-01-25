@@ -1,0 +1,135 @@
+.main {
+  padding: 16px;
+  padding-bottom: 120px;
+  min-height: calc(100vh - 64px);
+}
+
+.markdown {
+  max-width: 800px;
+  margin: 0 auto;
+  color: #111418;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+
+/* Heading styles */
+.markdown h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 32px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #111418;
+}
+
+.markdown h1:first-child {
+  margin-top: 0;
+}
+
+.markdown h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 28px 0 12px;
+  color: #111418;
+}
+
+.markdown h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+  color: #374151;
+}
+
+/* Paragraph styles */
+.markdown p {
+  font-size: 15px;
+  margin: 12px 0;
+  color: #4b5563;
+}
+
+/* List styles */
+.markdown ul,
+.markdown ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.markdown li {
+  font-size: 15px;
+  margin: 8px 0;
+  color: #4b5563;
+}
+
+.markdown li::marker {
+  color: #10b981;
+}
+
+/* Strong and emphasis */
+.markdown strong {
+  font-weight: 600;
+  color: #111418;
+}
+
+.markdown em {
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Code styles */
+.markdown code {
+  background-color: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+  color: #ef4444;
+}
+
+.markdown pre {
+  background-color: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.markdown pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #111418;
+}
+
+/* Blockquote styles */
+.markdown blockquote {
+  border-left: 4px solid #10b981;
+  padding-left: 16px;
+  margin: 16px 0;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Horizontal rule */
+.markdown hr {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 24px 0;
+}
+
+/* Link styles */
+.markdown a {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.markdown a:hover {
+  text-decoration: underline;
+}
+
+/* Modal description */
+.modalDescription {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}

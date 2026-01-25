@@ -1,13 +1,21 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header, Modal } from '@/components/common';
 import styles from './page.module.css';
 
 export default function AnalyzingPage() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.replace('/analysis-result');
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
 
   const handleCancel = () => {
     setIsModalOpen(true);
