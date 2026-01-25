@@ -12,3 +12,4 @@ export { default as SegmentedControl } from './SegmentedControl';
 export { default as ImageViewerModal } from './ImageViewerModal';
 export { default as Checklist } from './Checklist';
 export { default as ActionSheet } from './ActionSheet';
+export { default as AnalysisCard } from './AnalysisCard';

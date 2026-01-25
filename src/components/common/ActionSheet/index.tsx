@@ -14,12 +14,14 @@ interface ActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   options: ActionSheetOption[];
+  position?: { top: number; right: number };
 }
 
 export default function ActionSheet({
   isOpen,
   onClose,
   options,
+  position,
 }: ActionSheetProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -49,9 +51,17 @@ export default function ActionSheet({
     onClose();
   };
 
+  const popoverStyle = position
+    ? { top: `${position.top}px`, right: `${position.right}px` }
+    : undefined;
+
   return (
     <div className={styles.overlay}>
-      <div ref={menuRef} className={styles.popover}>
+      <div
+        ref={menuRef}
+        className={`${styles.popover} ${position ? styles.positioned : ''}`}
+        style={popoverStyle}
+      >
         {options.map((option, index) => (
           <button
             key={index}
