@@ -8,3 +8,7 @@ export { default as ImageUploader } from './ImageUploader';
 export { default as ImageGrid } from './ImageGrid';
 export { default as HomeNoteCard } from './HomeNoteCard';
 export { default as FloatingAddButton } from './FloatingAddButton';
+export { default as SegmentedControl } from './SegmentedControl';
+export { default as ImageViewerModal } from './ImageViewerModal';
+export { default as Checklist } from './Checklist';
+export { default as ActionSheet } from './ActionSheet';
