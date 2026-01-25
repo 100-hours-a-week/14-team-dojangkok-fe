@@ -1,0 +1,85 @@
+.card {
+  position: relative;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--gray-300);
+}
+
+.card:active {
+  transform: translateY(0);
+}
+
+.colorBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary);
+}
+
+.content {
+  padding: 20px 20px 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0 0 6px 0;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  margin: 0;
+}
+
+.optionButton {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  padding: 0;
+}
+
+.optionButton:hover {
+  background: var(--gray-100);
+}
+
+.optionButton:active {
+  background: var(--gray-200);
+}
+
+.optionButton .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--gray-600);
+}
