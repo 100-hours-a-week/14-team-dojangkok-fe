@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { Header, BottomFixedArea, MainButton, Modal } from '@/components/common';
+import {
+  Header,
+  BottomFixedArea,
+  MainButton,
+  Modal,
+} from '@/components/common';
 import styles from './page.module.css';
 
 // TODO: 실제로는 API에서 받아올 데이터
