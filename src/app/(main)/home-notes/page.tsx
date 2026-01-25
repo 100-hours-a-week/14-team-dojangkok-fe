@@ -1,7 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Header, HomeNoteCard, FloatingAddButton, Modal } from '@/components/common';
+import { useRouter } from 'next/navigation';
+import {
+  Header,
+  HomeNoteCard,
+  FloatingAddButton,
+  Modal,
+  TextFieldModal,
+} from '@/components/common';
 import { HomeNote } from './types';
 import styles from './HomeNotes.module.css';
 
@@ -103,18 +110,20 @@ const mockNotes: HomeNote[] = [
 ];
 
 export default function HomeNotesPage() {
+  const router = useRouter();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleNoteClick = (id: string) => {
-    console.log('Note clicked:', id);
-    // TODO: Navigate to detail page
+    const note = mockNotes.find((n) => n.id === id);
+    const title = note?.title || '집노트';
+    router.push(`/home-notes/${id}?title=${encodeURIComponent(title)}`);
   };
 
   const handleAddClick = () => {
-    console.log('Add button clicked');
-    // TODO: Navigate to add new note page
+    setIsCreateModalOpen(true);
   };
 
   const handleEditToggle = () => {
@@ -140,12 +149,24 @@ export default function HomeNotesPage() {
     setNoteToDelete(null);
   };
 
+  const handleCreateNote = (title: string) => {
+    // TODO: API call to create note and get new ID
+    const newId = Date.now().toString(); // Temporary ID
+    setIsCreateModalOpen(false);
+    router.push(`/home-notes/${newId}?title=${encodeURIComponent(title)}`);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
   return (
     <>
       <Header
         title="집노트"
-        rightText={isEditMode ? '완료' : '수정'}
+        rightIcon={isEditMode ? 'check' : 'edit'}
         onRightClick={handleEditToggle}
+        rightIconColor="#111418"
       />
       <main className={styles.container}>
         <div className={styles.grid}>
@@ -161,6 +182,16 @@ export default function HomeNotesPage() {
         </div>
       </main>
       {!isEditMode && <FloatingAddButton onClick={handleAddClick} />}
+      <TextFieldModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseCreateModal}
+        onSubmit={handleCreateNote}
+        title="새 집노트"
+        placeholder="집노트 제목을 입력하세요"
+        maxLength={30}
+        confirmText="생성하기"
+        cancelText="취소"
+      />
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={handleCancelDelete}
