@@ -11,6 +11,7 @@ type HeaderProps = {
   title: string;
   showBackButton?: boolean;
   onBackClick?: () => void;
+  rightIconColor?: string;
 } & RightButtonProps;
 
 export default function Header({
@@ -20,6 +21,7 @@ export default function Header({
   rightIcon,
   rightText,
   onRightClick,
+  rightIconColor,
 }: HeaderProps) {
   return (
     <header className={styles.header}>
@@ -33,7 +35,11 @@ export default function Header({
       <h1 className={styles.title}>{title}</h1>
       <div className={styles.rightArea}>
         {rightIcon && (
-          <button className={styles.rightButton} onClick={onRightClick}>
+          <button
+            className={styles.rightButton}
+            onClick={onRightClick}
+            style={rightIconColor ? { color: rightIconColor } : undefined}
+          >
             <span className="material-symbols-outlined">{rightIcon}</span>
           </button>
         )}
