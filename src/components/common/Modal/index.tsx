@@ -42,15 +42,15 @@ export default function Modal({
         )}
         <div className={styles.content}>{children}</div>
         <div className={styles.footer}>
+          <button className={styles.cancelButton} onClick={onClose}>
+            {cancelText}
+          </button>
           <button
             className={confirmButtonClass}
             onClick={onConfirm}
             disabled={confirmDisabled}
           >
             {confirmText}
-          </button>
-          <button className={styles.cancelButton} onClick={onClose}>
-            {cancelText}
           </button>
         </div>
       </div>
