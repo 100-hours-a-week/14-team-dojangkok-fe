@@ -41,7 +41,10 @@ export default function HomeNoteCard({
   };
 
   return (
-    <article className={`${styles.card} ${isEditMode ? styles.editMode : ''}`} onClick={handleClick}>
+    <article
+      className={`${styles.card} ${isEditMode ? styles.editMode : ''}`}
+      onClick={handleClick}
+    >
       <div
         className={`${styles.imageGrid} ${isSingleImage ? styles.singleImage : ''}`}
       >
@@ -49,6 +52,7 @@ export default function HomeNoteCard({
           <>
             {displayImages.map((image, index) => (
               <div key={image.id} className={styles.imageWrapper}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={image.url}
                   alt={`${note.title} ${index + 1}`}
@@ -56,7 +60,9 @@ export default function HomeNoteCard({
                 />
                 {index === 3 && remainingCount > 0 && (
                   <div className={styles.overlay}>
-                    <span className={styles.overlayText}>+{remainingCount}</span>
+                    <span className={styles.overlayText}>
+                      +{remainingCount}
+                    </span>
                   </div>
                 )}
                 {isEditMode && index === 0 && (
