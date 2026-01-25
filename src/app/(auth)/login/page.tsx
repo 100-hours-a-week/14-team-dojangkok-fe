@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import styles from './Login.module.css';
 
 export default function LoginPage() {
@@ -31,9 +32,10 @@ export default function LoginPage() {
 
         <div className={styles.imageWrapper}>
           <div className={styles.imageOverlay} />
-          <img
+          <Image
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDarbVr0ke52TveIrgoKxPDAOhbRDIGfDcCsaIO6pvlA7m8OBZK-xHL3CUyPecnIdFXcNpAeYUYBgmsT2h0vlEbVpWohMRdd08XLE3k0N8hINqojjWnMKtZ2QkLaCosQoiIHvU_W_HtlhiTlMdzZRaUSqTgWGDTPI3ZUZf50UA9fPQxDvPrENZwpUOh-xF5lZexVNkh2I8pmHvSCWRyWaMD81Dp2rLDhSdFhYlfLhqXVN2VqtLmd3WYtJKhsqhjZUTy8e0PIl2f-AI"
             alt="도장콕 서비스 일러스트"
+            fill
             className={styles.image}
           />
         </div>
@@ -41,9 +43,11 @@ export default function LoginPage() {
 
       <div className={styles.bottomSection}>
         <button className={styles.kakaoButton} onClick={handleKakaoLogin}>
-          <img
+          <Image
             src="/kakao_login_large_wide.png"
             alt="카카오로 시작하기"
+            width={400}
+            height={60}
             className={styles.kakaoButtonImage}
           />
         </button>
