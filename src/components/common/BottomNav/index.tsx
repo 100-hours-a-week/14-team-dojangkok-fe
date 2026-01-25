@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { useLayout } from '@/contexts/LayoutContext';
 import styles from './BottomNav.module.css';
 
 interface NavItem {
@@ -41,6 +42,17 @@ const NAV_ITEMS: NavItem[] = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { navigationGuard, setPendingPath } = useLayout();
+
+  const handleNavClick = (targetPath: string) => {
+    if (pathname === targetPath) return;
+
+    if (navigationGuard) {
+      setPendingPath(targetPath);
+      return;
+    }
+    router.push(targetPath);
+  };
 
   return (
     <nav className={styles.nav}>
@@ -54,7 +66,7 @@ export default function BottomNav() {
             <button
               key={item.path}
               className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
-              onClick={() => router.push(item.path)}
+              onClick={() => handleNavClick(item.path)}
             >
               <span
                 className={`material-symbols-outlined ${styles.navIcon} ${isActive ? 'filled' : ''}`}
