@@ -1,0 +1,32 @@
+.fab {
+  position: fixed;
+  bottom: 96px;
+  right: max(20px, calc((100vw - 430px) / 2 + 20px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  z-index: 40;
+  transition: all 0.2s ease;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+.fab :global(.material-symbols-outlined) {
+  font-size: 28px;
+  color: white;
+  font-weight: 400;
+}

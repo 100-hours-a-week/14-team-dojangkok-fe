@@ -6,3 +6,5 @@ export { default as Modal } from './Modal';
 export { default as TextFieldModal } from './TextFieldModal';
 export { default as ImageUploader } from './ImageUploader';
 export { default as ImageGrid } from './ImageGrid';
+export { default as HomeNoteCard } from './HomeNoteCard';
+export { default as FloatingAddButton } from './FloatingAddButton';
