@@ -1,3 +1,107 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Header } from '@/components/common';
+import styles from './LifestyleTags.module.css';
+
+const defaultTags = [
+  '역세권',
+  '반려동물',
+  '안심귀가',
+  '신축',
+  '풀옵션',
+  '조용한',
+];
+
 export default function LifestyleTagsPage() {
-  return <div>라이프스타일 태그</div>;
+  const router = useRouter();
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState('');
+  const [allTags, setAllTags] = useState<string[]>(defaultTags);
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleAddCustomTag = () => {
+    const trimmedInput = customInput.trim().slice(0, 10);
+    if (trimmedInput && !allTags.includes(trimmedInput)) {
+      setAllTags([...allTags, trimmedInput]);
+      setSelectedTags([...selectedTags, trimmedInput]);
+      setCustomInput('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleAddCustomTag();
+    }
+  };
+
+  const handleComplete = () => {
+    // TODO: 선택된 태그 저장 및 다음 페이지로 이동
+    console.log('Selected tags:', selectedTags);
+    router.push('/home');
+  };
+
+  const handleBack = () => {
+    router.back();
+  };
+
+  return (
+    <div className={styles.container}>
+      <Header
+        title="2/2"
+        showBackButton={true}
+        onBackClick={handleBack}
+        rightText="완료"
+        onRightClick={handleComplete}
+      />
+
+      <main className={styles.content}>
+        <div className={styles.titleSection}>
+          <h1 className={styles.title}>
+            어떤 집을
+            <br />
+            찾고 계신가요?
+          </h1>
+          <p className={styles.subtitle}>
+            선택한 태그를 바탕으로 AI가 나만의 체크리스트를 만들어드려요.
+          </p>
+        </div>
+
+        <div className={styles.tagsWrapper}>
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              className={`${styles.tag} ${selectedTags.includes(tag) ? styles.selected : ''}`}
+              onClick={() => handleTagClick(tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </main>
+
+      <div className={styles.bottomSection}>
+        <div className={styles.inputWrapper}>
+          <input
+            type="text"
+            className={styles.customInput}
+            placeholder="직접 입력하기 (최대 10자)"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value.slice(0, 10))}
+            onKeyPress={handleKeyPress}
+            maxLength={10}
+          />
+          <button className={styles.addButton} onClick={handleAddCustomTag}>
+            <span className="material-symbols-outlined">add</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
