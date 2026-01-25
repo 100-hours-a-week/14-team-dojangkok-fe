@@ -43,6 +43,10 @@
   text-align: center;
   color: #111418;
   pointer-events: none;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rightArea {
@@ -59,7 +63,7 @@
   border: none;
   cursor: pointer;
   padding: 8px;
-  color: #111418;
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -69,6 +73,6 @@
 .rightText {
   font-size: 15px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--primary);
   white-space: nowrap;
 }

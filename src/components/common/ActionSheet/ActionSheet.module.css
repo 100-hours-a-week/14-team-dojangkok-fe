@@ -1,0 +1,68 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.popover {
+  position: fixed;
+  top: 60px;
+  right: max(16px, calc((100vw - 430px) / 2 + 16px));
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  min-width: 160px;
+  pointer-events: auto;
+  animation: popoverIn 0.2s ease-out;
+  border: 1px solid var(--gray-200);
+}
+
+@keyframes popoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.option {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-900);
+  cursor: pointer;
+  transition: background-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.option:hover {
+  background: var(--gray-50);
+}
+
+.option:active {
+  background: var(--gray-100);
+}
+
+.option .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--gray-600);
+}
+
+.option.destructive {
+  color: var(--error);
+}
+
+.option.destructive .material-symbols-outlined {
+  color: var(--error);
+}
