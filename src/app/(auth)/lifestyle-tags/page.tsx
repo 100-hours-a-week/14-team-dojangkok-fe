@@ -3,22 +3,17 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/common';
+import {
+  DEFAULT_LIFESTYLE_TAGS,
+  LIFESTYLE_TAG_MAX_LENGTH,
+} from '@/constants/lifestyle';
 import styles from './LifestyleTags.module.css';
-
-const defaultTags = [
-  '역세권',
-  '반려동물',
-  '안심귀가',
-  '신축',
-  '풀옵션',
-  '조용한',
-];
 
 export default function LifestyleTagsPage() {
   const router = useRouter();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customInput, setCustomInput] = useState('');
-  const [allTags, setAllTags] = useState<string[]>(defaultTags);
+  const [allTags, setAllTags] = useState<string[]>([...DEFAULT_LIFESTYLE_TAGS]);
 
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>
@@ -27,7 +22,7 @@ export default function LifestyleTagsPage() {
   };
 
   const handleAddCustomTag = () => {
-    const trimmedInput = customInput.trim().slice(0, 10);
+    const trimmedInput = customInput.trim();
     if (trimmedInput && !allTags.includes(trimmedInput)) {
       setAllTags([...allTags, trimmedInput]);
       setSelectedTags([...selectedTags, trimmedInput]);
@@ -93,9 +88,11 @@ export default function LifestyleTagsPage() {
             className={styles.customInput}
             placeholder="직접 입력하기 (최대 10자)"
             value={customInput}
-            onChange={(e) => setCustomInput(e.target.value.slice(0, 10))}
+            onChange={(e) =>
+              setCustomInput(e.target.value.slice(0, LIFESTYLE_TAG_MAX_LENGTH))
+            }
             onKeyPress={handleKeyPress}
-            maxLength={10}
+            maxLength={LIFESTYLE_TAG_MAX_LENGTH}
           />
           <button className={styles.addButton} onClick={handleAddCustomTag}>
             <span className="material-symbols-outlined">add</span>
