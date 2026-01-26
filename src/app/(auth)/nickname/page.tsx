@@ -3,22 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header, MainButton, BottomFixedArea } from '@/components/common';
+import { NICKNAME_MAX_LENGTH, NICKNAME_MESSAGES } from '@/constants/nickname';
+import { filterNickname, validateNickname } from '@/utils/nickname';
 import styles from './Nickname.module.css';
 
 export default function NicknamePage() {
   const router = useRouter();
   const [nickname, setNickname] = useState('');
-  const maxLength = 10;
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // 특수문자와 공백 제거 (한글, 영문, 숫자만 허용)
-    const filteredValue = value.replace(/[^a-zA-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣]/g, '');
-    setNickname(filteredValue.slice(0, maxLength));
+    const filteredValue = filterNickname(value);
+    setNickname(filteredValue.slice(0, NICKNAME_MAX_LENGTH));
   };
 
   const handleNext = () => {
-    if (nickname.length > 0) {
+    if (validateNickname(nickname)) {
       // TODO: 닉네임 저장 및 다음 페이지로 이동
       router.push('/lifestyle-tags');
     }
@@ -28,7 +28,7 @@ export default function NicknamePage() {
     router.back();
   };
 
-  const isButtonDisabled = nickname.length === 0;
+  const isButtonDisabled = !validateNickname(nickname);
 
   return (
     <div className={styles.container}>
@@ -53,17 +53,17 @@ export default function NicknamePage() {
               placeholder="닉네임 입력"
               value={nickname}
               onChange={handleNicknameChange}
-              maxLength={maxLength}
+              maxLength={NICKNAME_MAX_LENGTH}
             />
           </div>
           <div className={styles.charCount}>
             <span className={styles.charCountText}>
-              {nickname.length}/{maxLength}
+              {nickname.length}/{NICKNAME_MAX_LENGTH}
             </span>
           </div>
           <p className={styles.helperText}>
-            * 공백과 특수문자는 사용할 수 없어요.
-            <br />* 나중에 마이페이지에서 언제든지 변경할 수 있어요.
+            * {NICKNAME_MESSAGES.noSpecialChars}
+            <br />* {NICKNAME_MESSAGES.changeable}
           </p>
         </div>
       </main>

@@ -21,6 +21,7 @@ interface TextFieldModalProps {
   confirmText?: string;
   cancelText?: string;
   validation?: ValidationConfig;
+  filter?: (value: string) => string;
 }
 
 export default function TextFieldModal({
@@ -34,6 +35,7 @@ export default function TextFieldModal({
   confirmText = '저장하기',
   cancelText = '취소',
   validation,
+  filter,
 }: TextFieldModalProps) {
   const [value, setValue] = useState(initialValue);
   const [prevIsOpen, setPrevIsOpen] = useState(false);
@@ -72,7 +74,11 @@ export default function TextFieldModal({
             type="text"
             className={styles.input}
             value={value}
-            onChange={(e) => setValue(e.target.value.slice(0, maxLength))}
+            onChange={(e) => {
+              const newValue = e.target.value;
+              const filteredValue = filter ? filter(newValue) : newValue;
+              setValue(filteredValue.slice(0, maxLength));
+            }}
             placeholder={placeholder}
           />
           <span className={styles.charCount}>
