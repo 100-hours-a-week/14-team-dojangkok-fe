@@ -13,9 +13,7 @@ export default function LifestyleTagsPage() {
   const router = useRouter();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customInput, setCustomInput] = useState('');
-  const [allTags, setAllTags] = useState<string[]>([
-    ...DEFAULT_LIFESTYLE_TAGS,
-  ]);
+  const [allTags, setAllTags] = useState<string[]>([...DEFAULT_LIFESTYLE_TAGS]);
 
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>

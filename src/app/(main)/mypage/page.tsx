@@ -9,10 +9,7 @@ import {
   TextFieldModal,
   LifestyleTagModal,
 } from '@/components/common';
-import {
-  NICKNAME_MAX_LENGTH,
-  NICKNAME_MESSAGES,
-} from '@/constants/nickname';
+import { NICKNAME_MAX_LENGTH, NICKNAME_MESSAGES } from '@/constants/nickname';
 import { filterNickname, validateNickname } from '@/utils/nickname';
 import styles from './MyPage.module.css';
 
@@ -112,7 +109,10 @@ export default function MyPage() {
                 <span className={styles.label}>닉네임</span>
                 <span className={styles.value}>{userInfo.nickname}</span>
               </div>
-              <button className={styles.editButton} onClick={handleNicknameEdit}>
+              <button
+                className={styles.editButton}
+                onClick={handleNicknameEdit}
+              >
                 수정
               </button>
             </div>

@@ -57,8 +57,8 @@ export default function LoginPage() {
         </div> */}
 
         <div className={styles.terms}>
-          계속 진행함으로써 도장콕의 <a href="#">서비스 이용약관</a> 및{' '}
-          <a href="#">개인정보 처리방침</a>에 동의하게 됩니다.
+          계속 진행함으로써 도장콕의 <a href="/terms">서비스 이용약관</a> 및{' '}
+          <a href="/privacy">개인정보 처리방침</a>에 동의하게 됩니다.
         </div>
       </div>
     </div>

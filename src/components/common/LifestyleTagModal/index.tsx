@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import Modal from '../Modal';
-import { DEFAULT_LIFESTYLE_TAGS, LIFESTYLE_TAG_MAX_LENGTH } from '@/constants/lifestyle';
+import {
+  DEFAULT_LIFESTYLE_TAGS,
+  LIFESTYLE_TAG_MAX_LENGTH,
+} from '@/constants/lifestyle';
 import styles from './LifestyleTagModal.module.css';
 
 interface LifestyleTagModalProps {
@@ -22,8 +25,9 @@ export default function LifestyleTagModal({
   const [customInput, setCustomInput] = useState('');
   const [allTags, setAllTags] = useState<string[]>(() => {
     // 초기 태그에 커스텀 태그가 있다면 allTags에 추가
+    const defaultTagsArray = [...DEFAULT_LIFESTYLE_TAGS] as string[];
     const customTags = initialTags.filter(
-      (tag) => !DEFAULT_LIFESTYLE_TAGS.includes(tag as any)
+      (tag) => !defaultTagsArray.includes(tag)
     );
     return [...DEFAULT_LIFESTYLE_TAGS, ...customTags];
   });
@@ -31,8 +35,9 @@ export default function LifestyleTagModal({
 
   // 모달이 열릴 때 상태 초기화
   if (isOpen && !prevIsOpen) {
+    const defaultTagsArray = [...DEFAULT_LIFESTYLE_TAGS] as string[];
     const customTags = initialTags.filter(
-      (tag) => !DEFAULT_LIFESTYLE_TAGS.includes(tag as any)
+      (tag) => !defaultTagsArray.includes(tag)
     );
     setAllTags([...DEFAULT_LIFESTYLE_TAGS, ...customTags]);
     setSelectedTags(initialTags);
