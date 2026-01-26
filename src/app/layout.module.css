@@ -1,0 +1,25 @@
+.wrapper {
+  min-height: 100dvh;
+  background-color: #e5e5e5;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100dvh;
+  background-color: #ffffff;
+  position: relative;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 430px) {
+  .wrapper {
+    background-color: #ffffff;
+  }
+
+  .container {
+    box-shadow: none;
+  }
+}

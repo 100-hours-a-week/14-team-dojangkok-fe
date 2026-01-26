@@ -1,0 +1,58 @@
+.inputWrapper {
+  text-align: left;
+}
+
+.inputContainer {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  background-color: #f9fafb;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 14px 60px 14px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #111418;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  background-color: #ffffff;
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+.charCount {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding-left: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.messageSuccess {
+  color: #10b981;
+}
+
+.messageError {
+  color: #ef4444;
+}
