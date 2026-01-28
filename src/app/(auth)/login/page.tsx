@@ -1,15 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Login.module.css';
 
 export default function LoginPage() {
-  const router = useRouter();
   const handleKakaoLogin = () => {
-    // TODO: 카카오 로그인 API 연동
-    console.log('카카오 로그인');
-    router.push('/nickname');
+    try {
+      const backendOAuthUrl = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/oauth2/authorization/kakao`;
+      window.location.href = backendOAuthUrl;
+    } catch (error) {
+      console.error('Failed to initiate Kakao login:', error);
+    }
   };
 
   return (
