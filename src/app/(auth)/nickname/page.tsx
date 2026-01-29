@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header, MainButton, BottomFixedArea } from '@/components/common';
+import Header from '@/components/common/Header';
+import MainButton from '@/components/common/MainButton';
+import BottomFixedArea from '@/components/common/BottomFixedArea';
 import { NICKNAME_MAX_LENGTH, NICKNAME_MESSAGES } from '@/constants/nickname';
 import { filterNickname, validateNickname } from '@/utils/nickname';
 import { useAuth } from '@/contexts/AuthContext';

@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Header, Modal } from '@/components/common';
+import Header from '@/components/common/Header';
+import Modal from '@/components/common/Modal';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import styles from './page.module.css';
 

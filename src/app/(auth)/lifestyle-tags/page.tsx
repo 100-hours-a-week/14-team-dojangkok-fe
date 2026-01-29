@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/common';
+import Header from '@/components/common/Header';
 import {
   DEFAULT_LIFESTYLE_TAGS,
   LIFESTYLE_TAG_MAX_LENGTH,

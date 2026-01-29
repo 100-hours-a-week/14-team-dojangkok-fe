@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import {
-  Header,
-  BottomFixedArea,
-  MainButton,
-  Modal,
-} from '@/components/common';
+import Header from '@/components/common/Header';
+import BottomFixedArea from '@/components/common/BottomFixedArea';
+import MainButton from '@/components/common/MainButton';
+import Modal from '@/components/common/Modal';
 import { getEasyContract } from '@/lib/api/contract';
 import { EasyContractData } from '@/types/contract';
 import styles from './page.module.css';
