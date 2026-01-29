@@ -48,9 +48,8 @@ export default function LifestyleTagsPage() {
     try {
       await updateLifestyleTagsApi(selectedTags);
       updateUser({ lifestyleTags: selectedTags });
-      router.push('/home');
-    } catch (err) {
-      console.error('Failed to update lifestyle tags:', err);
+      router.push('/');
+    } catch {
       setError('라이프스타일 태그 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
