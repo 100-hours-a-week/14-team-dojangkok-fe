@@ -14,26 +14,14 @@ export class ApiError extends Error {
     public status: number,
     message: string,
     public code?: string,
-    public data?: any
+    public data?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
   }
 }
 
-let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
-let refreshSubscribers: Array<(token: string | null) => void> = [];
-
-function subscribeTokenRefresh(callback: (token: string | null) => void) {
-  refreshSubscribers.push(callback);
-}
-
-function onTokenRefreshed(token: string | null) {
-  refreshSubscribers.forEach((callback) => callback(token));
-  refreshSubscribers = [];
-  refreshPromise = null;
-}
 
 async function refreshAccessToken(): Promise<string | null> {
   if (process.env.NODE_ENV === 'development') {
@@ -98,7 +86,12 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { requiresAuth = false, skipTokenRefresh = false, headers = {}, ...fetchOptions } = options;
+  const {
+    requiresAuth = false,
+    skipTokenRefresh = false,
+    headers = {},
+    ...fetchOptions
+  } = options;
 
   const makeRequest = async (accessToken?: string): Promise<Response> => {
     const defaultHeaders: Record<string, string> = {
@@ -163,11 +156,8 @@ export async function apiClient<T>(
           console.log('[DEBUG] Creating new refresh promise');
         }
 
-        isRefreshing = true;
-
         // 갱신 프로미스 생성 및 저장
         refreshPromise = refreshAccessToken().finally(() => {
-          isRefreshing = false;
           // 프로미스는 일정 시간 후 초기화 (다른 요청들이 사용할 수 있도록)
           setTimeout(() => {
             refreshPromise = null;
@@ -192,7 +182,10 @@ export async function apiClient<T>(
           if (typeof window !== 'undefined') {
             window.location.href = '/signin';
           }
-          throw new ApiError(401, '인증이 만료되었습니다. 다시 로그인해주세요.');
+          throw new ApiError(
+            401,
+            '인증이 만료되었습니다. 다시 로그인해주세요.'
+          );
         }
       } else {
         // 토큰 갱신 실패 시 에러 throw
@@ -219,7 +212,10 @@ export async function apiClient<T>(
       // Spring Boot Validation 에러 형식
       if (errorData.errors && Array.isArray(errorData.errors)) {
         const validationMessages = errorData.errors
-          .map((err: any) => err.defaultMessage || err.message)
+          .map(
+            (err: { defaultMessage?: string; message?: string }) =>
+              err.defaultMessage || err.message
+          )
           .filter(Boolean)
           .join(', ');
         throw new ApiError(

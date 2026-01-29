@@ -42,7 +42,7 @@ export interface AuthState {
 export interface ApiErrorResponse {
   code: string;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 // 백엔드 에러 코드 상수
