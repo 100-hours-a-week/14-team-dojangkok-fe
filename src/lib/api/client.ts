@@ -123,7 +123,7 @@ export async function apiClient<T>(
 
   try {
     let accessToken = requiresAuth
-      ? tokenStorage.getAccessToken() ?? undefined
+      ? (tokenStorage.getAccessToken() ?? undefined)
       : undefined;
     let response = await makeRequest(accessToken);
 
