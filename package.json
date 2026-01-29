@@ -16,9 +16,12 @@
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
     "next": "16.1.4",
+    "pdfjs-dist": "^5.4.530",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-markdown": "^10.1.0"
+    "react-markdown": "^10.1.0",
+    "react-pdf": "^10.3.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
