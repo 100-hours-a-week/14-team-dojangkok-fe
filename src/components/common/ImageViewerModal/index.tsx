@@ -1,11 +1,23 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import styles from './ImageViewerModal.module.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// PDF.js worker 설정
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+interface ImageItem {
+  id: string;
+  url: string;
+  file?: File;
+}
 
 interface ImageViewerModalProps {
   isOpen: boolean;
-  images: string[];
+  images: ImageItem[];
   currentIndex: number;
   onClose: () => void;
   onPrevious: () => void;
@@ -50,7 +62,8 @@ export default function ImageViewerModal({
 
   if (!isOpen || images.length === 0) return null;
 
-  const currentImage = images[currentIndex];
+  const currentItem = images[currentIndex];
+  const isPDF = currentItem.file?.type === 'application/pdf';
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < images.length - 1;
 
@@ -90,12 +103,64 @@ export default function ImageViewerModal({
         className={styles.imageContainer}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={currentImage}
-          alt={`이미지 ${currentIndex + 1}`}
-          className={styles.image}
-        />
+        {isPDF ? (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#f3f4f6',
+            }}
+          >
+            <Document
+              file={currentItem.url}
+              loading={
+                <div
+                  style={{
+                    color: 'white',
+                    fontSize: '16px',
+                  }}
+                >
+                  PDF 로딩 중...
+                </div>
+              }
+              error={
+                <div
+                  style={{
+                    color: 'white',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: '48px', color: '#DC2626' }}
+                  >
+                    picture_as_pdf
+                  </span>
+                  <span>PDF를 불러올 수 없습니다</span>
+                </div>
+              }
+            >
+              <Page
+                pageNumber={1}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+          </div>
+        ) : (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={currentItem.url}
+            alt={`이미지 ${currentIndex + 1}`}
+            className={styles.image}
+          />
+        )}
       </div>
 
       <div className={styles.counter}>

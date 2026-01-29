@@ -2,16 +2,20 @@
 
 import { use, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   Header,
   ImageUploader,
-  ImageGrid,
   SegmentedControl,
   Checklist,
   ActionSheet,
   TextFieldModal,
   Modal,
 } from '@/components/common';
+
+const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
+  ssr: false,
+});
 import type { ChecklistItem } from '@/components/common/Checklist';
 import type { ActionSheetOption } from '@/components/common/ActionSheet';
 import styles from './HomeNoteDetail.module.css';

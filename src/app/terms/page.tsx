@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Header } from '@/components/common';
+import Header from '@/components/common/Header';
 import styles from './Terms.module.css';
 
 export default function TermsPage() {

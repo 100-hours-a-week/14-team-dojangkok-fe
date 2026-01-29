@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AnalysisProvider } from '@/contexts/AnalysisContext';
 import './globals.css';
 import styles from './layout.module.css';
 
@@ -33,9 +34,11 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <div className={styles.wrapper}>
-            <div className={styles.container}>{children}</div>
-          </div>
+          <AnalysisProvider>
+            <div className={styles.wrapper}>
+              <div className={styles.container}>{children}</div>
+            </div>
+          </AnalysisProvider>
         </AuthProvider>
       </body>
     </html>

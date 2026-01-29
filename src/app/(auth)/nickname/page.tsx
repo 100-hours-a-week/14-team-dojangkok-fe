@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Header, MainButton, BottomFixedArea } from '@/components/common';
+import Header from '@/components/common/Header';
+import MainButton from '@/components/common/MainButton';
+import BottomFixedArea from '@/components/common/BottomFixedArea';
 import { NICKNAME_MAX_LENGTH, NICKNAME_MESSAGES } from '@/constants/nickname';
 import { filterNickname, validateNickname } from '@/utils/nickname';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,10 +13,17 @@ import styles from './Nickname.module.css';
 
 export default function NicknamePage() {
   const router = useRouter();
-  const { updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [nickname, setNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 이미 닉네임이 설정된 사용자는 홈으로 리다이렉트
+  useEffect(() => {
+    if (user && !user.isNewUser && user.nickname) {
+      router.replace('/');
+    }
+  }, [user, router]);
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -80,7 +89,8 @@ export default function NicknamePage() {
             </span>
           </div>
           <p className={styles.helperText}>
-            * {NICKNAME_MESSAGES.noSpecialChars}
+            * 최소 2자 이상 입력해주세요.
+            <br />* {NICKNAME_MESSAGES.noSpecialChars}
             <br />* {NICKNAME_MESSAGES.changeable}
           </p>
           {error && <p className={styles.errorText}>{error}</p>}

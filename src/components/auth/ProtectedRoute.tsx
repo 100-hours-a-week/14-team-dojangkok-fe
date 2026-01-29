@@ -14,19 +14,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/signin');
+      // 즉시 리다이렉트
+      router.replace('/signin');
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
+  // 로딩 중이거나 미인증 상태면 아무것도 렌더링하지 않음
+  if (isLoading || !isAuthenticated) {
     return null;
   }
 
