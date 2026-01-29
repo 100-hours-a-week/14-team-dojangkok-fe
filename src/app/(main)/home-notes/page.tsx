@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Header,
@@ -10,114 +10,64 @@ import {
   TextFieldModal,
 } from '@/components/common';
 import { HomeNote } from './types';
+import { getHomeNotes } from '@/lib/api/homeNote';
+import { HomeNoteItem } from '@/types/homeNote';
 import styles from './HomeNotes.module.css';
 
-const mockNotes: HomeNote[] = [
-  {
-    id: '1',
-    title: '역삼동 햇살 가득한 원룸',
-    date: '2023.10.28',
-    images: [
-      { id: '1-1', url: 'https://picsum.photos/seed/1-1/400/400' },
-      { id: '1-2', url: 'https://picsum.photos/seed/1-2/400/400' },
-      { id: '1-3', url: 'https://picsum.photos/seed/1-3/400/400' },
-      { id: '1-4', url: 'https://picsum.photos/seed/1-4/400/400' },
-      { id: '1-5', url: 'https://picsum.photos/seed/1-5/400/400' },
-      { id: '1-6', url: 'https://picsum.photos/seed/1-6/400/400' },
-    ],
-  },
-  {
-    id: '2',
-    title: '논현동 복층 오피스텔',
-    date: '2023.10.15',
-    images: [{ id: '2-1', url: 'https://picsum.photos/seed/2-1/400/400' }],
-  },
-  {
-    id: '3',
-    title: '서초동 신축 빌라',
-    date: '2023.09.20',
-    images: [
-      { id: '3-1', url: 'https://picsum.photos/seed/3-1/400/400' },
-      { id: '3-2', url: 'https://picsum.photos/seed/3-2/400/400' },
-      { id: '3-3', url: 'https://picsum.photos/seed/3-3/400/400' },
-      { id: '3-4', url: 'https://picsum.photos/seed/3-4/400/400' },
-      { id: '3-5', url: 'https://picsum.photos/seed/3-5/400/400' },
-      { id: '3-6', url: 'https://picsum.photos/seed/3-6/400/400' },
-      { id: '3-7', url: 'https://picsum.photos/seed/3-7/400/400' },
-      { id: '3-8', url: 'https://picsum.photos/seed/3-8/400/400' },
-    ],
-  },
-  {
-    id: '3',
-    title: '서초동 신축 빌라',
-    date: '2023.09.20',
-    images: [
-      { id: '3-1', url: 'https://picsum.photos/seed/3-1/400/400' },
-      { id: '3-2', url: 'https://picsum.photos/seed/3-2/400/400' },
-      { id: '3-3', url: 'https://picsum.photos/seed/3-3/400/400' },
-      { id: '3-4', url: 'https://picsum.photos/seed/3-4/400/400' },
-      { id: '3-5', url: 'https://picsum.photos/seed/3-5/400/400' },
-      { id: '3-6', url: 'https://picsum.photos/seed/3-6/400/400' },
-      { id: '3-7', url: 'https://picsum.photos/seed/3-7/400/400' },
-      { id: '3-8', url: 'https://picsum.photos/seed/3-8/400/400' },
-    ],
-  },
-  {
-    id: '3',
-    title: '서초동 신축 빌라',
-    date: '2023.09.20',
-    images: [
-      { id: '3-1', url: 'https://picsum.photos/seed/3-1/400/400' },
-      { id: '3-2', url: 'https://picsum.photos/seed/3-2/400/400' },
-    ],
-  },
-  {
-    id: '3',
-    title: '서초동 신축 빌라',
-    date: '2023.09.20',
-    images: [
-      { id: '3-1', url: 'https://picsum.photos/seed/3-1/400/400' },
-      { id: '3-2', url: 'https://picsum.photos/seed/3-2/400/400' },
-      { id: '3-3', url: 'https://picsum.photos/seed/3-3/400/400' },
-      { id: '3-4', url: 'https://picsum.photos/seed/3-4/400/400' },
-      { id: '3-5', url: 'https://picsum.photos/seed/3-5/400/400' },
-      { id: '3-6', url: 'https://picsum.photos/seed/3-6/400/400' },
-      { id: '3-7', url: 'https://picsum.photos/seed/3-7/400/400' },
-      { id: '3-8', url: 'https://picsum.photos/seed/3-8/400/400' },
-    ],
-  },
-  {
-    id: '3',
-    title: '서초동 신축 빌라',
-    date: '2023.09.20',
-    images: [
-      { id: '3-1', url: 'https://picsum.photos/seed/3-1/400/400' },
-      { id: '3-2', url: 'https://picsum.photos/seed/3-2/400/400' },
-      { id: '3-3', url: 'https://picsum.photos/seed/3-3/400/400' },
-      { id: '3-4', url: 'https://picsum.photos/seed/3-4/400/400' },
-      { id: '3-5', url: 'https://picsum.photos/seed/3-5/400/400' },
-      { id: '3-6', url: 'https://picsum.photos/seed/3-6/400/400' },
-      { id: '3-7', url: 'https://picsum.photos/seed/3-7/400/400' },
-      { id: '3-8', url: 'https://picsum.photos/seed/3-8/400/400' },
-    ],
-  },
-  {
-    id: '3',
-    title: '서초동 신축 빌라',
-    date: '2023.09.20',
-    images: [],
-  },
-];
+/**
+ * API 응답을 UI 타입으로 변환
+ */
+function convertToHomeNote(item: HomeNoteItem): HomeNote {
+  return {
+    id: item.home_note_id.toString(),
+    title: item.title,
+    date: new Date(item.created_at).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }),
+    images: item.preview_images.map((url, index) => ({
+      id: `${item.home_note_id}-${index}`,
+      url,
+    })),
+  };
+}
 
 export default function HomeNotesPage() {
   const router = useRouter();
+  const [notes, setNotes] = useState<HomeNote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [, setHasNext] = useState(false);
+  const [, setNextCursor] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  useEffect(() => {
+    loadHomeNotes();
+  }, []);
+
+  const loadHomeNotes = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await getHomeNotes();
+      const convertedNotes = response.data.items.map(convertToHomeNote);
+      setNotes(convertedNotes);
+      setHasNext(response.data.hasNext);
+      setNextCursor(response.data.next_cursor);
+    } catch (err) {
+      console.error('집 노트 목록 조회 실패:', err);
+      setError('집 노트 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleNoteClick = (id: string) => {
-    const note = mockNotes.find((n) => n.id === id);
+    const note = notes.find((n) => n.id === id);
     const title = note?.title || '집노트';
     router.push(`/home-notes/${id}?title=${encodeURIComponent(title)}`);
   };
@@ -169,17 +119,34 @@ export default function HomeNotesPage() {
         rightIconColor="#111418"
       />
       <main className={styles.container}>
-        <div className={styles.grid}>
-          {mockNotes.map((note, index) => (
-            <HomeNoteCard
-              key={`${note.id}-${index}`}
-              note={note}
-              onClick={handleNoteClick}
-              isEditMode={isEditMode}
-              onDelete={handleDeleteNote}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
+            로딩 중...
+          </div>
+        ) : error ? (
+          <div
+            style={{ textAlign: 'center', padding: '2rem', color: '#ef4444' }}
+          >
+            {error}
+          </div>
+        ) : notes.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
+            아직 집노트가 없습니다.
+            <br />+ 버튼을 눌러 새 집노트를 만들어보세요.
+          </div>
+        ) : (
+          <div className={styles.grid}>
+            {notes.map((note, index) => (
+              <HomeNoteCard
+                key={`${note.id}-${index}`}
+                note={note}
+                onClick={handleNoteClick}
+                isEditMode={isEditMode}
+                onDelete={handleDeleteNote}
+              />
+            ))}
+          </div>
+        )}
       </main>
       {!isEditMode && <FloatingAddButton onClick={handleAddClick} />}
       <TextFieldModal
