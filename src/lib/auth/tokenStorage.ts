@@ -6,8 +6,8 @@ export const tokenStorage = {
   save(tokenData: TokenData): void {
     try {
       localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
-    } catch (error) {
-      console.error('Failed to save token:', error);
+    } catch {
+      // Silent fail
     }
   },
 
@@ -24,8 +24,7 @@ export const tokenStorage = {
       }
 
       return tokenData;
-    } catch (error) {
-      console.error('Failed to get token:', error);
+    } catch {
       return null;
     }
   },
@@ -33,13 +32,15 @@ export const tokenStorage = {
   remove(): void {
     try {
       localStorage.removeItem(TOKEN_KEY);
-    } catch (error) {
-      console.error('Failed to remove token:', error);
+    } catch {
+      // Silent fail
     }
   },
 
   isExpired(tokenData: TokenData): boolean {
-    return Date.now() >= tokenData.expiresAt;
+    // 5분(300초) 버퍼를 두고 만료 체크 (API 요청 중 만료 방지)
+    const BUFFER_TIME = 5 * 60 * 1000; // 5분 = 300,000ms
+    return Date.now() >= tokenData.expiresAt - BUFFER_TIME;
   },
 
   getAccessToken(): string | null {

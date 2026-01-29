@@ -18,8 +18,19 @@ export interface TokenData {
 export interface User {
   id: string;
   nickname?: string;
+  profileImageUrl?: string;
   lifestyleTags?: string[];
   isNewUser: boolean;
+}
+
+export interface MemberProfileResponse {
+  code: string;
+  message: string;
+  data: {
+    member_id: number;
+    nickname: string | null;
+    profile_image_url: string;
+  };
 }
 
 export interface AuthState {
@@ -27,3 +38,16 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export interface ApiErrorResponse {
+  code: string;
+  message: string;
+  data?: any;
+}
+
+// 백엔드 에러 코드 상수
+export const ERROR_CODES = {
+  INVALID_REFRESH_TOKEN: 'INVALID_REFRESH_TOKEN',
+  TOKEN_REUSE_DETECTED: 'TOKEN_REUSE_DETECTED',
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+} as const;

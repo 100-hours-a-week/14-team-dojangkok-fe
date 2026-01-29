@@ -4,11 +4,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthState, User, TokenData } from '@/types/auth';
 import { tokenStorage } from '@/lib/auth/tokenStorage';
-import { exchangeCodeForToken } from '@/lib/api/auth';
+import { exchangeCodeForToken, getMemberProfile, logout as logoutApi, deleteAccount as deleteAccountApi } from '@/lib/api/auth';
 
 interface AuthContextType extends AuthState {
   login: (code: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
 }
 
@@ -27,14 +28,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const tokenData = tokenStorage.get();
 
       if (tokenData) {
-        setAuthState({
-          user: {
-            id: '',
-            isNewUser: false,
-          },
-          isAuthenticated: true,
-          isLoading: false,
-        });
+        try {
+          // 실제 프로필 조회하여 유저 정보 복원
+          const profileResponse = await getMemberProfile();
+          const isNewUser = !profileResponse.data.nickname;
+
+          const user: User = {
+            id: profileResponse.data.member_id.toString(),
+            nickname: profileResponse.data.nickname || undefined,
+            profileImageUrl: profileResponse.data.profile_image_url,
+            lifestyleTags: undefined,
+            isNewUser,
+          };
+
+          setAuthState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } catch (error) {
+          // 프로필 조회 실패 시 토큰 제거하고 로그아웃 상태로 전환
+          tokenStorage.remove();
+          setAuthState({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
       } else {
         setAuthState({
           user: null,
@@ -59,11 +79,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       tokenStorage.save(tokenData);
 
+      // 프로필 조회하여 닉네임 확인
+      const profileResponse = await getMemberProfile();
+      const isNewUser = !profileResponse.data.nickname;
+
       const user: User = {
-        id: '',
-        nickname: undefined,
+        id: profileResponse.data.member_id.toString(),
+        nickname: profileResponse.data.nickname || undefined,
+        profileImageUrl: profileResponse.data.profile_image_url,
         lifestyleTags: undefined,
-        isNewUser: response.data.is_new_user,
+        isNewUser,
       };
 
       setAuthState({
@@ -72,25 +97,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
       });
 
-      if (response.data.is_new_user) {
-        router.push('/nickname');
+      if (isNewUser) {
+        router.replace('/nickname');
       } else {
-        router.push('/home');
+        router.replace('/');
       }
     } catch (error) {
-      console.error('Login failed:', error);
       throw error;
     }
   };
 
-  const logout = () => {
-    tokenStorage.remove();
-    setAuthState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-    });
-    router.push('/login');
+  const logout = async () => {
+    try {
+      await logoutApi();
+    } catch (error) {
+      // 로그아웃 API 실패해도 로컬 토큰은 제거
+    } finally {
+      tokenStorage.remove();
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+      router.push('/signin');
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await deleteAccountApi();
+      tokenStorage.remove();
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+      router.push('/signin');
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updateUser = (userData: Partial<User>) => {
@@ -101,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ ...authState, login, logout, deleteAccount, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
