@@ -7,13 +7,18 @@ import {
   DEFAULT_LIFESTYLE_TAGS,
   LIFESTYLE_TAG_MAX_LENGTH,
 } from '@/constants/lifestyle';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateLifestyleTags as updateLifestyleTagsApi } from '@/lib/api/auth';
 import styles from './LifestyleTags.module.css';
 
 export default function LifestyleTagsPage() {
   const router = useRouter();
+  const { updateUser } = useAuth();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customInput, setCustomInput] = useState('');
   const [allTags, setAllTags] = useState<string[]>([...DEFAULT_LIFESTYLE_TAGS]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>
@@ -36,10 +41,19 @@ export default function LifestyleTagsPage() {
     }
   };
 
-  const handleComplete = () => {
-    // TODO: 선택된 태그 저장 및 다음 페이지로 이동
-    console.log('Selected tags:', selectedTags);
-    router.push('/home');
+  const handleComplete = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await updateLifestyleTagsApi(selectedTags);
+      updateUser({ lifestyleTags: selectedTags });
+      router.push('/');
+    } catch {
+      setError('라이프스타일 태그 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -52,7 +66,7 @@ export default function LifestyleTagsPage() {
         title="2/2"
         showBackButton={true}
         onBackClick={handleBack}
-        rightText="완료"
+        rightText={isLoading ? '저장 중...' : '완료'}
         onRightClick={handleComplete}
       />
 
@@ -66,6 +80,7 @@ export default function LifestyleTagsPage() {
           <p className={styles.subtitle}>
             선택한 태그를 바탕으로 AI가 나만의 체크리스트를 만들어드려요.
           </p>
+          {error && <p className={styles.errorText}>{error}</p>}
         </div>
 
         <div className={styles.tagsWrapper}>

@@ -49,7 +49,7 @@ export default function AnalysisResultPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleBackClick = () => {
-    router.push('/home');
+    router.push('/');
   };
 
   const handleRegenerate = () => {

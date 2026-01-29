@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
+import { ApiError } from '@/lib/api/client';
 import {
   Header,
   Modal,
@@ -15,6 +17,7 @@ import styles from './MyPage.module.css';
 
 export default function MyPage() {
   const router = useRouter();
+  const { logout, deleteAccount } = useAuth();
 
   // TODO: 실제로는 API에서 사용자 정보를 가져와야 함
   const [userInfo, setUserInfo] = useState({
@@ -31,16 +34,16 @@ export default function MyPage() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isWithdrawConfirmed, setIsWithdrawConfirmed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleNicknameEdit = () => {
     setIsNicknameModalOpen(true);
   };
 
   const handleNicknameSubmit = (newNickname: string) => {
-    // TODO: API 호출하여 닉네임 업데이트
     setUserInfo((prev) => ({ ...prev, nickname: newNickname }));
     setIsNicknameModalOpen(false);
-    console.log('닉네임 변경:', newNickname);
   };
 
   const handleLifestyleEdit = () => {
@@ -48,21 +51,32 @@ export default function MyPage() {
   };
 
   const handleLifestyleSubmit = (newTags: string[]) => {
-    // TODO: API 호출하여 라이프스타일 태그 업데이트
     setUserInfo((prev) => ({ ...prev, lifestyleTags: newTags }));
     setIsLifestyleModalOpen(false);
-    console.log('라이프스타일 변경:', newTags);
   };
 
   const handleLogout = () => {
     setIsLogoutModalOpen(true);
   };
 
-  const handleLogoutConfirm = () => {
-    // TODO: 로그아웃 API 호출
-    console.log('로그아웃 확인');
-    setIsLogoutModalOpen(false);
-    router.push('/login');
+  const handleLogoutConfirm = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await logout();
+      setIsLogoutModalOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError('세션이 만료되었습니다. 다시 로그인해주세요.');
+        setTimeout(() => {
+          router.push('/signin');
+        }, 2000);
+      } else {
+        setError('로그아웃에 실패했습니다. 다시 시도해주세요.');
+      }
+      setIsLoading(false);
+    }
   };
 
   const handleWithdraw = () => {
@@ -70,12 +84,25 @@ export default function MyPage() {
     setIsWithdrawConfirmed(false);
   };
 
-  const handleWithdrawConfirm = () => {
-    // TODO: 회원 탈퇴 API 호출
-    console.log('회원 탈퇴 확인');
-    setIsWithdrawModalOpen(false);
-    setIsWithdrawConfirmed(false);
-    router.push('/login');
+  const handleWithdrawConfirm = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await deleteAccount();
+      setIsWithdrawModalOpen(false);
+      setIsWithdrawConfirmed(false);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError('세션이 만료되었습니다. 다시 로그인해주세요.');
+        setTimeout(() => {
+          router.push('/signin');
+        }, 2000);
+      } else {
+        setError('회원 탈퇴에 실패했습니다. 다시 시도해주세요.');
+      }
+      setIsLoading(false);
+    }
   };
 
   const handleWithdrawModalClose = () => {
@@ -204,12 +231,20 @@ export default function MyPage() {
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={handleLogoutConfirm}
         title="로그아웃"
-        confirmText="로그아웃"
+        confirmText={isLoading ? '처리 중...' : '로그아웃'}
         cancelText="취소"
+        confirmDisabled={isLoading}
       >
-        <p style={{ textAlign: 'center', color: '#60758a', lineHeight: 1.6 }}>
-          정말 로그아웃 하시겠어요?
-        </p>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#60758a', lineHeight: 1.6 }}>
+            정말 로그아웃 하시겠어요?
+          </p>
+          {error && (
+            <p style={{ color: '#ef4444', fontSize: 14, marginTop: 8 }}>
+              {error}
+            </p>
+          )}
+        </div>
       </Modal>
 
       {/* 회원 탈퇴 확인 모달 */}
@@ -218,9 +253,9 @@ export default function MyPage() {
         onClose={handleWithdrawModalClose}
         onConfirm={handleWithdrawConfirm}
         title="회원 탈퇴"
-        confirmText="탈퇴하기"
+        confirmText={isLoading ? '처리 중...' : '탈퇴하기'}
         cancelText="취소"
-        confirmDisabled={!isWithdrawConfirmed}
+        confirmDisabled={!isWithdrawConfirmed || isLoading}
         variant="destructive"
       >
         <div className={styles.withdrawContent}>
@@ -236,6 +271,18 @@ export default function MyPage() {
             />
             <span>안내 사항을 확인했습니다.</span>
           </label>
+          {error && (
+            <p
+              style={{
+                color: '#ef4444',
+                fontSize: 14,
+                marginTop: 8,
+                textAlign: 'center',
+              }}
+            >
+              {error}
+            </p>
+          )}
         </div>
       </Modal>
     </div>

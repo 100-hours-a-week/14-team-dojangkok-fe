@@ -12,7 +12,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: '/home', icon: 'home', iconFilled: 'home', label: '홈' },
+  { path: '/', icon: 'home', iconFilled: 'home', label: '홈' },
   {
     path: '/storage',
     icon: 'folder_open',
