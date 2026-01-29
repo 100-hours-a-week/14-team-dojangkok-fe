@@ -7,6 +7,7 @@ import { tokenStorage } from '@/lib/auth/tokenStorage';
 import {
   exchangeCodeForToken,
   getMemberProfile,
+  getLifestyleTags,
   logout as logoutApi,
   deleteAccount as deleteAccountApi,
 } from '@/lib/api/auth';
@@ -38,11 +39,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profileResponse = await getMemberProfile();
           const isNewUser = !profileResponse.data.nickname;
 
+          // 라이프스타일 태그 조회
+          let lifestyleTags: string[] | undefined = undefined;
+          try {
+            const lifestyleResponse = await getLifestyleTags();
+            lifestyleTags = lifestyleResponse.data.lifestyle_items.map(
+              (item) => item.lifestyle_item
+            );
+          } catch {
+            // 라이프스타일 조회 실패 시 undefined로 처리
+            lifestyleTags = undefined;
+          }
+
           const user: User = {
             id: profileResponse.data.member_id.toString(),
             nickname: profileResponse.data.nickname || undefined,
             profileImageUrl: profileResponse.data.profile_image_url,
-            lifestyleTags: undefined,
+            lifestyleTags,
             isNewUser,
           };
 
@@ -88,11 +101,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const profileResponse = await getMemberProfile();
       const isNewUser = !profileResponse.data.nickname;
 
+      // 기존 사용자는 라이프스타일 태그도 조회
+      let lifestyleTags: string[] | undefined = undefined;
+      if (!isNewUser) {
+        try {
+          const lifestyleResponse = await getLifestyleTags();
+          lifestyleTags = lifestyleResponse.data.lifestyle_items.map(
+            (item) => item.lifestyle_item
+          );
+        } catch {
+          // 라이프스타일 조회 실패 시 undefined로 처리
+          lifestyleTags = undefined;
+        }
+      }
+
       const user: User = {
         id: profileResponse.data.member_id.toString(),
         nickname: profileResponse.data.nickname || undefined,
         profileImageUrl: profileResponse.data.profile_image_url,
-        lifestyleTags: undefined,
+        lifestyleTags,
         isNewUser,
       };
 

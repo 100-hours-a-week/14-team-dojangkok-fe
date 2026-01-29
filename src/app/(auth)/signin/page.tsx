@@ -1,11 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './Login.module.css';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  // 이미 로그인한 사용자는 홈으로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleKakaoLogin = () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -26,6 +37,11 @@ export default function LoginPage() {
       alert('로그인 연결에 실패했습니다. 다시 시도해주세요.');
     }
   };
+
+  // 로그인 상태 확인 중이거나 이미 로그인된 경우 렌더링하지 않음
+  if (authLoading || isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className={styles.container}>

@@ -25,10 +25,20 @@ export async function updateNickname(nickname: string): Promise<void> {
   });
 }
 
-export async function updateLifestyleTags(tags: string[]): Promise<void> {
-  return apiClient<void>('/v1/lifestyles', {
+export async function updateLifestyleTags(tags: string[]): Promise<{
+  code: string;
+  message: string;
+  data: {
+    lifestyle_items: Array<{
+      lifestyle_item: string;
+      lifestyle_item_id: number;
+    }>;
+    member_id: number;
+  };
+}> {
+  return apiClient('/v1/lifestyles', {
     method: 'POST',
-    body: JSON.stringify({ tags }),
+    body: JSON.stringify({ lifestyle_items: tags }),
     requiresAuth: true,
   });
 }
@@ -53,8 +63,18 @@ export async function deleteAccount(): Promise<void> {
   });
 }
 
-export async function getLifestyleTags(): Promise<{ tags: string[] }> {
-  return apiClient<{ tags: string[] }>('/v1/lifestyles', {
+export async function getLifestyleTags(): Promise<{
+  code: string;
+  message: string;
+  data: {
+    lifestyle_items: Array<{
+      lifestyle_item: string;
+      lifestyle_item_id: number;
+    }>;
+    member_id: number;
+  };
+}> {
+  return apiClient('/v1/lifestyles', {
     method: 'GET',
     requiresAuth: true,
   });
