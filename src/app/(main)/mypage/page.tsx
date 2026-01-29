@@ -1,10 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApiError } from '@/lib/api/client';
+import {
+  updateNickname as updateNicknameApi,
+  updateLifestyleTags as updateLifestyleTagsApi,
+} from '@/lib/api/auth';
 import {
   Header,
   Modal,
@@ -17,18 +21,9 @@ import styles from './MyPage.module.css';
 
 export default function MyPage() {
   const router = useRouter();
-  const { logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, updateUser } = useAuth();
 
-  // TODO: 실제로는 API에서 사용자 정보를 가져와야 함
-  const [userInfo, setUserInfo] = useState({
-    name: '김민수',
-    email: 'minsu.kim@kakao.com',
-    nickname: '똑똑한 자취생',
-    profileImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAsyFVKfgu0WJNKVYNf7zOVeFk7PYSwolyA_7jpHwciJ7S_16kjIdFlHtda_9Dv4NkGAJ-Yb8xypsePb5WzToSRvklY0n7tb0NixmzMfvcCE664bTV59R6lImYyU8MTFEXFTtUZWFUyF95SWQKwhHyMTdGE16PijSDuhh6b-ki583Nd-Ol27mQSbLGvVhip-k8RspMfyFFjl05ywvSguMBEN86tDr8gaNy49yB388ckzMGmZmtlTDj9-_u-kbDs-GIyJp4pqlbjP9M',
-    lifestyleTags: ['역세권', '신축', '남향', '풀옵션', '반려동물 가능'],
-  });
-
+  const [lifestyleTags, setLifestyleTags] = useState<string[]>([]);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isLifestyleModalOpen, setIsLifestyleModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -37,22 +32,76 @@ export default function MyPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 라이프스타일 태그 로드 (추후 API 연동 시 사용)
+  useEffect(() => {
+    // TODO: GET /v1/lifestyles API 연동
+    // 현재는 user.lifestyleTags 사용
+    if (user?.lifestyleTags) {
+      setLifestyleTags(user.lifestyleTags);
+    }
+  }, [user]);
+
   const handleNicknameEdit = () => {
     setIsNicknameModalOpen(true);
   };
 
-  const handleNicknameSubmit = (newNickname: string) => {
-    setUserInfo((prev) => ({ ...prev, nickname: newNickname }));
-    setIsNicknameModalOpen(false);
+  const handleNicknameSubmit = async (newNickname: string) => {
+    // 기존 닉네임과 동일하면 API 호출 없이 모달만 닫기
+    if (newNickname === user?.nickname) {
+      setIsNicknameModalOpen(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await updateNicknameApi(newNickname);
+      updateUser({ nickname: newNickname });
+      setIsNicknameModalOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('닉네임 변경에 실패했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLifestyleEdit = () => {
     setIsLifestyleModalOpen(true);
   };
 
-  const handleLifestyleSubmit = (newTags: string[]) => {
-    setUserInfo((prev) => ({ ...prev, lifestyleTags: newTags }));
-    setIsLifestyleModalOpen(false);
+  const handleLifestyleSubmit = async (newTags: string[]) => {
+    // 기존 태그와 동일하면 API 호출 없이 모달만 닫기
+    const isSame =
+      newTags.length === lifestyleTags.length &&
+      newTags.every((tag) => lifestyleTags.includes(tag));
+
+    if (isSame) {
+      setIsLifestyleModalOpen(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await updateLifestyleTagsApi(newTags);
+      setLifestyleTags(newTags);
+      updateUser({ lifestyleTags: newTags });
+      setIsLifestyleModalOpen(false);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('라이프스타일 변경에 실패했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -110,6 +159,19 @@ export default function MyPage() {
     setIsWithdrawConfirmed(false);
   };
 
+  if (!user) {
+    return (
+      <div className={styles.container}>
+        <Header title="마이페이지" />
+        <main className={styles.main}>
+          <p style={{ textAlign: 'center', marginTop: 40, color: '#60758a' }}>
+            로딩 중...
+          </p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <Header title="마이페이지" />
@@ -119,13 +181,13 @@ export default function MyPage() {
         <div className={styles.profileSection}>
           <div className={styles.profileImage}>
             <Image
-              src={userInfo.profileImage}
+              src={user.profileImageUrl || '/default-profile.png'}
               alt="프로필 이미지"
               fill
               className={styles.image}
             />
           </div>
-          <h2 className={styles.userName}>{userInfo.name}</h2>
+          <h2 className={styles.userName}>{user.nickname || '사용자'}</h2>
         </div>
 
         {/* 닉네임 섹션 */}
@@ -134,11 +196,12 @@ export default function MyPage() {
             <div className={styles.cardContent}>
               <div className={styles.labelValue}>
                 <span className={styles.label}>닉네임</span>
-                <span className={styles.value}>{userInfo.nickname}</span>
+                <span className={styles.value}>{user.nickname}</span>
               </div>
               <button
                 className={styles.editButton}
                 onClick={handleNicknameEdit}
+                disabled={isLoading}
               >
                 수정
               </button>
@@ -154,16 +217,23 @@ export default function MyPage() {
               <button
                 className={styles.editButton}
                 onClick={handleLifestyleEdit}
+                disabled={isLoading}
               >
                 수정
               </button>
             </div>
             <div className={styles.tags}>
-              {userInfo.lifestyleTags.map((tag, index) => (
-                <span key={index} className={styles.tag}>
-                  {tag}
-                </span>
-              ))}
+              {lifestyleTags.length > 0 ? (
+                lifestyleTags.map((tag, index) => (
+                  <span key={index} className={styles.tag}>
+                    {tag}
+                  </span>
+                ))
+              ) : (
+                <p className={styles.emptyText}>
+                  설정된 라이프스타일이 없습니다.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -204,10 +274,10 @@ export default function MyPage() {
         onClose={() => setIsNicknameModalOpen(false)}
         onSubmit={handleNicknameSubmit}
         title="닉네임 수정"
-        initialValue={userInfo.nickname}
+        initialValue={user.nickname || ''}
         placeholder="닉네임을 입력해주세요"
         maxLength={NICKNAME_MAX_LENGTH}
-        confirmText="완료"
+        confirmText={isLoading ? '저장 중...' : '완료'}
         cancelText="취소"
         filter={filterNickname}
         validation={{
@@ -222,7 +292,7 @@ export default function MyPage() {
         isOpen={isLifestyleModalOpen}
         onClose={() => setIsLifestyleModalOpen(false)}
         onSubmit={handleLifestyleSubmit}
-        initialTags={userInfo.lifestyleTags}
+        initialTags={lifestyleTags}
       />
 
       {/* 로그아웃 확인 모달 */}

@@ -51,3 +51,18 @@ export const ERROR_CODES = {
   TOKEN_REUSE_DETECTED: 'TOKEN_REUSE_DETECTED',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
 } as const;
+
+// 라이프스타일 관련 타입
+export interface LifestyleItem {
+  lifestyle_item: string;
+  lifestyle_item_id: number;
+}
+
+export interface LifestyleResponse {
+  code: string;
+  message: string;
+  data: {
+    lifestyle_items: LifestyleItem[];
+    member_id: number;
+  };
+}
