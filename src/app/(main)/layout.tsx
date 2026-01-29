@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { LayoutProvider, useLayout } from '@/contexts/LayoutContext';
-import { BottomNav, Modal } from '@/components/common';
+import BottomNav from '@/components/common/BottomNav';
+import Modal from '@/components/common/Modal';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 function NavigationGuardModal() {

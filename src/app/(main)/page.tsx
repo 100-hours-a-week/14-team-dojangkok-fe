@@ -6,14 +6,18 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { uploadFiles, createEasyContract } from '@/lib/api/contract';
 import { ApiError } from '@/lib/api/client';
+import dynamic from 'next/dynamic';
 import {
   Header,
   ImageUploader,
-  ImageGrid,
   MainButton,
   BottomFixedArea,
   Modal,
 } from '@/components/common';
+
+const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
+  ssr: false,
+});
 
 interface ImageItem {
   id: string;
