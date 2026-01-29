@@ -17,13 +17,13 @@ function AuthCallbackContent() {
 
       if (errorParam) {
         setError('OAuth authorization failed');
-        setTimeout(() => router.push('/login'), 3000);
+        setTimeout(() => router.push('/signin'), 3000);
         return;
       }
 
       if (!code) {
         setError('Authorization code not found');
-        setTimeout(() => router.push('/login'), 3000);
+        setTimeout(() => router.push('/signin'), 3000);
         return;
       }
 
@@ -32,7 +32,7 @@ function AuthCallbackContent() {
       } catch (err) {
         console.error('Token exchange failed:', err);
         setError('Failed to complete login. Please try again.');
-        setTimeout(() => router.push('/login'), 3000);
+        setTimeout(() => router.push('/signin'), 3000);
       }
     };
 

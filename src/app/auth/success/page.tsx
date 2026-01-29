@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import styles from './AuthSuccess.module.css';
 
 function AuthSuccessContent() {
   const router = useRouter();
@@ -21,23 +22,22 @@ function AuthSuccessContent() {
       const errorParam = searchParams.get('error');
 
       if (errorParam) {
-        setError('OAuth authorization failed');
-        setTimeout(() => router.push('/login'), 3000);
+        setError('인증에 실패했습니다');
+        setTimeout(() => router.replace('/signin'), 3000);
         return;
       }
 
       if (!code) {
-        setError('Authorization code not found');
-        setTimeout(() => router.push('/login'), 3000);
+        setError('인증 코드를 찾을 수 없습니다');
+        setTimeout(() => router.replace('/signin'), 3000);
         return;
       }
 
       try {
         await login(code);
-      } catch (err) {
-        console.error('Token exchange failed:', err);
-        setError('Failed to complete login. Please try again.');
-        setTimeout(() => router.push('/login'), 3000);
+      } catch {
+        setError('로그인에 실패했습니다');
+        setTimeout(() => router.replace('/signin'), 3000);
       }
     };
 
@@ -46,25 +46,39 @@ function AuthSuccessContent() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-2">{error}</p>
-          <p className="text-sm text-gray-500">로그인 페이지로 이동합니다...</p>
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <div className={styles.errorWrapper}>
+            <div className={styles.errorIcon}>
+              <span className="material-symbols-outlined">error</span>
+            </div>
+            <h1 className={styles.errorTitle}>{error}</h1>
+            <p className={styles.errorDescription}>다시 시도해주세요</p>
+            <p className={styles.redirectMessage}>
+              잠시 후 로그인 페이지로 이동합니다...
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white">
-      <div className="text-center">
-        <div className="mb-4">
-          <div className="inline-block w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <div className={styles.logoWrapper}>
+          <div className={styles.logoIcon}>
+            <div className={styles.spinner}></div>
+            <span className="material-symbols-outlined">approval</span>
+          </div>
         </div>
-        <p className="text-lg font-medium text-gray-900 mb-1">
-          로그인 중입니다
-        </p>
-        <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
+        <h1 className={styles.title}>로그인 중입니다</h1>
+        <p className={styles.description}>잠시만 기다려주세요</p>
+        <div className={styles.progressDots}>
+          <div className={styles.dot}></div>
+          <div className={styles.dot}></div>
+          <div className={styles.dot}></div>
+        </div>
       </div>
     </div>
   );
@@ -74,15 +88,21 @@ export default function AuthSuccessPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-white">
-          <div className="text-center">
-            <div className="mb-4">
-              <div className="inline-block w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+        <div className={styles.container}>
+          <div className={styles.content}>
+            <div className={styles.logoWrapper}>
+              <div className={styles.logoIcon}>
+                <div className={styles.spinner}></div>
+                <span className="material-symbols-outlined">approval</span>
+              </div>
             </div>
-            <p className="text-lg font-medium text-gray-900 mb-1">
-              로그인 중입니다
-            </p>
-            <p className="text-sm text-gray-500">잠시만 기다려주세요</p>
+            <h1 className={styles.title}>로그인 중입니다</h1>
+            <p className={styles.description}>잠시만 기다려주세요</p>
+            <div className={styles.progressDots}>
+              <div className={styles.dot}></div>
+              <div className={styles.dot}></div>
+              <div className={styles.dot}></div>
+            </div>
           </div>
         </div>
       }
