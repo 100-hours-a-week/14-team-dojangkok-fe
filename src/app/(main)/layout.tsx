@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { LayoutProvider, useLayout } from '@/contexts/LayoutContext';
 import { BottomNav, Modal } from '@/components/common';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 function NavigationGuardModal() {
   const router = useRouter();
@@ -48,11 +49,11 @@ function NavigationGuardModal() {
 
 function MainLayoutContent({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <ProtectedRoute>
       {children}
       <BottomNav />
       <NavigationGuardModal />
-    </>
+    </ProtectedRoute>
   );
 }
 

@@ -5,22 +5,39 @@ import { useRouter } from 'next/navigation';
 import { Header, MainButton, BottomFixedArea } from '@/components/common';
 import { NICKNAME_MAX_LENGTH, NICKNAME_MESSAGES } from '@/constants/nickname';
 import { filterNickname, validateNickname } from '@/utils/nickname';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateNickname as updateNicknameApi } from '@/lib/api/auth';
 import styles from './Nickname.module.css';
 
 export default function NicknamePage() {
   const router = useRouter();
+  const { updateUser } = useAuth();
   const [nickname, setNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const filteredValue = filterNickname(value);
     setNickname(filteredValue.slice(0, NICKNAME_MAX_LENGTH));
+    setError(null);
   };
 
-  const handleNext = () => {
-    if (validateNickname(nickname)) {
-      // TODO: 닉네임 저장 및 다음 페이지로 이동
+  const handleNext = async () => {
+    if (!validateNickname(nickname)) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await updateNicknameApi(nickname);
+      updateUser({ nickname });
       router.push('/lifestyle-tags');
+    } catch (err) {
+      console.error('Failed to update nickname:', err);
+      setError('닉네임 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -28,7 +45,7 @@ export default function NicknamePage() {
     router.back();
   };
 
-  const isButtonDisabled = !validateNickname(nickname);
+  const isButtonDisabled = !validateNickname(nickname) || isLoading;
 
   return (
     <div className={styles.container}>
@@ -54,6 +71,7 @@ export default function NicknamePage() {
               value={nickname}
               onChange={handleNicknameChange}
               maxLength={NICKNAME_MAX_LENGTH}
+              disabled={isLoading}
             />
           </div>
           <div className={styles.charCount}>
@@ -65,12 +83,13 @@ export default function NicknamePage() {
             * {NICKNAME_MESSAGES.noSpecialChars}
             <br />* {NICKNAME_MESSAGES.changeable}
           </p>
+          {error && <p className={styles.errorText}>{error}</p>}
         </div>
       </main>
 
       <BottomFixedArea>
         <MainButton onClick={handleNext} disabled={isButtonDisabled}>
-          다음
+          {isLoading ? '저장 중...' : '다음'}
         </MainButton>
       </BottomFixedArea>
     </div>

@@ -23,7 +23,7 @@ export default function AnalyzingPage() {
 
   const handleGoHome = () => {
     setIsModalOpen(false);
-    router.push('/home');
+    router.push('/');
   };
 
   const handleContinueWaiting = () => {

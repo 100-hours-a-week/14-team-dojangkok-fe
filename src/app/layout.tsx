@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { AuthProvider } from '@/contexts/AuthContext';
 import './globals.css';
 import styles from './layout.module.css';
 
@@ -31,9 +32,11 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className={styles.wrapper}>
-          <div className={styles.container}>{children}</div>
-        </div>
+        <AuthProvider>
+          <div className={styles.wrapper}>
+            <div className={styles.container}>{children}</div>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );
