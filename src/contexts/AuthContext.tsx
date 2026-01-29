@@ -4,7 +4,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthState, User, TokenData } from '@/types/auth';
 import { tokenStorage } from '@/lib/auth/tokenStorage';
-import { exchangeCodeForToken, getMemberProfile, logout as logoutApi, deleteAccount as deleteAccountApi } from '@/lib/api/auth';
+import {
+  exchangeCodeForToken,
+  getMemberProfile,
+  logout as logoutApi,
+  deleteAccount as deleteAccountApi,
+} from '@/lib/api/auth';
 
 interface AuthContextType extends AuthState {
   login: (code: string) => Promise<void>;
@@ -46,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             isLoading: false,
           });
-        } catch (error) {
+        } catch {
           // 프로필 조회 실패 시 토큰 제거하고 로그아웃 상태로 전환
           tokenStorage.remove();
           setAuthState({
@@ -110,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await logoutApi();
-    } catch (error) {
+    } catch {
       // 로그아웃 API 실패해도 로컬 토큰은 제거
     } finally {
       tokenStorage.remove();
@@ -146,7 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...authState, login, logout, deleteAccount, updateUser }}>
+    <AuthContext.Provider
+      value={{ ...authState, login, logout, deleteAccount, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
