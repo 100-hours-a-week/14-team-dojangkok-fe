@@ -122,7 +122,9 @@ export async function apiClient<T>(
   };
 
   try {
-    let accessToken = requiresAuth ? tokenStorage.getAccessToken() : undefined;
+    let accessToken = requiresAuth
+      ? tokenStorage.getAccessToken() ?? undefined
+      : undefined;
     let response = await makeRequest(accessToken);
 
     // 401 에러 시 토큰 갱신 시도
