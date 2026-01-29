@@ -1,12 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import ImageViewerModal from '../ImageViewerModal';
 import styles from './ImageGrid.module.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// PDF.js worker 설정
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface ImageItem {
   id: string;
   url: string;
+  file?: File;
 }
 
 interface ImageGridProps {
@@ -81,35 +88,99 @@ export default function ImageGrid({
           )}
         </div>
         <div className={styles.grid}>
-          {images.map((image) => (
-            <div key={image.id} className={styles.imageItem}>
-              {onDelete && (
-                <button
-                  className={styles.deleteButton}
-                  onClick={() => onDelete(image.id)}
-                >
-                  <span
-                    className={`material-symbols-outlined ${styles.deleteIcon}`}
+          {images.map((image) => {
+            const isPDF = image.file?.type === 'application/pdf';
+            return (
+              <div key={image.id} className={styles.imageItem}>
+                {onDelete && (
+                  <button
+                    className={styles.deleteButton}
+                    onClick={() => onDelete(image.id)}
                   >
-                    close
-                  </span>
-                </button>
-              )}
-              <div
-                className={styles.imageWrapper}
-                style={{ backgroundImage: `url("${image.url}")` }}
-                onClick={() => handleImageClick(image.url)}
-              >
-                <div className={styles.imageOverlay} />
+                    <span
+                      className={`material-symbols-outlined ${styles.deleteIcon}`}
+                    >
+                      close
+                    </span>
+                  </button>
+                )}
+                {isPDF ? (
+                  <div
+                    className={styles.imageWrapper}
+                    onClick={() => handleImageClick(image.url)}
+                    style={{
+                      backgroundColor: '#f3f4f6',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Document
+                      file={image.url}
+                      loading={
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                          }}
+                        >
+                          로딩 중...
+                        </div>
+                      }
+                      error={
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            gap: '8px',
+                          }}
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: '32px', color: '#DC2626' }}
+                          >
+                            picture_as_pdf
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                            PDF
+                          </span>
+                        </div>
+                      }
+                    >
+                      <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                        <Page
+                          pageNumber={1}
+                          width={100}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                        />
+                      </div>
+                    </Document>
+                  </div>
+                ) : (
+                  <div
+                    className={styles.imageWrapper}
+                    style={{ backgroundImage: `url("${image.url}")` }}
+                    onClick={() => handleImageClick(image.url)}
+                  >
+                    <div className={styles.imageOverlay} />
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       {enableViewer && (
         <ImageViewerModal
           isOpen={selectedImageIndex !== null}
-          images={images.map((img) => img.url)}
+          images={images}
           currentIndex={selectedImageIndex ?? 0}
           onClose={handleCloseViewer}
           onPrevious={handlePreviousImage}

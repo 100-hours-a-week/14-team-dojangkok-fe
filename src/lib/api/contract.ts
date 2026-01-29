@@ -14,11 +14,11 @@ import {
  * @returns Presigned URL 정보
  */
 export async function getPresignedUrls(
-  items: PresignedUrlRequest['items']
+  items: PresignedUrlRequest['file_items']
 ): Promise<PresignedUrlResponse> {
   return apiClient<PresignedUrlResponse>('/v1/file-assets/presigned-urls', {
     method: 'POST',
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ file_items: items }),
     requiresAuth: true,
   });
 }
@@ -102,19 +102,25 @@ export async function completeFileUpload(
 export async function uploadFiles(files: File[]): Promise<number[]> {
   // 1. Presigned URL 발급 요청
   const items = files.map((file) => ({
-    fileType: file.type.startsWith('image/')
+    file_type: file.type.startsWith('image/')
       ? ('IMAGE' as const)
       : ('PDF' as const),
-    contentType: file.type,
-    fileName: file.name,
+    content_type: file.type,
+    file_name: file.name,
   }));
+
+  console.log('Presigned URL 요청 데이터:', { file_items: items });
 
   const presignedResponse = await getPresignedUrls(items);
 
   // 2. S3에 파일 업로드
   const uploadPromises = presignedResponse.data.file_items.map(
     (fileItem, index) =>
-      uploadToS3(fileItem.presigned_url, files[index], items[index].contentType)
+      uploadToS3(
+        fileItem.presigned_url,
+        files[index],
+        items[index].content_type
+      )
   );
 
   await Promise.all(uploadPromises);
@@ -151,4 +157,21 @@ export async function createEasyContract(
     body: JSON.stringify({ file_asset_ids: fileAssetIds }),
     requiresAuth: true,
   });
+}
+
+/**
+ * 쉬운 계약서 상태 조회
+ * @param easyContractId - 쉬운 계약서 ID
+ * @returns 쉬운 계약서 정보
+ */
+export async function getEasyContract(
+  easyContractId: number
+): Promise<EasyContractResponse> {
+  return apiClient<EasyContractResponse>(
+    `/v1/easy-contracts/${easyContractId}`,
+    {
+      method: 'GET',
+      requiresAuth: true,
+    }
+  );
 }

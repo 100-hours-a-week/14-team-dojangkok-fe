@@ -3,13 +3,13 @@
 export type FileType = 'IMAGE' | 'PDF';
 
 export interface FileUploadItem {
-  fileType: FileType;
-  contentType: string;
-  fileName: string;
+  file_type: FileType;
+  content_type: string;
+  file_name: string;
 }
 
 export interface PresignedUrlRequest {
-  items: FileUploadItem[];
+  file_items: FileUploadItem[];
 }
 
 export interface FileItem {
@@ -32,11 +32,17 @@ export interface EasyContractRequest {
   file_asset_ids: number[];
 }
 
+export type EasyContractStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED';
+
 export interface EasyContractData {
   easy_contract_id: number;
   title: string;
   content: string;
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  status: EasyContractStatus;
   created_at: string;
 }
 
