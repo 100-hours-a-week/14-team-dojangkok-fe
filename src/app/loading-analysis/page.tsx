@@ -3,19 +3,25 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Header, Modal } from '@/components/common';
+import { useAnalysis } from '@/contexts/AnalysisContext';
 import styles from './page.module.css';
 
 export default function AnalyzingPage() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { analysisState, clearAnalysis } = useAnalysis();
 
+  // 분석 완료 시 자동으로 결과 페이지로 이동
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace('/analysis-result');
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [router]);
+    if (analysisState.status === 'COMPLETED' && analysisState.easyContractId) {
+      router.replace(`/analysis-result?id=${analysisState.easyContractId}`);
+      clearAnalysis(); // 상태 초기화
+    } else if (analysisState.status === 'FAILED') {
+      // 에러 처리 (옵션)
+      console.error('분석 실패:', analysisState.error);
+      clearAnalysis();
+    }
+  }, [analysisState, router, clearAnalysis]);
 
   const handleCancel = () => {
     setIsModalOpen(true);
@@ -32,13 +38,7 @@ export default function AnalyzingPage() {
 
   return (
     <div className={styles.container}>
-      <Header
-        title="계약서 분석"
-        showBackButton
-        onBackClick={handleCancel}
-        rightText="취소하기"
-        onRightClick={handleCancel}
-      />
+      <Header title="계약서 분석" showBackButton onBackClick={handleCancel} />
 
       <main className={styles.main}>
         <div className={styles.loaderWrapper}>
@@ -58,7 +58,7 @@ export default function AnalyzingPage() {
             <br />
             분석하고 있어요
           </h1>
-          <p className={styles.subtitle}>잠시만 기다려 주세요 (약 1분 소요)</p>
+          <p className={styles.subtitle}>잠시만 기다려 주세요 (1~10분 소요)</p>
         </div>
 
         <div className={styles.infoBox}>
@@ -85,8 +85,8 @@ export default function AnalyzingPage() {
         cancelText="계속 대기하기"
       >
         <p className={styles.modalDescription}>
-          화면을 나가더라도 분석은 백그라운드에서 계속 진행되며, 완료 시 알림을
-          보내드려요.
+          화면을 나가더라도 분석은 백그라운드에서 계속 진행되며, 홈 화면에서
+          상태를 확인할 수 있어요.
         </p>
       </Modal>
     </div>
