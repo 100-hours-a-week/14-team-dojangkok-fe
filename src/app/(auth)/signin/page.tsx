@@ -1,15 +1,29 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import styles from './Login.module.css';
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleKakaoLogin = () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!apiUrl) {
+      alert('로그인 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      const backendOAuthUrl = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/oauth2/authorization/kakao`;
+      const baseUrl = apiUrl.replace(/\/api$/, '');
+      const backendOAuthUrl = `${baseUrl}/oauth2/authorization/kakao`;
       window.location.href = backendOAuthUrl;
-    } catch (error) {
-      console.error('Failed to initiate Kakao login:', error);
+    } catch {
+      setIsLoading(false);
+      alert('로그인 연결에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -43,14 +57,22 @@ export default function LoginPage() {
       </div>
 
       <div className={styles.bottomSection}>
-        <button className={styles.kakaoButton} onClick={handleKakaoLogin}>
-          <Image
-            src="/kakao_login_large_wide.png"
-            alt="카카오로 시작하기"
-            width={400}
-            height={60}
-            className={styles.kakaoButtonImage}
-          />
+        <button
+          className={styles.kakaoButton}
+          onClick={handleKakaoLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <div className={styles.loadingState}>로그인 중...</div>
+          ) : (
+            <Image
+              src="/kakao_login_large_wide.png"
+              alt="카카오로 시작하기"
+              width={400}
+              height={60}
+              className={styles.kakaoButtonImage}
+            />
+          )}
         </button>
 
         {/* <div className={styles.links}>
