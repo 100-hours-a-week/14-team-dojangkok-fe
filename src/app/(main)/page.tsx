@@ -113,17 +113,12 @@ export default function HomePage() {
         const files = images.map((img) => img.file);
         const fileAssetIds = await uploadFiles(files);
 
-        // 쉬운 계약서 생성
+        // 쉬운 계약서 생성 및 분석 (API 응답 시 이미 분석 완료)
         const response = await createEasyContract(fileAssetIds);
         const easyContractId = response.data.easy_contract_id;
 
-        // 전역 상태에 실제 ID로 업데이트
-        startAnalysis(easyContractId);
-
-        // 1분 후 완료로 간주 (임시 - 실제로는 상태 조회 API 필요)
-        setTimeout(() => {
-          completeAnalysis(easyContractId);
-        }, 60000);
+        // 분석 완료 처리
+        completeAnalysis(easyContractId);
       } catch (err) {
         console.error('분석 요청 실패:', err);
         if (err instanceof ApiError) {
