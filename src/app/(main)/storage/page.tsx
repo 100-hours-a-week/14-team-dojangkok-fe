@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Header,
@@ -11,29 +11,41 @@ import {
 } from '@/components/common';
 import { AnalysisResult } from './types';
 import { ActionSheetOption } from '@/components/common/ActionSheet';
+import {
+  getEasyContractList,
+  updateEasyContractTitle,
+  deleteEasyContract,
+} from '@/lib/api/contract';
+import { EasyContractListItem } from '@/types/contract';
 import styles from './Storage.module.css';
 
-const mockResults: AnalysisResult[] = [
-  {
-    id: '1',
-    address: '서울특별시 강남구 테헤란로 123',
-    date: '2024.01.15',
-  },
-  {
-    id: '2',
-    address: '서울특별시 서초구 강남대로 456',
-    date: '2024.01.10',
-  },
-  {
-    id: '3',
-    address: '서울특별시 송파구 올림픽로 789',
-    date: '2024.01.05',
-  },
-];
+/**
+ * ISO 날짜를 YYYY.MM.DD 형식으로 변환
+ */
+function formatDate(isoDate: string): string {
+  const date = new Date(isoDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+}
+
+/**
+ * API 응답을 AnalysisResult 형식으로 변환
+ */
+function mapToAnalysisResult(item: EasyContractListItem): AnalysisResult {
+  return {
+    id: String(item.easy_contract_id),
+    address: item.title,
+    date: formatDate(item.created_at),
+  };
+}
 
 export default function StoragePage() {
   const router = useRouter();
-  const [results, setResults] = useState<AnalysisResult[]>(mockResults);
+  const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -44,6 +56,27 @@ export default function StoragePage() {
   } | null>(null);
 
   const selectedResult = results.find((r) => r.id === selectedResultId);
+
+  // 쉬운 계약서 목록 조회
+  useEffect(() => {
+    const loadContracts = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getEasyContractList();
+        const mappedResults =
+          response.data.easyContractListItemList.map(mapToAnalysisResult);
+        setResults(mappedResults);
+      } catch (err) {
+        console.error('계약서 목록 조회 실패:', err);
+        setError('계약서 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContracts();
+  }, []);
 
   const handleResultClick = (id: string) => {
     router.push(`/analysis-result?id=${id}`);
@@ -74,23 +107,43 @@ export default function StoragePage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleEditSubmit = (newAddress: string) => {
+  const handleEditSubmit = async (newAddress: string) => {
     if (selectedResultId) {
-      setResults(
-        results.map((r) =>
-          r.id === selectedResultId ? { ...r, address: newAddress } : r
-        )
-      );
-      setIsEditModalOpen(false);
-      setSelectedResultId(null);
+      try {
+        // API 호출하여 제목 수정
+        await updateEasyContractTitle(Number(selectedResultId), newAddress);
+
+        // 로컬 상태 업데이트
+        setResults(
+          results.map((r) =>
+            r.id === selectedResultId ? { ...r, address: newAddress } : r
+          )
+        );
+        setIsEditModalOpen(false);
+        setSelectedResultId(null);
+      } catch (err) {
+        console.error('제목 수정 실패:', err);
+        // 에러 처리 (필요시 사용자에게 알림)
+        alert('제목 수정에 실패했습니다.');
+      }
     }
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (selectedResultId) {
-      setResults(results.filter((r) => r.id !== selectedResultId));
-      setIsDeleteModalOpen(false);
-      setSelectedResultId(null);
+      try {
+        // API 호출하여 계약서 삭제
+        await deleteEasyContract(Number(selectedResultId));
+
+        // 로컬 상태 업데이트
+        setResults(results.filter((r) => r.id !== selectedResultId));
+        setIsDeleteModalOpen(false);
+        setSelectedResultId(null);
+      } catch (err) {
+        console.error('계약서 삭제 실패:', err);
+        // 에러 처리 (필요시 사용자에게 알림)
+        alert('계약서 삭제에 실패했습니다.');
+      }
     }
   };
 
@@ -112,7 +165,18 @@ export default function StoragePage() {
     <>
       <Header title="보관함" />
       <main className={styles.container}>
-        {results.length > 0 ? (
+        {isLoading ? (
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>로딩 중...</p>
+          </div>
+        ) : error ? (
+          <div className={styles.emptyState}>
+            <span className={`material-symbols-outlined ${styles.emptyIcon}`}>
+              error
+            </span>
+            <p className={styles.emptyText}>{error}</p>
+          </div>
+        ) : results.length > 0 ? (
           <>
             <p className={styles.count}>총 {results.length}건</p>
             <div className={styles.list}>
