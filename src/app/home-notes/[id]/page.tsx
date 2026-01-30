@@ -193,17 +193,18 @@ export default function HomeNoteDetailPage({
       setImages((prev) => [...prev, ...tempImages]);
 
       // API 호출하여 S3 업로드 및 집 노트에 첨부
-      const response = await uploadHomeNotePhotos(
-        Number(id),
-        Array.from(files)
-      );
+      await uploadHomeNotePhotos(Number(id), Array.from(files));
+
+      // 업로드 완료 후 상세 정보 다시 로드하여 presigned URL 받기
+      const detailResponse = await getHomeNoteDetail(Number(id));
+      const { files: uploadedFiles } = detailResponse.data;
 
       // 임시 이미지 제거하고 실제 업로드된 이미지로 교체
-      // (필요시 presigned URL을 받아서 표시할 수도 있음)
-      console.log('업로드 완료:', response.data.file_items);
-
-      // 성공 알림 (선택사항)
-      // alert('사진이 업로드되었습니다.');
+      const realImages: ImageItem[] = uploadedFiles.map((file) => ({
+        id: file.file_asset_id.toString(),
+        url: file.presigned_url,
+      }));
+      setImages(realImages);
     } catch (err) {
       console.error('사진 업로드 실패:', err);
       alert('사진 업로드에 실패했습니다.');
