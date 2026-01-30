@@ -15,6 +15,7 @@ interface ChecklistProps {
   onItemAdd: (text: string) => void;
   onItemUpdate?: (id: string, text: string) => void;
   onItemDelete?: (id: string) => void;
+  onEditingChange?: (isEditing: boolean, editingId: string | null) => void;
 }
 
 export default function Checklist({
@@ -23,6 +24,7 @@ export default function Checklist({
   onItemAdd,
   onItemUpdate,
   onItemDelete,
+  onEditingChange,
 }: ChecklistProps) {
   const [newItemText, setNewItemText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,6 +69,10 @@ export default function Checklist({
   const handleTextClick = (item: ChecklistItem) => {
     setEditingId(item.id);
     setEditingText(item.text);
+    // 편집 시작을 부모에게 알림
+    if (onEditingChange) {
+      onEditingChange(true, item.id);
+    }
   };
 
   const handleEditChange = (text: string) => {
@@ -81,6 +87,10 @@ export default function Checklist({
     // 텍스트가 공백이면 항목 삭제
     if (editingId && editingText.trim() === '' && onItemDelete) {
       onItemDelete(editingId);
+    }
+    // 편집 종료를 부모에게 알림
+    if (onEditingChange) {
+      onEditingChange(false, null);
     }
     // 편집 모드 종료
     setEditingId(null);

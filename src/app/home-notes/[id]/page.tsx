@@ -64,6 +64,9 @@ export default function HomeNoteDetailPage({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoadRef = useRef(true);
   const skipDebounceRef = useRef(false);
+  const isEditingRef = useRef(false);
+  const editingIdRef = useRef<string | null>(null);
+  const lastApiResponseRef = useRef<ChecklistItem[] | null>(null);
 
   // 집 노트 상세 정보 로드
   useEffect(() => {
@@ -142,9 +145,6 @@ export default function HomeNoteDetailPage({
         const response = await updateChecklist(Number(id), checklistsData);
         console.log('체크리스트 자동 저장 완료');
 
-        // 응답에서 ID 업데이트 (백엔드에서 ID가 재할당될 수 있음)
-        skipDebounceRef.current = true; // 상태 업데이트 시 디바운스 방지
-
         // API 응답으로 상태 업데이트 (ID 동기화)
         const updatedChecklist: ChecklistItem[] =
           response.data.checklist_items.map((apiItem) => ({
@@ -153,7 +153,14 @@ export default function HomeNoteDetailPage({
             checked: apiItem.is_completed,
           }));
 
-        setChecklistItems(updatedChecklist);
+        // 항상 마지막 응답 저장
+        lastApiResponseRef.current = updatedChecklist;
+
+        // 편집 중이 아닐 때만 즉시 상태 업데이트 (편집 중 포커스 유지)
+        if (!isEditingRef.current) {
+          skipDebounceRef.current = true; // 상태 업데이트 시 디바운스 방지
+          setChecklistItems(updatedChecklist);
+        }
       } catch (err) {
         console.error('체크리스트 저장 실패:', err);
         // 사용자에게 에러를 보여주지 않고 조용히 실패 처리
@@ -274,6 +281,21 @@ export default function HomeNoteDetailPage({
 
   const handleChecklistDelete = (id: string) => {
     setChecklistItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleEditingChange = (
+    isEditing: boolean,
+    editingId: string | null
+  ) => {
+    isEditingRef.current = isEditing;
+    editingIdRef.current = editingId;
+
+    // 편집 종료 시 마지막 API 응답으로 상태 업데이트 (ID 동기화)
+    if (!isEditing && lastApiResponseRef.current) {
+      skipDebounceRef.current = true;
+      setChecklistItems(lastApiResponseRef.current);
+      lastApiResponseRef.current = null;
+    }
   };
 
   const handleOptionsClick = () => {
@@ -401,6 +423,7 @@ export default function HomeNoteDetailPage({
                 onItemAdd={handleChecklistAdd}
                 onItemUpdate={handleChecklistUpdate}
                 onItemDelete={handleChecklistDelete}
+                onEditingChange={handleEditingChange}
               />
             </div>
           )}
