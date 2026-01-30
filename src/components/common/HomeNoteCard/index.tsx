@@ -1,7 +1,13 @@
 'use client';
 
+import { Document, Page, pdfjs } from 'react-pdf';
 import { HomeNote } from '@/app/(main)/home-notes/types';
 import styles from './HomeNoteCard.module.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+// PDF.js worker 설정
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface HomeNoteCardProps {
   note: HomeNote;
@@ -26,6 +32,16 @@ export default function HomeNoteCard({
     hasImages && !isSingleImage && note.images.length < 4
       ? 4 - note.images.length
       : 0;
+
+  // PDF 여부 판단
+  const isPDF = (url: string) => {
+    const urlLower = url.toLowerCase();
+    return (
+      urlLower.includes('/pdf/') ||
+      urlLower.includes('.pdf?') ||
+      urlLower.endsWith('.pdf')
+    );
+  };
 
   const handleClick = () => {
     if (!isEditMode) {
@@ -52,12 +68,41 @@ export default function HomeNoteCard({
           <>
             {displayImages.map((image, index) => (
               <div key={image.id} className={styles.imageWrapper}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.url}
-                  alt={`${note.title} ${index + 1}`}
-                  className={styles.image}
-                />
+                {isPDF(image.url) ? (
+                  <div className={styles.pdfWrapper}>
+                    <Document
+                      file={image.url}
+                      loading={
+                        <div className={styles.pdfLoading}>
+                          <span className="material-symbols-outlined">
+                            picture_as_pdf
+                          </span>
+                        </div>
+                      }
+                      error={
+                        <div className={styles.pdfError}>
+                          <span className="material-symbols-outlined">
+                            error
+                          </span>
+                        </div>
+                      }
+                    >
+                      <Page
+                        pageNumber={1}
+                        width={200}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                      />
+                    </Document>
+                  </div>
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={image.url}
+                    alt={`${note.title} ${index + 1}`}
+                    className={styles.image}
+                  />
+                )}
                 {index === 3 && remainingCount > 0 && (
                   <div className={styles.overlay}>
                     <span className={styles.overlayText}>

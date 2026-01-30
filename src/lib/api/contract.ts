@@ -3,6 +3,8 @@ import {
   PresignedUrlRequest,
   PresignedUrlResponse,
   EasyContractResponse,
+  EasyContractListResponse,
+  UpdateEasyContractTitleResponse,
   FileUploadCompleteRequest,
   FileUploadCompleteResponse,
   FileMetadata,
@@ -174,4 +176,58 @@ export async function getEasyContract(
       requiresAuth: true,
     }
   );
+}
+
+/**
+ * 쉬운 계약서 목록 조회
+ * @param cursor - 페이지네이션 커서 (선택)
+ * @returns 쉬운 계약서 목록
+ */
+export async function getEasyContractList(
+  cursor?: string
+): Promise<EasyContractListResponse> {
+  const params = new URLSearchParams();
+  if (cursor) {
+    params.append('cursor', cursor);
+  }
+
+  const url = `/v1/easy-contracts${params.toString() ? `?${params.toString()}` : ''}`;
+
+  return apiClient<EasyContractListResponse>(url, {
+    method: 'GET',
+    requiresAuth: true,
+  });
+}
+
+/**
+ * 쉬운 계약서 제목 수정
+ * @param easyContractId - 쉬운 계약서 ID
+ * @param title - 새로운 제목
+ * @returns 수정된 쉬운 계약서 정보
+ */
+export async function updateEasyContractTitle(
+  easyContractId: number,
+  title: string
+): Promise<UpdateEasyContractTitleResponse> {
+  return apiClient<UpdateEasyContractTitleResponse>(
+    `/v1/easy-contracts/${easyContractId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ title }),
+      requiresAuth: true,
+    }
+  );
+}
+
+/**
+ * 쉬운 계약서 삭제
+ * @param easyContractId - 쉬운 계약서 ID
+ */
+export async function deleteEasyContract(
+  easyContractId: number
+): Promise<void> {
+  await apiClient<void>(`/v1/easy-contracts/${easyContractId}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  });
 }

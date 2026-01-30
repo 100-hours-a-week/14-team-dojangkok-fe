@@ -4,10 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import Header from '@/components/common/Header';
-import BottomFixedArea from '@/components/common/BottomFixedArea';
-import MainButton from '@/components/common/MainButton';
-import Modal from '@/components/common/Modal';
 import { getEasyContract } from '@/lib/api/contract';
 import { EasyContractData } from '@/types/contract';
 import styles from './page.module.css';
@@ -15,7 +13,6 @@ import styles from './page.module.css';
 export default function AnalysisResultPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [contractData, setContractData] = useState<EasyContractData | null>(
     null
   );
@@ -47,23 +44,16 @@ export default function AnalysisResultPage() {
   }, [searchParams]);
 
   const handleBackClick = () => {
-    router.push('/');
-  };
-
-  const handleRegenerate = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleConfirmRegenerate = () => {
-    setIsModalOpen(false);
-    // TODO: 실제로는 재분석 API 호출
-    console.log('재분석 요청');
-    router.push('/loading-analysis');
+    router.push('/storage');
   };
 
   return (
     <>
-      <Header title="분석 결과" showBackButton onBackClick={handleBackClick} />
+      <Header
+        title={contractData?.title || '분석 결과'}
+        showBackButton
+        onBackClick={handleBackClick}
+      />
       <main className={styles.main}>
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
@@ -91,8 +81,10 @@ export default function AnalysisResultPage() {
           </div>
         ) : contractData ? (
           <div className={styles.markdown}>
-            <h1>{contractData.title}</h1>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+            >
               {contractData.content}
             </ReactMarkdown>
           </div>
@@ -102,25 +94,6 @@ export default function AnalysisResultPage() {
           </div>
         )}
       </main>
-      {contractData?.status === 'COMPLETED' && (
-        <BottomFixedArea>
-          <MainButton onClick={handleRegenerate}>다시 생성하기</MainButton>
-        </BottomFixedArea>
-      )}
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmRegenerate}
-        title="분석을 다시 생성할까요?"
-        confirmText="다시 생성"
-        cancelText="취소"
-      >
-        <p className={styles.modalDescription}>
-          같은 계약서로 다시 분석을 진행합니다.
-          <br />약 1분 정도 소요될 수 있어요.
-        </p>
-      </Modal>
     </>
   );
 }

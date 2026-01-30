@@ -89,7 +89,14 @@ export default function ImageGrid({
         </div>
         <div className={styles.grid}>
           {images.map((image) => {
-            const isPDF = image.file?.type === 'application/pdf';
+            // PDF 여부 판단: file.type 또는 URL에서 확인
+            // presigned URL은 쿼리 파라미터가 있어서 .endsWith('.pdf')로 감지 안됨
+            const urlLower = image.url.toLowerCase();
+            const isPDF =
+              image.file?.type === 'application/pdf' ||
+              urlLower.includes('/pdf/') ||
+              urlLower.includes('.pdf?') ||
+              urlLower.endsWith('.pdf');
             return (
               <div key={image.id} className={styles.imageItem}>
                 {onDelete && (
