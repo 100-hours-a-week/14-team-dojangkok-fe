@@ -14,6 +14,7 @@ interface ChecklistProps {
   onItemToggle: (id: string) => void;
   onItemAdd: (text: string) => void;
   onItemUpdate?: (id: string, text: string) => void;
+  onItemDelete?: (id: string) => void;
 }
 
 export default function Checklist({
@@ -21,10 +22,12 @@ export default function Checklist({
   onItemToggle,
   onItemAdd,
   onItemUpdate,
+  onItemDelete,
 }: ChecklistProps) {
   const [newItemText, setNewItemText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [isComposing, setIsComposing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,12 +39,16 @@ export default function Checklist({
   }, [newItemText]);
 
   useEffect(() => {
-    if (editTextareaRef.current) {
+    if (editTextareaRef.current && editingId) {
       editTextareaRef.current.style.height = 'auto';
       editTextareaRef.current.style.height = `${editTextareaRef.current.scrollHeight}px`;
+      // 편집 중일 때는 항상 포커스 (리렌더링 후에도 포커스 유지)
       editTextareaRef.current.focus();
+      // 커서를 끝으로 이동
+      const length = editTextareaRef.current.value.length;
+      editTextareaRef.current.setSelectionRange(length, length);
     }
-  }, [editingId, editingText]);
+  }, [editingId, editingText, items]); // items 추가: 부모 상태 변경 시에도 포커스 복원
 
   const handleAddItem = () => {
     if (newItemText.trim()) {
@@ -51,7 +58,7 @@ export default function Checklist({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleAddItem();
     }
@@ -62,10 +69,20 @@ export default function Checklist({
     setEditingText(item.text);
   };
 
-  const handleEditSave = () => {
-    if (editingId && editingText.trim() && onItemUpdate) {
-      onItemUpdate(editingId, editingText.trim());
+  const handleEditChange = (text: string) => {
+    setEditingText(text);
+    // 빈 문자열이 아닐 때만 부모에게 알림 (빈 문자열은 blur 시 삭제 처리)
+    if (editingId && onItemUpdate && text.trim() !== '') {
+      onItemUpdate(editingId, text);
     }
+  };
+
+  const handleEditFinish = () => {
+    // 텍스트가 공백이면 항목 삭제
+    if (editingId && editingText.trim() === '' && onItemDelete) {
+      onItemDelete(editingId);
+    }
+    // 편집 모드 종료
     setEditingId(null);
     setEditingText('');
   };
@@ -73,7 +90,7 @@ export default function Checklist({
   const handleEditKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleEditSave();
+      handleEditFinish();
     } else if (e.key === 'Escape') {
       setEditingId(null);
       setEditingText('');
@@ -101,9 +118,9 @@ export default function Checklist({
                 ref={editTextareaRef}
                 className={styles.textarea}
                 value={editingText}
-                onChange={(e) => setEditingText(e.target.value)}
+                onChange={(e) => handleEditChange(e.target.value)}
                 onKeyDown={handleEditKeyDown}
-                onBlur={handleEditSave}
+                onBlur={handleEditFinish}
                 rows={1}
               />
             ) : (
@@ -130,6 +147,8 @@ export default function Checklist({
             placeholder="항목 추가..."
             value={newItemText}
             onChange={(e) => setNewItemText(e.target.value)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             onKeyDown={handleKeyDown}
             onBlur={handleAddItem}
             rows={1}
