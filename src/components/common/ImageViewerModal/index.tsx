@@ -63,7 +63,13 @@ export default function ImageViewerModal({
   if (!isOpen || images.length === 0) return null;
 
   const currentItem = images[currentIndex];
-  const isPDF = currentItem.file?.type === 'application/pdf';
+  // PDF 여부 판단: file.type 또는 URL에서 확인
+  const urlLower = currentItem.url.toLowerCase();
+  const isPDF =
+    currentItem.file?.type === 'application/pdf' ||
+    urlLower.includes('/pdf/') ||
+    urlLower.includes('.pdf?') ||
+    urlLower.endsWith('.pdf');
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < images.length - 1;
 

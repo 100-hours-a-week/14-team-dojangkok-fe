@@ -2,17 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import {
   Header,
-  HomeNoteCard,
   FloatingAddButton,
   Modal,
   TextFieldModal,
 } from '@/components/common';
 import { HomeNote } from './types';
-import { getHomeNotes } from '@/lib/api/homeNote';
+import {
+  getHomeNotes,
+  createHomeNote,
+  deleteHomeNote,
+} from '@/lib/api/homeNote';
 import { HomeNoteItem } from '@/types/homeNote';
 import styles from './HomeNotes.module.css';
+
+// HomeNoteCard는 react-pdf를 사용하므로 SSR 방지를 위해 dynamic import 사용
+const HomeNoteCard = dynamic(() => import('@/components/common/HomeNoteCard'), {
+  ssr: false,
+});
 
 /**
  * API 응답을 UI 타입으로 변환
@@ -26,9 +35,9 @@ function convertToHomeNote(item: HomeNoteItem): HomeNote {
       month: '2-digit',
       day: '2-digit',
     }),
-    images: item.preview_images.map((url, index) => ({
-      id: `${item.home_note_id}-${index}`,
-      url,
+    images: (item.preview_images || []).map((previewImage) => ({
+      id: previewImage.file_asset_id.toString(),
+      url: previewImage.presigned_url,
     })),
   };
 }
@@ -85,12 +94,22 @@ export default function HomeNotesPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (noteToDelete) {
-      console.log('Delete note:', noteToDelete);
-      // TODO: Delete note logic
-      setIsDeleteModalOpen(false);
-      setNoteToDelete(null);
+      try {
+        // API 호출하여 집 노트 삭제
+        await deleteHomeNote(Number(noteToDelete));
+
+        // 로컬 상태에서 삭제
+        setNotes((prev) => prev.filter((note) => note.id !== noteToDelete));
+
+        setIsDeleteModalOpen(false);
+        setNoteToDelete(null);
+        setIsEditMode(false);
+      } catch (err) {
+        console.error('집 노트 삭제 실패:', err);
+        alert('집 노트 삭제에 실패했습니다.');
+      }
     }
   };
 
@@ -99,11 +118,20 @@ export default function HomeNotesPage() {
     setNoteToDelete(null);
   };
 
-  const handleCreateNote = (title: string) => {
-    // TODO: API call to create note and get new ID
-    const newId = Date.now().toString(); // Temporary ID
-    setIsCreateModalOpen(false);
-    router.push(`/home-notes/${newId}?title=${encodeURIComponent(title)}`);
+  const handleCreateNote = async (title: string) => {
+    try {
+      // API 호출하여 집 노트 생성
+      const response = await createHomeNote(title);
+      const newId = response.data.home_note_id;
+
+      setIsCreateModalOpen(false);
+
+      // 생성된 집 노트 상세 페이지로 이동
+      router.push(`/home-notes/${newId}?title=${encodeURIComponent(title)}`);
+    } catch (err) {
+      console.error('집 노트 생성 실패:', err);
+      alert('집 노트 생성에 실패했습니다.');
+    }
   };
 
   const handleCloseCreateModal = () => {

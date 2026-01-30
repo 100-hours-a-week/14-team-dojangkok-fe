@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AnalysisProvider } from '@/contexts/AnalysisContext';
 import './globals.css';
@@ -7,6 +7,10 @@ import styles from './layout.module.css';
 export const metadata: Metadata = {
   title: '도장콕',
   description: '계약서 분석 서비스',
+};
+
+export const viewport: Viewport = {
+  colorScheme: 'light',
 };
 
 export default function RootLayout({

@@ -126,10 +126,50 @@
   text-decoration: underline;
 }
 
-/* Modal description */
-.modalDescription {
-  color: #6b7280;
-  font-size: 14px;
-  line-height: 1.6;
-  text-align: center;
+/* Table styles */
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 15px;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.markdown thead {
+  background-color: #f9fafb;
+}
+
+.markdown th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #111418;
+  border-bottom: 2px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+}
+
+.markdown th:last-child {
+  border-right: none;
+}
+
+.markdown td {
+  padding: 12px 16px;
+  color: #4b5563;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+}
+
+.markdown td:last-child {
+  border-right: none;
+}
+
+.markdown tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown tbody tr:hover {
+  background-color: #f9fafb;
 }
