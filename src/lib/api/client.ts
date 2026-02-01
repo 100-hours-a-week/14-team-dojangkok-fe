@@ -23,6 +23,27 @@ export class ApiError extends Error {
 
 let refreshPromise: Promise<string | null> | null = null;
 
+/**
+ * 토큰 유효성 검증 및 갱신
+ * @returns 유효한 토큰이 있으면 true, 갱신 실패 시 false
+ */
+export async function ensureValidToken(): Promise<boolean> {
+  const tokenData = tokenStorage.get();
+
+  // 토큰이 없거나 만료되지 않았으면 검증 통과
+  if (!tokenData) {
+    return false;
+  }
+
+  if (!tokenStorage.isExpired(tokenData)) {
+    return true;
+  }
+
+  // 토큰이 만료되었으면 갱신 시도
+  const newToken = await refreshAccessToken();
+  return newToken !== null;
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   if (process.env.NODE_ENV === 'development') {
     console.log('[DEBUG] Refresh token attempt started');
