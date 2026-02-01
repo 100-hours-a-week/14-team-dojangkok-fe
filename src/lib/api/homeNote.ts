@@ -137,7 +137,11 @@ export async function uploadHomeNotePhotos(
   currentFileCount: number = 0
 ): Promise<AttachHomeNoteFileResponse> {
   // 1-3단계: 파일 업로드 공통 플로우 (S3 업로드)
-  const fileAssetIds = await uploadHomeNoteFiles(homeNoteId, files, currentFileCount);
+  const fileAssetIds = await uploadHomeNoteFiles(
+    homeNoteId,
+    files,
+    currentFileCount
+  );
 
   // 4단계: 집 노트 파일 첨부
   return await attachHomeNoteFiles(homeNoteId, fileAssetIds);

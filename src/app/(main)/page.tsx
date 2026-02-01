@@ -159,7 +159,8 @@ export default function HomePage() {
               position: 'relative',
               width: '100%',
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 50%, #ECFDF5 100%)',
+              background:
+                'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 50%, #ECFDF5 100%)',
               border: '1px solid #D1FAE5',
               padding: '20px 24px',
               overflow: 'hidden',
@@ -184,7 +185,10 @@ export default function HomePage() {
                 gap: 4,
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 12 }}
+              >
                 auto_awesome
               </span>
               AI 기능
@@ -203,7 +207,10 @@ export default function HomePage() {
                 color: '#10b981',
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 32 }}>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 32 }}
+              >
                 task_alt
               </span>
             </div>
