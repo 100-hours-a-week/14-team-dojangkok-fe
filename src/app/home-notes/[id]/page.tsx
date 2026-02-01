@@ -22,6 +22,8 @@ import {
   updateChecklistItemStatus,
   deleteHomeNoteFile,
 } from '@/lib/api/homeNote';
+import { useToast } from '@/contexts/ToastContext';
+import { validateHomeNoteFiles } from '@/utils/fileValidation';
 
 const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
   ssr: false,
@@ -48,6 +50,7 @@ export default function HomeNoteDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const initialTitle = searchParams.get('title') || '집노트';
   const [title, setTitle] = useState(initialTitle);
   const [activeTab, setActiveTab] = useState('photos');
@@ -75,14 +78,28 @@ export default function HomeNoteDetailPage({
         setIsLoading(true);
         setError(null);
 
-        const response = await getHomeNoteDetail(Number(id));
-        const { home_note, files } = response.data;
+        // 모든 파일 로드 (페이지네이션)
+        let allFiles: any[] = [];
+        let cursor: string | null = null;
+        let homeNote: any = null;
+
+        do {
+          const response = await getHomeNoteDetail(
+            Number(id),
+            cursor || undefined
+          );
+          if (!homeNote) {
+            homeNote = response.data.home_note;
+          }
+          allFiles = [...allFiles, ...response.data.files];
+          cursor = response.data.next_cursor;
+        } while (cursor);
 
         // 제목 업데이트
-        setTitle(home_note.title);
+        setTitle(homeNote.title);
 
         // 파일 목록을 이미지로 변환
-        const loadedImages: ImageItem[] = files.map((file) => ({
+        const loadedImages: ImageItem[] = allFiles.map((file) => ({
           id: file.file_asset_id.toString(),
           url: file.presigned_url,
         }));
@@ -182,35 +199,93 @@ export default function HomeNoteDetailPage({
   const handleUpload = async (files: FileList) => {
     if (isUploading) return;
 
+    const filesToAdd = Array.from(files);
+    const currentFileCount = images.length;
+    const MAX_SIZE_MB = 10;
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+    const ALLOWED_EXTENSIONS = ['png', 'jpg', 'jpeg'];
+    const MAX_COUNT = 50;
+
+    // 전체 개수 검증 (이미 50개면 중단)
+    if (currentFileCount >= MAX_COUNT) {
+      toast.error(`파일은 최대 ${MAX_COUNT}개까지 업로드할 수 있습니다.`);
+      return;
+    }
+
+    // 한번에 선택 제한 제거 - 개별 검증에서 50개까지만 업로드
+
+    // 개별 파일 검증 및 필터링
+    const validFiles: File[] = [];
+    const invalidFiles: { name: string; reason: string }[] = [];
+
+    for (const file of filesToAdd) {
+      // 개수 초과 확인
+      if (currentFileCount + validFiles.length >= MAX_COUNT) {
+        invalidFiles.push({ name: file.name, reason: '개수 초과' });
+        continue;
+      }
+
+      // 확장자 검증
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
+        invalidFiles.push({ name: file.name, reason: '허용되지 않는 파일 형식' });
+        continue;
+      }
+
+      // 파일 크기 검증
+      if (file.size > MAX_SIZE_BYTES) {
+        invalidFiles.push({ name: file.name, reason: `${MAX_SIZE_MB}MB 초과` });
+        continue;
+      }
+
+      validFiles.push(file);
+    }
+
+    // 유효한 파일이 없으면 중단
+    if (validFiles.length === 0) {
+      if (invalidFiles.length > 0) {
+        toast.error(`업로드 가능한 파일이 없습니다. (${invalidFiles[0].reason})`);
+      }
+      return;
+    }
+
     try {
       setIsUploading(true);
 
-      // 임시 미리보기용 이미지 추가
-      const tempImages: ImageItem[] = Array.from(files).map((file) => ({
-        id: `temp-${Date.now()}-${Math.random()}`,
-        url: URL.createObjectURL(file),
-      }));
-      setImages((prev) => [...prev, ...tempImages]);
-
       // API 호출하여 S3 업로드 및 집 노트에 첨부
-      await uploadHomeNotePhotos(Number(id), Array.from(files));
+      await uploadHomeNotePhotos(Number(id), validFiles, currentFileCount);
 
-      // 업로드 완료 후 상세 정보 다시 로드하여 presigned URL 받기
-      const detailResponse = await getHomeNoteDetail(Number(id));
-      const { files: uploadedFiles } = detailResponse.data;
+      // 업로드 완료 후 모든 파일 로드 (페이지네이션)
+      let allFiles: any[] = [];
+      let cursor: string | null = null;
 
-      // 임시 이미지 제거하고 실제 업로드된 이미지로 교체
-      const realImages: ImageItem[] = uploadedFiles.map((file) => ({
+      do {
+        const detailResponse = await getHomeNoteDetail(
+          Number(id),
+          cursor || undefined
+        );
+        allFiles = [...allFiles, ...detailResponse.data.files];
+        cursor = detailResponse.data.next_cursor;
+      } while (cursor);
+
+      // 업로드된 이미지로 업데이트
+      const realImages: ImageItem[] = allFiles.map((file) => ({
         id: file.file_asset_id.toString(),
         url: file.presigned_url,
       }));
       setImages(realImages);
+
+      // 업로드 결과 알림
+      if (invalidFiles.length > 0) {
+        toast.info(
+          `${validFiles.length}개 업로드 완료, ${invalidFiles.length}개 실패`
+        );
+      } else {
+        toast.success(`${validFiles.length}개 업로드 완료`);
+      }
     } catch (err) {
       console.error('사진 업로드 실패:', err);
-      alert('사진 업로드에 실패했습니다.');
-
-      // 실패 시 임시 이미지 제거
-      setImages((prev) => prev.filter((img) => !img.id.startsWith('temp-')));
+      toast.error('사진 업로드에 실패했습니다.');
     } finally {
       setIsUploading(false);
     }
@@ -403,7 +478,7 @@ export default function HomeNoteDetailPage({
               <ImageUploader
                 onUpload={handleUpload}
                 mainText="파일 추가하기"
-                subText="JPG, PNG, PDF 지원"
+                subText="JPG, PNG 지원 · 한장 당 10MB, 최대 50장"
               />
               <div className={styles.imageGridWrapper}>
                 <ImageGrid
