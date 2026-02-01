@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
+import { useToast } from '@/contexts/ToastContext';
 import { uploadFiles, createEasyContract } from '@/lib/api/contract';
-import { ApiError } from '@/lib/api/client';
+import { ApiError, ensureValidToken } from '@/lib/api/client';
+import { validateEasyContractFiles } from '@/utils/fileValidation';
 import dynamic from 'next/dynamic';
 import {
   Header,
@@ -27,6 +29,7 @@ interface ImageItem {
 
 export default function HomePage() {
   const router = useRouter();
+  const toast = useToast();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
@@ -56,14 +59,24 @@ export default function HomePage() {
 
   const handleUpload = (files: FileList) => {
     const MAX_IMAGES = 5;
-    const remainingSlots = MAX_IMAGES - images.length;
+    const currentCount = images.length;
+    const filesToAdd = Array.from(files);
 
-    if (remainingSlots <= 0) {
-      alert('이미지는 최대 5장까지만 업로드할 수 있습니다.');
+    // 현재 개수 + 선택한 파일 개수가 최대치를 초과하면 전체 거부
+    if (currentCount + filesToAdd.length > MAX_IMAGES) {
+      toast.error(
+        `최대 5장까지만 선택할 수 있습니다. (현재: ${currentCount}장, 선택: ${filesToAdd.length}장)`
+      );
       return;
     }
 
-    const filesToAdd = Array.from(files).slice(0, remainingSlots);
+    // 프론트엔드 검증 (파일 선택 시점)
+    const validationError = validateEasyContractFiles(filesToAdd);
+    if (validationError) {
+      toast.error(validationError.message);
+      return;
+    }
+
     const newImages: ImageItem[] = filesToAdd.map((file) => ({
       id: crypto.randomUUID(),
       url: URL.createObjectURL(file),
@@ -71,12 +84,6 @@ export default function HomePage() {
     }));
 
     setImages((prev) => [...prev, ...newImages]);
-
-    if (files.length > remainingSlots) {
-      alert(
-        `최대 5장까지만 업로드할 수 있어 ${remainingSlots}장만 추가되었습니다.`
-      );
-    }
   };
 
   const handleDelete = (id: string) => {
@@ -97,7 +104,18 @@ export default function HomePage() {
     setIsModalOpen(true);
   };
 
-  const handleConfirmAnalyze = () => {
+  const handleConfirmAnalyze = async () => {
+    // 0. 토큰 검증 및 갱신
+    const isTokenValid = await ensureValidToken();
+    if (!isTokenValid) {
+      setIsModalOpen(false);
+      toast.error('로그인이 만료되었습니다. 다시 로그인해주세요.');
+      setTimeout(() => {
+        router.push('/signin');
+      }, 1500);
+      return;
+    }
+
     // 1. 즉시 전역 상태를 PROCESSING으로 설정 (임시 ID)
     startAnalysis(0);
 
@@ -133,22 +151,150 @@ export default function HomePage() {
   return (
     <>
       <Header title="도장콕" />
-      <main style={{ padding: 16, paddingBottom: 180 }}>
-        <ImageUploader onUpload={handleUpload} />
-        {images.length === 0 ? (
-          <p
+      <main style={{ paddingBottom: 180 }}>
+        {/* 서비스 소개 카드 */}
+        <div style={{ padding: '20px 16px' }}>
+          <div
             style={{
-              textAlign: 'center',
-              color: '#888',
-              marginTop: 24,
-              fontSize: 14,
-              lineHeight: 1.6,
+              position: 'relative',
+              width: '100%',
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 50%, #ECFDF5 100%)',
+              border: '1px solid #D1FAE5',
+              padding: '20px 24px',
+              overflow: 'hidden',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             }}
           >
-            분석할 계약서 이미지를 업로드해주세요
-          </p>
-        ) : (
-          <ImageGrid images={images} onDelete={handleDelete} />
+            {/* AI 기능 배지 */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
+                color: 'white',
+                fontSize: 10,
+                fontWeight: 700,
+                padding: '4px 10px',
+                borderRadius: 9999,
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 12 }}>
+                auto_awesome
+              </span>
+              AI 기능
+            </div>
+
+            {/* 아이콘 */}
+            <div
+              style={{
+                marginBottom: 16,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 12,
+                borderRadius: 9999,
+                backgroundColor: '#D1FAE5',
+                color: '#10b981',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 32 }}>
+                task_alt
+              </span>
+            </div>
+
+            {/* 제목 */}
+            <h1
+              style={{
+                color: '#111418',
+                fontSize: 20,
+                fontWeight: 700,
+                lineHeight: 1.3,
+                marginBottom: 12,
+                paddingRight: 80,
+                margin: 0,
+              }}
+            >
+              도장 찍기 전에, 도장콕!
+            </h1>
+
+            {/* 설명 박스 */}
+            <div
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: 12,
+                padding: 12,
+                border: '1px solid rgba(255, 255, 255, 0.8)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    color: '#10b981',
+                    fontSize: 16,
+                    marginTop: 2,
+                  }}
+                >
+                  check_circle
+                </span>
+                <p
+                  style={{
+                    color: '#4B5563',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}
+                >
+                  계약서 내용을 쉬운 말로 읽어봐요
+                </p>
+              </div>
+            </div>
+
+            {/* 장식용 원형 */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: -24,
+                right: -24,
+                width: 96,
+                height: 96,
+                backgroundColor: 'rgba(167, 243, 208, 0.2)',
+                borderRadius: '50%',
+                filter: 'blur(40px)',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 이미지 업로더 */}
+        <div style={{ padding: '0 16px' }}>
+          <ImageUploader
+            onUpload={handleUpload}
+            mainText="계약서 이미지를 첨부해주세요"
+            subText="JPG, PNG, PDF 지원 · 한장 당 15MB, 최대 5장"
+          />
+        </div>
+
+        {/* 이미지 그리드 */}
+        {images.length > 0 && (
+          <div style={{ padding: '12px 16px 0 16px' }}>
+            <ImageGrid images={images} onDelete={handleDelete} />
+          </div>
         )}
       </main>
       <BottomFixedArea>
