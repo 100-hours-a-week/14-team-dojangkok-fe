@@ -22,8 +22,8 @@ import {
   updateChecklistItemStatus,
   deleteHomeNoteFile,
 } from '@/lib/api/homeNote';
+import { HomeNoteFile, HomeNoteDetail } from '@/types/homeNote';
 import { useToast } from '@/contexts/ToastContext';
-import { validateHomeNoteFiles } from '@/utils/fileValidation';
 
 const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
   ssr: false,
@@ -79,9 +79,9 @@ export default function HomeNoteDetailPage({
         setError(null);
 
         // 모든 파일 로드 (페이지네이션)
-        let allFiles: any[] = [];
+        let allFiles: HomeNoteFile[] = [];
         let cursor: string | null = null;
-        let homeNote: any = null;
+        let homeNote: HomeNoteDetail | null = null;
 
         do {
           const response = await getHomeNoteDetail(
@@ -228,7 +228,10 @@ export default function HomeNoteDetailPage({
       // 확장자 검증
       const extension = file.name.split('.').pop()?.toLowerCase();
       if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-        invalidFiles.push({ name: file.name, reason: '허용되지 않는 파일 형식' });
+        invalidFiles.push({
+          name: file.name,
+          reason: '허용되지 않는 파일 형식',
+        });
         continue;
       }
 
@@ -244,7 +247,9 @@ export default function HomeNoteDetailPage({
     // 유효한 파일이 없으면 중단
     if (validFiles.length === 0) {
       if (invalidFiles.length > 0) {
-        toast.error(`업로드 가능한 파일이 없습니다. (${invalidFiles[0].reason})`);
+        toast.error(
+          `업로드 가능한 파일이 없습니다. (${invalidFiles[0].reason})`
+        );
       }
       return;
     }
@@ -256,7 +261,7 @@ export default function HomeNoteDetailPage({
       await uploadHomeNotePhotos(Number(id), validFiles, currentFileCount);
 
       // 업로드 완료 후 모든 파일 로드 (페이지네이션)
-      let allFiles: any[] = [];
+      let allFiles: HomeNoteFile[] = [];
       let cursor: string | null = null;
 
       do {

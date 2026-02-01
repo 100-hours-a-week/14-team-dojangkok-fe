@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import {
   PresignedUrlRequest,
   PresignedUrlResponse,
+  HomeNotePresignedUrlResponse,
   EasyContractResponse,
   EasyContractListResponse,
   UpdateEasyContractTitleResponse,
@@ -41,8 +42,8 @@ export async function getPresignedUrls(
 export async function getPresignedUrlsForHomeNote(
   homeNoteId: number,
   items: PresignedUrlRequest['file_items']
-): Promise<PresignedUrlResponse> {
-  return apiClient<PresignedUrlResponse>(
+): Promise<HomeNotePresignedUrlResponse> {
+  return apiClient<HomeNotePresignedUrlResponse>(
     `/v1/home-notes/${homeNoteId}/files/presigned-urls`,
     {
       method: 'POST',
@@ -147,29 +148,36 @@ export async function completeFileUploadForHomeNote(
 /**
  * 에러 처리 헬퍼 함수
  */
-function handleFileUploadError(error: any): never {
+function handleFileUploadError(error: unknown): never {
   if (error && typeof error === 'object' && 'code' in error) {
-    const { code, data } = error;
+    const { code, data } = error as {
+      code: string;
+      data: Record<string, unknown>;
+    };
 
     // 파일 크기 초과
     if (code === 'FILE_SIZE_EXCEEDED') {
-      const errorData = data as any;
+      const errorData = data as {
+        max_size_bytes?: number;
+        size_exceeded_files?: Array<{ file_name: string }>;
+      };
       const maxSizeMB = errorData.max_size_bytes
         ? (errorData.max_size_bytes / (1024 * 1024)).toFixed(0)
         : '15';
       const fileNames = errorData.size_exceeded_files
-        ?.map((f: any) => f.file_name)
+        ?.map((f) => f.file_name)
         .join(', ');
       throw new Error(`파일 크기가 ${maxSizeMB}MB를 초과합니다: ${fileNames}`);
     }
 
     // 파일 개수 초과
     if (code === 'FILE_COUNT_EXCEEDED') {
-      throw new Error(
-        typeof error.message === 'string'
-          ? error.message
-          : '파일 개수가 제한을 초과했습니다.'
-      );
+      const errorWithMessage = error as { message?: unknown };
+      const message =
+        typeof errorWithMessage.message === 'string'
+          ? errorWithMessage.message
+          : '파일 개수가 제한을 초과했습니다.';
+      throw new Error(message);
     }
 
     // Content-Type 에러
@@ -179,7 +187,7 @@ function handleFileUploadError(error: any): never {
 
     // 업로드 완료 실패
     if (code === 'FILE_UPLOAD_NOT_COMPLETED') {
-      const errorData = data as any;
+      const errorData = data as { failed_files?: Array<unknown> };
       throw new Error(
         `파일 업로드 검증 실패: ${errorData.failed_files?.length || 0}개`
       );
@@ -364,11 +372,13 @@ export async function uploadHomeNoteFiles(
       size_bytes: file.size,
     }));
 
-    const presignedResponse = await getPresignedUrlsForHomeNote(homeNoteId, items);
+    const presignedResponse = await getPresignedUrlsForHomeNote(
+      homeNoteId,
+      items
+    );
 
     // 집노트 API는 success_file_items와 failed_file_items로 구분
     const successItems = presignedResponse.data.success_file_items || [];
-    const failedItems = presignedResponse.data.failed_file_items || [];
 
     if (successItems.length === 0) {
       throw new Error('업로드 가능한 파일이 없습니다.');
