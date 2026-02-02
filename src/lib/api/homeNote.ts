@@ -10,7 +10,7 @@ import {
   UpdateChecklistResponse,
   UpdateChecklistItemStatusResponse,
 } from '@/types/homeNote';
-import { uploadFiles } from './contract';
+import { uploadHomeNoteFiles } from './contract';
 
 /**
  * 집 노트 목록 조회
@@ -128,14 +128,20 @@ export async function attachHomeNoteFiles(
  * 집 노트 사진 업로드 전체 플로우
  * @param homeNoteId - 집 노트 ID
  * @param files - 업로드할 파일 배열
+ * @param currentFileCount - 현재 집노트에 첨부된 파일 개수
  * @returns 첨부된 파일 정보
  */
 export async function uploadHomeNotePhotos(
   homeNoteId: number,
-  files: File[]
+  files: File[],
+  currentFileCount: number = 0
 ): Promise<AttachHomeNoteFileResponse> {
   // 1-3단계: 파일 업로드 공통 플로우 (S3 업로드)
-  const fileAssetIds = await uploadFiles(files);
+  const fileAssetIds = await uploadHomeNoteFiles(
+    homeNoteId,
+    files,
+    currentFileCount
+  );
 
   // 4단계: 집 노트 파일 첨부
   return await attachHomeNoteFiles(homeNoteId, fileAssetIds);
