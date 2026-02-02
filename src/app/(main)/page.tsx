@@ -25,6 +25,7 @@ interface ImageItem {
   id: string;
   url: string;
   file: File;
+  fileAssetId?: number; // 업로드된 파일의 서버 ID
 }
 
 export default function HomePage() {
@@ -33,6 +34,7 @@ export default function HomePage() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { setNavigationGuard } = useLayout();
   const {
     analysisState,
@@ -57,7 +59,9 @@ export default function HomePage() {
     };
   }, [images.length, setNavigationGuard]);
 
-  const handleUpload = (files: FileList) => {
+  const handleUpload = async (files: FileList) => {
+    if (isUploading) return;
+
     const MAX_IMAGES = 5;
     const currentCount = images.length;
     const filesToAdd = Array.from(files);
@@ -77,13 +81,32 @@ export default function HomePage() {
       return;
     }
 
-    const newImages: ImageItem[] = filesToAdd.map((file) => ({
-      id: crypto.randomUUID(),
-      url: URL.createObjectURL(file),
-      file,
-    }));
+    try {
+      setIsUploading(true);
 
-    setImages((prev) => [...prev, ...newImages]);
+      // 즉시 API 호출하여 파일 업로드 (Presigned URL → S3 → 완료 알림)
+      const fileAssetIds = await uploadFiles(filesToAdd);
+
+      // 업로드된 파일 정보를 상태에 저장
+      const newImages: ImageItem[] = filesToAdd.map((file, index) => ({
+        id: fileAssetIds[index].toString(),
+        url: URL.createObjectURL(file),
+        file,
+        fileAssetId: fileAssetIds[index],
+      }));
+
+      setImages((prev) => [...prev, ...newImages]);
+      toast.success(`${filesToAdd.length}개 업로드 완료`);
+    } catch (err) {
+      console.error('이미지 업로드 실패:', err);
+      if (err instanceof ApiError) {
+        toast.error(err.message);
+      } else {
+        toast.error('이미지 업로드에 실패했습니다.');
+      }
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -116,6 +139,18 @@ export default function HomePage() {
       return;
     }
 
+    // 0-1. 업로드된 파일 ID 확인
+    const fileAssetIds = images
+      .map((img) => img.fileAssetId)
+      .filter((id): id is number => id !== undefined);
+
+    if (fileAssetIds.length !== images.length) {
+      toast.error(
+        '일부 이미지가 아직 업로드 중입니다. 잠시 후 다시 시도해주세요.'
+      );
+      return;
+    }
+
     // 1. 즉시 전역 상태를 PROCESSING으로 설정 (임시 ID)
     startAnalysis(0);
 
@@ -127,11 +162,7 @@ export default function HomePage() {
     // 3. 백그라운드에서 API 호출 (페이지 이동과 독립적으로 실행)
     (async () => {
       try {
-        // 파일 업로드 (Presigned URL → S3 → 완료 알림)
-        const files = images.map((img) => img.file);
-        const fileAssetIds = await uploadFiles(files);
-
-        // 쉬운 계약서 생성 및 분석 (API 응답 시 이미 분석 완료)
+        // 쉬운 계약서 생성 및 분석 (이미 업로드된 파일 ID 사용)
         const response = await createEasyContract(fileAssetIds);
         const easyContractId = response.data.easy_contract_id;
 
@@ -292,7 +323,11 @@ export default function HomePage() {
         <div style={{ padding: '0 16px' }}>
           <ImageUploader
             onUpload={handleUpload}
-            mainText="계약서 이미지를 첨부해주세요"
+            mainText={
+              isUploading
+                ? '이미지 업로드 중...'
+                : '계약서 이미지를 첨부해주세요'
+            }
             subText="JPG, PNG, PDF 지원 · 한장 당 15MB, 최대 5장"
           />
         </div>
@@ -305,8 +340,11 @@ export default function HomePage() {
         )}
       </main>
       <BottomFixedArea>
-        <MainButton onClick={handleAnalyzeClick} disabled={images.length === 0}>
-          분석 요청하기
+        <MainButton
+          onClick={handleAnalyzeClick}
+          disabled={images.length === 0 || isUploading}
+        >
+          {isUploading ? '이미지 업로드 중...' : '분석 요청하기'}
         </MainButton>
       </BottomFixedArea>
 
