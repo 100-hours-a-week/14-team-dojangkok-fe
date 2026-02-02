@@ -26,6 +26,18 @@ export interface PresignedUrlResponse {
   };
 }
 
+export interface HomeNotePresignedUrlResponse {
+  code: string;
+  message: string;
+  data: {
+    success_file_items: FileItem[];
+    failed_file_items: Array<{
+      file_name: string;
+      error_message: string;
+    }>;
+  };
+}
+
 // 쉬운 계약서 관련 타입
 
 export interface EasyContractRequest {
