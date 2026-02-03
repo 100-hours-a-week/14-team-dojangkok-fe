@@ -26,6 +26,19 @@ export default function NicknamePage() {
     }
   }, [user, router]);
 
+  // 브라우저 뒤로가기 감지하여 로그아웃 처리
+  useEffect(() => {
+    const handlePopState = async () => {
+      await logout();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [logout]);
+
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNickname(value.slice(0, NICKNAME_MAX_LENGTH));

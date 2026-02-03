@@ -27,6 +27,19 @@ export default function LifestyleTagsPage() {
     }
   }, [user, router]);
 
+  // 브라우저 뒤로가기 감지하여 닉네임 페이지로 이동
+  useEffect(() => {
+    const handlePopState = () => {
+      router.push('/nickname');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
+
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
