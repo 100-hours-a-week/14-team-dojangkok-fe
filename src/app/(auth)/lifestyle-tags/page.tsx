@@ -20,9 +20,9 @@ export default function LifestyleTagsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 이미 라이프스타일 태그가 설정된 사용자는 홈으로 리다이렉트
+  // 온보딩이 완료된 사용자만 홈으로 리다이렉트
   useEffect(() => {
-    if (user && !user.isNewUser && user.lifestyleTags) {
+    if (user && user.onboardingStatus === 'COMPLETE') {
       router.replace('/');
     }
   }, [user, router]);
@@ -61,15 +61,14 @@ export default function LifestyleTagsPage() {
     try {
       const response = await updateLifestyleTagsApi(selectedTags);
 
-      // 저장 후 실제로 저장되었는지 확인
-      const { getLifestyleTags } = await import('@/lib/api/auth');
-      const savedTags = await getLifestyleTags();
+      const actualTags = response.data.lifestyle_items.map(
+        (item) => item.lifestyle_item
+      );
 
-      const actualTags =
-        savedTags.data.lifestyle_items.map((item) => item.lifestyle_item) ||
-        selectedTags;
-
-      updateUser({ lifestyleTags: actualTags });
+      updateUser({
+        lifestyleTags: actualTags,
+        onboardingStatus: response.data.onboarding_status
+      });
       router.push('/');
     } catch (err) {
       console.error('라이프스타일 태그 저장 실패:', err);
@@ -80,7 +79,7 @@ export default function LifestyleTagsPage() {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/nickname');
   };
 
   return (

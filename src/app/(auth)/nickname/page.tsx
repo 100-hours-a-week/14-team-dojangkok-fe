@@ -13,14 +13,14 @@ import styles from './Nickname.module.css';
 
 export default function NicknamePage() {
   const router = useRouter();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const [nickname, setNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 이미 닉네임이 설정된 사용자는 홈으로 리다이렉트
+  // 온보딩이 완료된 사용자만 홈으로 리다이렉트
   useEffect(() => {
-    if (user && !user.isNewUser && user.nickname) {
+    if (user && user.onboardingStatus === 'COMPLETE') {
       router.replace('/');
     }
   }, [user, router]);
@@ -39,8 +39,11 @@ export default function NicknamePage() {
     setError(null);
 
     try {
-      await updateNicknameApi(nickname);
-      updateUser({ nickname });
+      const response = await updateNicknameApi(nickname);
+      updateUser({
+        nickname,
+        onboardingStatus: response.data.onboarding_status
+      });
       router.push('/lifestyle-tags');
     } catch (err) {
       console.error('Failed to update nickname:', err);
@@ -50,8 +53,8 @@ export default function NicknamePage() {
     }
   };
 
-  const handleBack = () => {
-    router.back();
+  const handleBack = async () => {
+    await logout();
   };
 
   const isButtonDisabled = !validateNickname(nickname) || isLoading;

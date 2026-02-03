@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           // 실제 프로필 조회하여 유저 정보 복원
           const profileResponse = await getMemberProfile();
-          const isNewUser = !profileResponse.data.nickname;
+          const onboardingStatus = profileResponse.data.onboarding_status;
 
           // 라이프스타일 태그 조회
           let lifestyleTags: string[] | undefined = undefined;
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             nickname: profileResponse.data.nickname || undefined,
             profileImageUrl: profileResponse.data.profile_image_url,
             lifestyleTags,
-            isNewUser,
+            onboardingStatus,
           };
 
           setAuthState({
@@ -89,21 +89,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await exchangeCodeForToken(code);
 
+      // OnboardingStatus는 토큰 응답에서 직접 추출
+      const onboardingStatus = response.data.onboarding_status;
+
       // Access Token만 저장 (Refresh Token은 HttpOnly 쿠키로 자동 관리됨)
       const tokenData: TokenData = {
-        accessToken: response.data.access_token,
-        expiresAt: Date.now() + response.data.expires_in * 1000,
+        accessToken: response.data.token.access_token,
+        expiresAt: Date.now() + response.data.token.expires_in * 1000,
       };
 
       tokenStorage.save(tokenData);
 
-      // 프로필 조회하여 닉네임 확인
+      // 프로필 조회하여 다른 정보 획득
       const profileResponse = await getMemberProfile();
-      const isNewUser = !profileResponse.data.nickname;
 
-      // 기존 사용자는 라이프스타일 태그도 조회
+      // 완료된 사용자는 라이프스타일 태그도 조회
       let lifestyleTags: string[] | undefined = undefined;
-      if (!isNewUser) {
+      if (onboardingStatus === 'COMPLETE') {
         try {
           const lifestyleResponse = await getLifestyleTags();
           lifestyleTags = lifestyleResponse.data.lifestyle_items.map(
@@ -120,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         nickname: profileResponse.data.nickname || undefined,
         profileImageUrl: profileResponse.data.profile_image_url,
         lifestyleTags,
-        isNewUser,
+        onboardingStatus,
       };
 
       setAuthState({
@@ -129,10 +131,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading: false,
       });
 
-      if (isNewUser) {
-        router.replace('/nickname');
-      } else {
-        router.replace('/');
+      switch (onboardingStatus) {
+        case 'NICKNAME':
+          router.replace('/nickname');
+          break;
+        case 'LIFESTYLE':
+          router.replace('/lifestyle-tags');
+          break;
+        case 'COMPLETE':
+          router.replace('/');
+          break;
       }
     } catch (error) {
       throw error;

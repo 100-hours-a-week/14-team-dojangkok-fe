@@ -1,11 +1,14 @@
+export type OnboardingStatus = 'NICKNAME' | 'LIFESTYLE' | 'COMPLETE';
+
 export interface OAuthTokenResponse {
   code: string;
   message: string;
   data: {
-    access_token: string;
-    refresh_token?: string;
-    expires_in: number;
-    is_new_user: boolean;
+    token: {
+      access_token: string;
+      expires_in: number;
+    };
+    onboarding_status: OnboardingStatus;
   };
 }
 
@@ -15,12 +18,23 @@ export interface TokenData {
   // refreshToken은 HttpOnly 쿠키로 자동 관리됨
 }
 
+export interface TokenRefreshResponse {
+  code: string;
+  message: string;
+  data: {
+    token: {
+      access_token: string;
+      expires_in: number;
+    };
+  };
+}
+
 export interface User {
   id: string;
   nickname?: string;
   profileImageUrl?: string;
   lifestyleTags?: string[];
-  isNewUser: boolean;
+  onboardingStatus: OnboardingStatus;
 }
 
 export interface MemberProfileResponse {
@@ -30,6 +44,17 @@ export interface MemberProfileResponse {
     member_id: number;
     nickname: string | null;
     profile_image_url: string;
+    onboarding_status: OnboardingStatus;
+  };
+}
+
+export interface UpdateNicknameResponse {
+  code: string;
+  message: string;
+  data: {
+    member_id: number;
+    nickname: string;
+    onboarding_status: OnboardingStatus;
   };
 }
 
@@ -62,7 +87,8 @@ export interface LifestyleResponse {
   code: string;
   message: string;
   data: {
-    lifestyle_items: LifestyleItem[];
     member_id: number;
+    onboarding_status: OnboardingStatus;
+    lifestyle_items: LifestyleItem[];
   };
 }

@@ -84,8 +84,8 @@ async function refreshAccessToken(): Promise<string | null> {
 
     const data = await response.json();
     const tokenData: TokenData = {
-      accessToken: data.data.access_token,
-      expiresAt: Date.now() + data.data.expires_in * 1000,
+      accessToken: data.data.token.access_token,
+      expiresAt: Date.now() + data.data.token.expires_in * 1000,
     };
 
     tokenStorage.save(tokenData);
