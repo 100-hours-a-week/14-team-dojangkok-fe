@@ -81,7 +81,7 @@ export default function AnalyzingPage() {
         isOpen={isModalOpen}
         onClose={handleContinueWaiting}
         onConfirm={handleGoHome}
-        title="분석을 중단하시겠어요?"
+        title="페이지를 나가시겠어요?"
         confirmText="홈으로 가기"
         cancelText="계속 대기하기"
       >
