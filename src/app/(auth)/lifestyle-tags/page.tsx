@@ -49,12 +49,6 @@ export default function LifestyleTagsPage() {
   };
 
   const handleComplete = async () => {
-    // 태그를 하나도 선택하지 않은 경우 경고
-    if (selectedTags.length === 0) {
-      setError('최소 1개 이상의 태그를 선택해주세요.');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
@@ -67,7 +61,7 @@ export default function LifestyleTagsPage() {
 
       updateUser({
         lifestyleTags: actualTags,
-        onboardingStatus: response.data.onboarding_status
+        onboardingStatus: response.data.onboarding_status,
       });
       router.push('/');
     } catch (err) {

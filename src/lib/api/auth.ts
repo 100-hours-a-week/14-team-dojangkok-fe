@@ -1,5 +1,11 @@
 import { apiClient } from './client';
-import { OAuthTokenResponse, MemberProfileResponse, TokenRefreshResponse, UpdateNicknameResponse, LifestyleResponse } from '@/types/auth';
+import {
+  OAuthTokenResponse,
+  MemberProfileResponse,
+  TokenRefreshResponse,
+  UpdateNicknameResponse,
+  LifestyleResponse,
+} from '@/types/auth';
 
 export async function exchangeCodeForToken(
   code: string
@@ -17,7 +23,9 @@ export async function getMemberProfile(): Promise<MemberProfileResponse> {
   });
 }
 
-export async function updateNickname(nickname: string): Promise<UpdateNicknameResponse> {
+export async function updateNickname(
+  nickname: string
+): Promise<UpdateNicknameResponse> {
   return apiClient<UpdateNicknameResponse>('/v1/members/nickname', {
     method: 'PATCH',
     body: JSON.stringify({ nickname }),
@@ -25,7 +33,9 @@ export async function updateNickname(nickname: string): Promise<UpdateNicknameRe
   });
 }
 
-export async function updateLifestyleTags(tags: string[]): Promise<LifestyleResponse> {
+export async function updateLifestyleTags(
+  tags: string[]
+): Promise<LifestyleResponse> {
   return apiClient<LifestyleResponse>('/v1/lifestyles', {
     method: 'POST',
     body: JSON.stringify({ lifestyle_items: tags }),
