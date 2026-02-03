@@ -29,6 +29,19 @@ export const tokenStorage = {
     }
   },
 
+  /**
+   * 만료 체크 없이 토큰 데이터를 가져옴 (초기화 및 갱신 로직용)
+   */
+  getRaw(): TokenData | null {
+    try {
+      const data = localStorage.getItem(TOKEN_KEY);
+      if (!data) return null;
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
+  },
+
   remove(): void {
     try {
       localStorage.removeItem(TOKEN_KEY);
