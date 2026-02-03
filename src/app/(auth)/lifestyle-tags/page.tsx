@@ -59,14 +59,11 @@ export default function LifestyleTagsPage() {
     setError(null);
 
     try {
-      console.log('선택된 태그:', selectedTags);
       const response = await updateLifestyleTagsApi(selectedTags);
-      console.log('POST 응답:', response);
 
       // 저장 후 실제로 저장되었는지 확인
       const { getLifestyleTags } = await import('@/lib/api/auth');
       const savedTags = await getLifestyleTags();
-      console.log('저장된 태그 조회:', savedTags);
 
       const actualTags =
         savedTags.data.lifestyle_items.map((item) => item.lifestyle_item) ||

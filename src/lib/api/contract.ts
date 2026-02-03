@@ -220,8 +220,6 @@ export async function uploadFiles(files: File[]): Promise<number[]> {
       size_bytes: file.size,
     }));
 
-    console.log('Presigned URL 요청 데이터:', { file_items: items });
-
     const presignedResponse = await getPresignedUrls(items);
 
     // 2. S3에 파일 업로드
