@@ -25,7 +25,7 @@ export default function HomeNoteCard({
   const hasImages = note.images.length > 0;
   const isSingleImage = note.images.length === 1;
   const displayImages = hasImages ? note.images.slice(0, 4) : [];
-  const remainingCount = note.images.length - 4;
+  const remainingCount = note.totalFileCount - 4;
 
   // 2x2 그리드를 채우기 위해 빈 슬롯 계산 (2-3장인 경우)
   const emptySlots =
