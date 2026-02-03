@@ -31,9 +31,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      const tokenData = tokenStorage.get();
+      // 만료 체크 없이 토큰 가져오기 (자동 삭제 방지)
+      const tokenData = tokenStorage.getRaw();
 
       if (tokenData) {
+        // 토큰이 만료되었는지 확인
+        if (tokenStorage.isExpired(tokenData)) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              '[AuthContext] Access token expired, attempting refresh via API call'
+            );
+          }
+          // 토큰이 만료되었지만 삭제하지 않음
+          // API 호출 시 자동 갱신될 것이므로 프로필 조회 시도
+        }
+
         try {
           // 실제 프로필 조회하여 유저 정보 복원
           const profileResponse = await getMemberProfile();
@@ -64,14 +76,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             isAuthenticated: true,
             isLoading: false,
           });
-        } catch {
-          // 프로필 조회 실패 시 토큰 제거하고 로그아웃 상태로 전환
-          tokenStorage.remove();
-          setAuthState({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
+        } catch (error) {
+          // 프로필 조회 실패 시 에러 확인
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[AuthContext] Profile fetch failed:', error);
+          }
+
+          // ApiError의 경우 status code 확인
+          const isAuthError =
+            error &&
+            typeof error === 'object' &&
+            'status' in error &&
+            error.status === 401;
+
+          if (isAuthError) {
+            // 401 에러면 토큰 제거하고 로그아웃 (refresh도 실패한 경우)
+            tokenStorage.remove();
+            setAuthState({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
+          } else {
+            // 네트워크 에러 등 일시적 문제일 수 있으므로 토큰은 유지하되 미인증 상태로
+            // (다음 API 호출 시 자동 재시도됨)
+            setAuthState({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
+          }
         }
       } else {
         setAuthState({
