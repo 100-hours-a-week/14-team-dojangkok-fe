@@ -48,7 +48,14 @@ export default function LoginPage() {
       <div className={styles.content}>
         <div className={styles.logoWrapper}>
           <div className={styles.logoIcon}>
-            <span className="material-symbols-outlined">approval</span>
+            <Image
+              src="/logo.pdf"
+              alt="도장콕 로고"
+              width={128}
+              height={128}
+              priority
+              className={styles.logoImage}
+            />
           </div>
         </div>
 
@@ -59,16 +66,6 @@ export default function LoginPage() {
             <br />
             똑똑한 계약서 분석 서비스
           </p>
-        </div>
-
-        <div className={styles.imageWrapper}>
-          <div className={styles.imageOverlay} />
-          <Image
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDarbVr0ke52TveIrgoKxPDAOhbRDIGfDcCsaIO6pvlA7m8OBZK-xHL3CUyPecnIdFXcNpAeYUYBgmsT2h0vlEbVpWohMRdd08XLE3k0N8hINqojjWnMKtZ2QkLaCosQoiIHvU_W_HtlhiTlMdzZRaUSqTgWGDTPI3ZUZf50UA9fPQxDvPrENZwpUOh-xF5lZexVNkh2I8pmHvSCWRyWaMD81Dp2rLDhSdFhYlfLhqXVN2VqtLmd3WYtJKhsqhjZUTy8e0PIl2f-AI"
-            alt="도장콕 서비스 일러스트"
-            fill
-            className={styles.image}
-          />
         </div>
       </div>
 
