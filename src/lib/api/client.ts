@@ -45,10 +45,6 @@ export async function ensureValidToken(): Promise<boolean> {
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[DEBUG] Refresh token attempt started');
-  }
-
   try {
     const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
       method: 'POST',
@@ -60,13 +56,6 @@ async function refreshAccessToken(): Promise<string | null> {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[DEBUG] Token refresh failed:', {
-          status: response.status,
-          error: errorData,
-        });
-      }
 
       // INVALID_REFRESH_TOKEN 또는 TOKEN_REUSE_DETECTED 시 즉시 로그아웃
       if (
@@ -83,22 +72,24 @@ async function refreshAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json();
+
+    // 두 가지 응답 형식 지원: data.token 또는 data 직접
+    const tokenInfo = data?.data?.token || data?.data;
+
+    // 응답 형식 검증
+    if (!tokenInfo?.access_token || !tokenInfo?.expires_in) {
+      return null;
+    }
+
     const tokenData: TokenData = {
-      accessToken: data.data.token.access_token,
-      expiresAt: Date.now() + data.data.token.expires_in * 1000,
+      accessToken: tokenInfo.access_token,
+      expiresAt: Date.now() + tokenInfo.expires_in * 1000,
     };
 
     tokenStorage.save(tokenData);
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[DEBUG] Token refresh succeeded');
-    }
-
     return tokenData.accessToken;
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[DEBUG] Token refresh error:', error);
-    }
     return null;
   }
 }
@@ -153,10 +144,6 @@ export async function apiClient<T>(
       // 에러 데이터 먼저 파싱 (치명적 에러 체크용)
       const errorData = await response.json().catch(() => ({}));
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[DEBUG] 401 detected, error code:', errorData.code);
-      }
-
       // 치명적인 에러 코드 체크 (즉시 로그아웃 필요)
       if (
         errorData.code === 'INVALID_REFRESH_TOKEN' ||
@@ -175,10 +162,6 @@ export async function apiClient<T>(
 
       // 일반 401이면 토큰 갱신 시도
       if (!refreshPromise) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[DEBUG] Creating new refresh promise');
-        }
-
         // 갱신 프로미스 생성 및 저장
         refreshPromise = refreshAccessToken().finally(() => {
           // 프로미스는 일정 시간 후 초기화 (다른 요청들이 사용할 수 있도록)
@@ -186,10 +169,6 @@ export async function apiClient<T>(
             refreshPromise = null;
           }, 100);
         });
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[DEBUG] Reusing existing refresh promise');
-        }
       }
 
       // 모든 요청이 같은 프로미스 대기
