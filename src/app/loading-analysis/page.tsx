@@ -5,10 +5,12 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/common/Header';
 import Modal from '@/components/common/Modal';
 import { useAnalysis } from '@/contexts/AnalysisContext';
+import { useToast } from '@/contexts/ToastContext';
 import styles from './page.module.css';
 
 export default function AnalyzingPage() {
   const router = useRouter();
+  const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { analysisState, clearAnalysis } = useAnalysis();
 
@@ -18,11 +20,15 @@ export default function AnalyzingPage() {
       router.replace(`/analysis-result?id=${analysisState.easyContractId}`);
       clearAnalysis(); // 상태 초기화
     } else if (analysisState.status === 'FAILED') {
-      // 에러 처리 (옵션)
-      console.error('분석 실패:', analysisState.error);
+      // 실패 시 사용자에게 Toast 알림 표시
+      const errorMessage =
+        analysisState.error || '쉬운 계약서 생성에 실패했어요.';
+      toast.error(errorMessage);
       clearAnalysis();
+      // 홈으로 리다이렉트
+      router.replace('/');
     }
-  }, [analysisState, router, clearAnalysis]);
+  }, [analysisState, router, clearAnalysis, toast]);
 
   const handleCancel = () => {
     setIsModalOpen(true);
