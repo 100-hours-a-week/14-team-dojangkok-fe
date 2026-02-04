@@ -186,8 +186,8 @@ export default function MyPage() {
               fill
               className={styles.image}
             />
-                    </div>
-                    <h2 className={styles.userName}>{user.username || user.nickname}</h2>
+          </div>
+          <h2 className={styles.userName}>{user.username || user.nickname}</h2>
         </div>
 
         {/* 닉네임 섹션 */}
