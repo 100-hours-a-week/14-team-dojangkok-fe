@@ -14,17 +14,10 @@ import styles from './Nickname.module.css';
 
 export default function NicknamePage() {
   const router = useRouter();
-  const { user, updateUser, logout } = useAuth();
+  const { updateUser, logout } = useAuth();
   const toast = useToast();
   const [nickname, setNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  // 온보딩이 완료된 사용자만 홈으로 리다이렉트
-  useEffect(() => {
-    if (user && user.onboardingStatus === 'COMPLETE') {
-      router.replace('/');
-    }
-  }, [user, router]);
 
   // 브라우저 뒤로가기 감지하여 로그아웃 처리
   useEffect(() => {
@@ -33,10 +26,7 @@ export default function NicknamePage() {
     };
 
     window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
+    return () => window.removeEventListener('popstate', handlePopState);
   }, [logout]);
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

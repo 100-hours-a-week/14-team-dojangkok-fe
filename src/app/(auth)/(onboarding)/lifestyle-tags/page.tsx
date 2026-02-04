@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import {
@@ -13,32 +13,12 @@ import styles from './LifestyleTags.module.css';
 
 export default function LifestyleTagsPage() {
   const router = useRouter();
-  const { user, updateUser } = useAuth();
+  const { updateUser } = useAuth();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customInput, setCustomInput] = useState('');
   const [allTags, setAllTags] = useState<string[]>([...DEFAULT_LIFESTYLE_TAGS]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // 온보딩이 완료된 사용자만 홈으로 리다이렉트
-  useEffect(() => {
-    if (user && user.onboardingStatus === 'COMPLETE') {
-      router.replace('/');
-    }
-  }, [user, router]);
-
-  // 브라우저 뒤로가기 감지하여 닉네임 페이지로 이동
-  useEffect(() => {
-    const handlePopState = () => {
-      router.push('/nickname');
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [router]);
 
   const handleTagClick = (tag: string) => {
     setSelectedTags((prev) =>
