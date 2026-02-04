@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const user: User = {
             id: profileResponse.data.member_id.toString(),
             nickname: profileResponse.data.nickname || undefined,
+            username: profileResponse.data.username || undefined,
             profileImageUrl: profileResponse.data.profile_image_url,
             lifestyleTags,
             onboardingStatus,
@@ -154,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const user: User = {
         id: profileResponse.data.member_id.toString(),
         nickname: profileResponse.data.nickname || undefined,
+        username: profileResponse.data.username || undefined,
         profileImageUrl: profileResponse.data.profile_image_url,
         lifestyleTags,
         onboardingStatus,

@@ -32,6 +32,7 @@ export interface TokenRefreshResponse {
 export interface User {
   id: string;
   nickname?: string;
+  username?: string;
   profileImageUrl?: string;
   lifestyleTags?: string[];
   onboardingStatus: OnboardingStatus;
@@ -45,6 +46,7 @@ export interface MemberProfileResponse {
     nickname: string | null;
     profile_image_url: string;
     onboarding_status: OnboardingStatus;
+    username: string;
   };
 }
 

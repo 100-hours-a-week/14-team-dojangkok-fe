@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import {
   DEFAULT_LIFESTYLE_TAGS,
+  LIFESTYLE_TAG_MAX_COUNT,
   LIFESTYLE_TAG_MAX_LENGTH,
 } from '@/constants/lifestyle';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,15 +21,23 @@ export default function LifestyleTagsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isTagLimitReached = selectedTags.length >= LIFESTYLE_TAG_MAX_COUNT;
+
   const handleTagClick = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+    setSelectedTags((prev) => {
+      if (prev.includes(tag)) {
+        return prev.filter((t) => t !== tag);
+      }
+      if (isTagLimitReached) {
+        return prev;
+      }
+      return [...prev, tag];
+    });
   };
 
   const handleAddCustomTag = () => {
     const trimmedInput = customInput.trim();
-    if (trimmedInput && !allTags.includes(trimmedInput)) {
+    if (trimmedInput && !allTags.includes(trimmedInput) && !isTagLimitReached) {
       setAllTags([...allTags, trimmedInput]);
       setSelectedTags([...selectedTags, trimmedInput]);
       setCustomInput('');
@@ -87,7 +96,8 @@ export default function LifestyleTagsPage() {
             찾고 계신가요?
           </h1>
           <p className={styles.subtitle}>
-            선택한 태그를 바탕으로 AI가 나만의 체크리스트를 만들어드려요.
+            선택한 태그를 바탕으로 AI가 나만의 체크리스트를 만들어드려요. (
+            {selectedTags.length}/{LIFESTYLE_TAG_MAX_COUNT})
           </p>
           {error && <p className={styles.errorText}>{error}</p>}
         </div>
@@ -96,8 +106,11 @@ export default function LifestyleTagsPage() {
           {allTags.map((tag) => (
             <button
               key={tag}
-              className={`${styles.tag} ${selectedTags.includes(tag) ? styles.selected : ''}`}
+              className={`${styles.tag} ${
+                selectedTags.includes(tag) ? styles.selected : ''
+              }`}
               onClick={() => handleTagClick(tag)}
+              disabled={isTagLimitReached && !selectedTags.includes(tag)}
             >
               {tag}
             </button>
@@ -110,15 +123,24 @@ export default function LifestyleTagsPage() {
           <input
             type="text"
             className={styles.customInput}
-            placeholder="직접 입력하기 (최대 10자)"
+            placeholder={
+              isTagLimitReached
+                ? '태그는 15개까지 선택할 수 있어요'
+                : '직접 입력하기 (최대 10자)'
+            }
             value={customInput}
             onChange={(e) =>
               setCustomInput(e.target.value.slice(0, LIFESTYLE_TAG_MAX_LENGTH))
             }
             onKeyPress={handleKeyPress}
             maxLength={LIFESTYLE_TAG_MAX_LENGTH}
+            disabled={isTagLimitReached}
           />
-          <button className={styles.addButton} onClick={handleAddCustomTag}>
+          <button
+            className={styles.addButton}
+            onClick={handleAddCustomTag}
+            disabled={isTagLimitReached || customInput.trim() === ''}
+          >
             <span className="material-symbols-outlined">add</span>
           </button>
         </div>
