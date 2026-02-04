@@ -89,7 +89,7 @@ async function refreshAccessToken(): Promise<string | null> {
     tokenStorage.save(tokenData);
 
     return tokenData.accessToken;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
