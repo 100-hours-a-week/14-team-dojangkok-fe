@@ -39,6 +39,7 @@ function convertToHomeNote(item: HomeNoteItem): HomeNote {
       id: previewImage.file_asset_id.toString(),
       url: previewImage.presigned_url,
     })),
+    totalFileCount: item.file_count,
   };
 }
 

@@ -160,7 +160,6 @@ export default function HomeNoteDetailPage({
         }));
 
         const response = await updateChecklist(Number(id), checklistsData);
-        console.log('체크리스트 자동 저장 완료');
 
         // API 응답으로 상태 업데이트 (ID 동기화)
         const updatedChecklist: ChecklistItem[] =

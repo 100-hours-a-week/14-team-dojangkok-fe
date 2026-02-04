@@ -1,6 +1,12 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // 프로덕션 빌드 시 console.log 자동 제거
+  compiler: {
+    removeConsole: {
+      exclude: ['error', 'warn'], // error와 warn은 유지
+    },
+  },
   images: {
     remotePatterns: [
       {

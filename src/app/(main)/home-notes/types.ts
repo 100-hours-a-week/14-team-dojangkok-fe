@@ -8,4 +8,5 @@ export interface HomeNote {
   title: string;
   date: string;
   images: ImageItem[];
+  totalFileCount: number; // 전체 파일 개수
 }

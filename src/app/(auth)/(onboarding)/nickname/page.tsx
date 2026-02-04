@@ -6,55 +6,69 @@ import Header from '@/components/common/Header';
 import MainButton from '@/components/common/MainButton';
 import BottomFixedArea from '@/components/common/BottomFixedArea';
 import { NICKNAME_MAX_LENGTH, NICKNAME_MESSAGES } from '@/constants/nickname';
-import { filterNickname, validateNickname } from '@/utils/nickname';
+import { validateNickname, hasInvalidCharacters } from '@/utils/nickname';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { updateNickname as updateNicknameApi } from '@/lib/api/auth';
 import styles from './Nickname.module.css';
 
 export default function NicknamePage() {
   const router = useRouter();
-  const { user, updateUser } = useAuth();
+  const { updateUser, logout } = useAuth();
+  const toast = useToast();
   const [nickname, setNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // 이미 닉네임이 설정된 사용자는 홈으로 리다이렉트
+  // 브라우저 뒤로가기 감지하여 로그아웃 처리
   useEffect(() => {
-    if (user && !user.isNewUser && user.nickname) {
-      router.replace('/');
-    }
-  }, [user, router]);
+    const handlePopState = async () => {
+      await logout();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [logout]);
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const filteredValue = filterNickname(value);
-    setNickname(filteredValue.slice(0, NICKNAME_MAX_LENGTH));
-    setError(null);
+    setNickname(value.slice(0, NICKNAME_MAX_LENGTH));
   };
 
   const handleNext = async () => {
-    if (!validateNickname(nickname)) return;
+    // 유효하지 않은 문자 포함 여부 확인
+    if (hasInvalidCharacters(nickname)) {
+      toast.error(NICKNAME_MESSAGES.noSpecialChars);
+      return;
+    }
+
+    // 최소 길이 검증
+    if (!validateNickname(nickname)) {
+      toast.error('닉네임은 최소 2자 이상 입력해주세요.');
+      return;
+    }
 
     setIsLoading(true);
-    setError(null);
 
     try {
-      await updateNicknameApi(nickname);
-      updateUser({ nickname });
+      const response = await updateNicknameApi(nickname);
+      updateUser({
+        nickname,
+        onboardingStatus: response.data.onboarding_status,
+      });
       router.push('/lifestyle-tags');
     } catch (err) {
       console.error('Failed to update nickname:', err);
-      setError('닉네임 저장에 실패했습니다. 다시 시도해주세요.');
+      toast.error('닉네임 저장에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBack = () => {
-    router.back();
+  const handleBack = async () => {
+    await logout();
   };
 
-  const isButtonDisabled = !validateNickname(nickname) || isLoading;
+  const isButtonDisabled = isLoading;
 
   return (
     <div className={styles.container}>
@@ -93,7 +107,6 @@ export default function NicknamePage() {
             <br />* {NICKNAME_MESSAGES.noSpecialChars}
             <br />* {NICKNAME_MESSAGES.changeable}
           </p>
-          {error && <p className={styles.errorText}>{error}</p>}
         </div>
       </main>
 
