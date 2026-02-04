@@ -12,3 +12,5 @@ export const DEFAULT_LIFESTYLE_TAGS = [
 ] as const;
 
 export const LIFESTYLE_TAG_MAX_LENGTH = 10;
+
+export const LIFESTYLE_TAG_MAX_COUNT = 15;
