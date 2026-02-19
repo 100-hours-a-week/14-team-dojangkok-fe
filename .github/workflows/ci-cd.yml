@@ -79,7 +79,6 @@ jobs:
           push: true
           platforms: linux/arm64 # t4g 계열 인스턴스에서 사용하기 위함
           provenance: false # 불필요한 메타데이터 파일 생성을 막음
-          outputs: type=image,name=target,push-by-digest=false
           # 주요 설정값 주입
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
@@ -89,8 +88,6 @@ jobs:
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/dojangkok-fe:latest
             ${{ steps.login-ecr.outputs.registry }}/dojangkok-fe:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy: # 배포를 수행하는 단계
     needs: build-and-push-image
