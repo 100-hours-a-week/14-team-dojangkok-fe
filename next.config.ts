@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   // 프로덕션 빌드 시 console.log 자동 제거
   compiler: {
     removeConsole: {
