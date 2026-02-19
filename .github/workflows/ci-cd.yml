@@ -72,7 +72,7 @@ jobs:
         run: cat .env >> $GITHUB_ENV
       # 7. 이미지 빌드 및 ECR로 Push
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
