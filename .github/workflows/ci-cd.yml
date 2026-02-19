@@ -79,6 +79,7 @@ jobs:
           push: true
           platforms: linux/arm64 # t4g 계열 인스턴스에서 사용하기 위함
           provenance: false # 불필요한 메타데이터 파일 생성을 막음
+          outputs: type=image,name=target,push-by-digest=false
           # 주요 설정값 주입
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
