@@ -123,7 +123,7 @@ jobs:
             --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},key=frontend/deploy.zip,bundleType=zip \
             --query "deploymentId" \
             --output text)
-          
+
           echo "배포가 시작되었습니다. Deployment ID: $DEPLOYMENT_ID"
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       # 7. Code Deploy 배포 완료 대기
