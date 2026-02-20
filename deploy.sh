@@ -20,8 +20,8 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
 # 4. Docker Compose 실행 (docker-compose가 설치되어 있는지 확인 필수)
-docker-compose pull
-docker-compose down --remove-orphans || true
-docker-compose up -d
+docker compose pull
+docker compose down --remove-orphans || true
+docker compose up -d
 
 echo "=== 배포 완료 ==="
