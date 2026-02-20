@@ -1,5 +1,4 @@
 #!/bin/bash
-# 로그 파일 권한 문제 방지를 위해 경로 변경 권장
 LOG_FILE="/home/ubuntu/deploy.log"
 exec > >(tee -a $LOG_FILE) 2>&1
 echo "=== 배포 시작: $(date) ==="
@@ -9,17 +8,21 @@ TARGET_DIR="/home/ubuntu/dojangkok-fe"
 mkdir -p $TARGET_DIR
 cd $TARGET_DIR
 
-# 2. .env 보안 세팅 (파일이 있는지 확인 후)
+# 2. .env 보안 세팅 (sudo 추가하여 권한 문제 해결)
 if [ -f .env ]; then
-    chmod 600 .env
+    sudo chmod 600 .env
 fi
 
-# 3. AWS 로그인 및 도커 실행
+# 3. AWS 로그인 정보 세팅 및 ECR_REGISTRY 변수 생성
 REGION="ap-northeast-2"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+# docker-compose가 읽을 수 있도록 변수를 내보냄(export)
+export ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 
-# 4. Docker Compose 실행 (docker-compose가 설치되어 있는지 확인 필수)
+# 4. AWS ECR 로그인
+aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+
+# 5. Docker Compose 실행 (v2 명령어)
 docker compose pull
 docker compose down --remove-orphans || true
 docker compose up -d
