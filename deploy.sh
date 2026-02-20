@@ -8,6 +8,8 @@ TARGET_DIR="/home/ubuntu/dojangkok-fe"
 mkdir -p $TARGET_DIR
 cd $TARGET_DIR
 
+sudo chown -R ubuntu:ubuntu $TARGET_DIR
+
 # 2. .env 보안 세팅 (sudo 추가하여 권한 문제 해결)
 if [ -f .env ]; then
     sudo chmod 600 .env
