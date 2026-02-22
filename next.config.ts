@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Docker 컨테이너 실행을 위한 타겟 설정 추가
+  output: 'standalone',
   // 프로덕션 빌드 시 console.log 자동 제거
   compiler: {
     removeConsole: {
