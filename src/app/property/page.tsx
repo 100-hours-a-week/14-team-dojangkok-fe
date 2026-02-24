@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Header,
   FloatingAddButton,
@@ -92,8 +92,33 @@ const MOCK_PROPERTIES: Property[] = [
 
 export default function PropertyPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showReviewedOnly, setShowReviewedOnly] = useState(true);
   const [properties, setProperties] = useState(MOCK_PROPERTIES);
+
+  // 필터 활성 상태
+  const [hasPropertyTypeFilter, setHasPropertyTypeFilter] = useState(false);
+  const [hasLeaseTypeFilter, setHasLeaseTypeFilter] = useState(false);
+  const [hasPriceFilter, setHasPriceFilter] = useState(false);
+
+  // URL 쿼리 파라미터에서 필터 상태 읽기
+  useEffect(() => {
+    const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
+    const propertyTypes = searchParams.get('propertyTypes');
+    const leaseTypes = searchParams.get('leaseTypes');
+    const hasPrice =
+      searchParams.has('monthlyDeposit') ||
+      searchParams.has('monthlyRent') ||
+      searchParams.has('jeonsaeDeposit') ||
+      searchParams.has('semiJeonsaeDeposit') ||
+      searchParams.has('semiJeonsaeRent') ||
+      searchParams.has('purchasePrice');
+
+    setShowReviewedOnly(reviewedOnly);
+    setHasPropertyTypeFilter(!!propertyTypes);
+    setHasLeaseTypeFilter(!!leaseTypes);
+    setHasPriceFilter(hasPrice);
+  }, [searchParams]);
 
   const handlePropertyClick = (id: string) => {
     console.log('Property clicked:', id);
@@ -120,6 +145,13 @@ export default function PropertyPage() {
 
   const handleSearchClick = () => {
     router.push('/property/search');
+  };
+
+  const handleFilterClick = () => {
+    const currentParams = searchParams.toString();
+    router.push(
+      `/property/filter${currentParams ? `?${currentParams}` : ''}`
+    );
   };
 
   const filteredProperties = showReviewedOnly
@@ -152,10 +184,27 @@ export default function PropertyPage() {
           >
             검토 완료
           </FilterChip>
-          <FilterChip showDropdown>거래유형</FilterChip>
-          <FilterChip showDropdown>가격</FilterChip>
-          <FilterChip showDropdown>매물유형</FilterChip>
-          <FilterChip showDropdown>방크기</FilterChip>
+          <FilterChip
+            showDropdown
+            onClick={handleFilterClick}
+            active={hasPropertyTypeFilter}
+          >
+            매물 유형
+          </FilterChip>
+          <FilterChip
+            showDropdown
+            onClick={handleFilterClick}
+            active={hasLeaseTypeFilter}
+          >
+            임대 형태
+          </FilterChip>
+          <FilterChip
+            showDropdown
+            onClick={handleFilterClick}
+            active={hasPriceFilter}
+          >
+            가격
+          </FilterChip>
         </div>
       </div>
 
