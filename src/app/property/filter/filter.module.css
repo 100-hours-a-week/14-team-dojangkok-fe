@@ -1,0 +1,178 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--gray-50, #f9fafb);
+  border: none;
+  outline: none;
+}
+
+.main {
+  flex: 1;
+  padding-bottom: 80px;
+}
+
+/* Section */
+.section {
+  background: white;
+  padding: 24px;
+  margin-bottom: 8px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900, #111827);
+  margin-bottom: 16px;
+}
+
+.subTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700, #374151);
+}
+
+/* Chip Group */
+.chipGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background: var(--gray-100, #f3f4f6);
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  border-color: var(--primary, #10b981);
+  color: var(--primary, #10b981);
+}
+
+.chip:active {
+  transform: scale(0.95);
+}
+
+.chipActive {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--primary, #10b981);
+  font-weight: 700;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 2px;
+}
+
+/* Price Section */
+.priceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.priceHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+.priceHeader .subTitle {
+  margin-bottom: 0;
+}
+
+.priceValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary, #10b981);
+}
+
+.sliderWrapper {
+  padding: 0 8px;
+}
+
+/* Footer */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background: white;
+  border-top: 1px solid var(--gray-200, #e5e7eb);
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  padding: 16px;
+  gap: 10px;
+  z-index: 50;
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  background: white;
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 0 0 auto;
+}
+
+.resetButton:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+.resetButton .material-symbols-outlined {
+  font-size: 18px;
+  color: var(--gray-500, #6b7280);
+}
+
+.applyButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--primary, #10b981);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.applyButton:hover {
+  background: #059669;
+}
+
+.applyButton:active {
+  transform: scale(0.98);
+}
