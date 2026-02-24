@@ -109,7 +109,7 @@ jobs:
       # 5. 서버 배포 수행
       - name: Deploy to Target Server
         env:
-          TARGET_IP: ${{ secrets.TARGET_IP }}
+          TARGET_IP: ${{ secrets.TMP_TARGET_IP }}
           SSH_USER: ${{ secrets.SSH_USER }}
           REMOTE_DIR: '/home/${{ secrets.SSH_USER }}/client'
         run: |
