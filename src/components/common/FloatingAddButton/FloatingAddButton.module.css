@@ -1,6 +1,6 @@
 .fab {
   position: fixed;
-  bottom: 96px;
+  bottom: 20px;
   right: max(20px, calc((100vw - 430px) / 2 + 20px));
   width: 72px;
   height: 72px;
