@@ -16,6 +16,10 @@
   transition: all 0.2s ease;
 }
 
+.fab.withBottomNav {
+  bottom: 96px;
+}
+
 .fab:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);

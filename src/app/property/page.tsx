@@ -121,7 +121,7 @@ export default function PropertyPage() {
   }, [searchParams]);
 
   const handlePropertyClick = (id: string) => {
-    console.log('Property clicked:', id);
+    router.push(`/property/${id}`);
   };
 
   const handleFavoriteClick = (id: string, event: React.MouseEvent) => {
@@ -132,7 +132,7 @@ export default function PropertyPage() {
   };
 
   const handleAddClick = () => {
-    console.log('Add property clicked');
+    router.push('/property/create');
   };
 
   const handleBackClick = () => {

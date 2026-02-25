@@ -18,6 +18,7 @@ export default function PropertySearchPage() {
     // Load recent searches from localStorage
     const saved = localStorage.getItem('recentPropertySearches');
     if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecentSearches(JSON.parse(saved));
     }
   }, []);
