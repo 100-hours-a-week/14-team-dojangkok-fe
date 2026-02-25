@@ -1,9 +1,10 @@
-import { PropertyFormData } from '../page';
+import { PropertyFormData, ValidationErrors } from '../page';
 import styles from './steps.module.css';
 
 interface Step1Props {
   formData: PropertyFormData;
   updateFormData: (data: Partial<PropertyFormData>) => void;
+  errors: ValidationErrors;
 }
 
 const PROPERTY_TYPES = ['원룸', '투룸', '오피스텔', '아파트'];
@@ -11,6 +12,7 @@ const PROPERTY_TYPES = ['원룸', '투룸', '오피스텔', '아파트'];
 export default function Step1PropertyType({
   formData,
   updateFormData,
+  errors,
 }: Step1Props) {
   return (
     <div className={styles.step}>
@@ -20,7 +22,7 @@ export default function Step1PropertyType({
         등록하시나요?
       </h2>
       <p className={styles.stepDescription}>
-        매물 유형을 선택해주세요
+        매물 유형을 선택해주세요<span className={styles.required}>*</span>
       </p>
 
       <div className={styles.optionGrid}>
@@ -36,6 +38,7 @@ export default function Step1PropertyType({
           </button>
         ))}
       </div>
+      <p className={styles.error}>{errors.propertyType || '\u00A0'}</p>
     </div>
   );
 }

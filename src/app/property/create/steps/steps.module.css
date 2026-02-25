@@ -29,6 +29,39 @@
   color: var(--gray-700, #374151);
 }
 
+.optional {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--gray-500, #6b7280);
+  margin-left: 4px;
+}
+
+.required {
+  color: var(--red-500, #ef4444);
+  margin-left: 2px;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--red-600, #dc2626);
+  margin-top: 4px;
+  min-height: 18px;
+  line-height: 18px;
+}
+
+.inputError,
+.textareaError,
+.selectError {
+  border-color: var(--red-500, #ef4444);
+}
+
+.inputError:focus,
+.textareaError:focus,
+.selectError:focus {
+  border-color: var(--red-500, #ef4444);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 /* 옵션 카드 그리드 */
 .optionGrid {
   display: grid;
@@ -117,6 +150,51 @@
 
 .input::placeholder {
   color: var(--gray-400, #9ca3af);
+}
+
+/* number input 스핀 버튼 제거 */
+.input[type='number']::-webkit-outer-spin-button,
+.input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--gray-900, #111827);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7280' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 24px;
+  padding-right: 44px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--gray-100, #f3f4f6);
+}
+
+.select option {
+  padding: 8px;
 }
 
 .inputGroup {
@@ -228,7 +306,8 @@
   }
 
   .input,
-  .textarea {
+  .textarea,
+  .select {
     background: var(--gray-800, #1f2937);
     border-color: var(--gray-700, #374151);
     color: var(--gray-100, #f3f4f6);

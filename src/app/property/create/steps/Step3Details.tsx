@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { PropertyFormData } from '../page';
+import { PropertyFormData, ValidationErrors } from '../page';
 import styles from './steps.module.css';
 
 interface Step3Props {
   formData: PropertyFormData;
   updateFormData: (data: Partial<PropertyFormData>) => void;
+  errors: ValidationErrors;
 }
 
 export default function Step3Details({
   formData,
   updateFormData,
+  errors,
 }: Step3Props) {
   // 평 ↔ m² 변환 상수
   const PYEONG_TO_M2 = 3.3058;
@@ -19,26 +21,59 @@ export default function Step3Details({
   const [floorType, setFloorType] = useState<'ground' | 'basement'>(
     formData.floor < 0 ? 'basement' : 'ground'
   );
-  const [floorNumber, setFloorNumber] = useState(Math.abs(formData.floor) || 1);
+  const [floorNumber, setFloorNumber] = useState<string>(
+    String(Math.abs(formData.floor) || 1)
+  );
+  const [floorError, setFloorError] = useState<string>('');
+
+  // 평수 입력을 위한 로컬 state
+  const [pyeongInput, setPyeongInput] = useState<string>('');
+
+  // formData.area가 변경되면 평수 계산하여 표시
+  useEffect(() => {
+    if (!formData.area) {
+      setPyeongInput('');
+      return;
+    }
+    const m2Value = Number(formData.area);
+    if (!isNaN(m2Value)) {
+      const pyeong = Math.round(m2Value * M2_TO_PYEONG * 100) / 100;
+      setPyeongInput(String(pyeong));
+    }
+  }, [formData.area]);
 
   useEffect(() => {
+    // 숫자 검증
+    const num = Number(floorNumber);
+    if (floorNumber && (isNaN(num) || num <= 0)) {
+      setFloorError('올바른 숫자를 입력해주세요');
+      return;
+    }
+    setFloorError('');
+
     // 지하일 경우 음수로, 지상일 경우 양수로 저장
-    const actualFloor = floorType === 'basement' ? -floorNumber : floorNumber;
+    const validNumber = num > 0 ? num : 1;
+    const actualFloor = floorType === 'basement' ? -validNumber : validNumber;
     updateFormData({ floor: actualFloor });
   }, [floorType, floorNumber]);
 
-  const handlePyeongChange = (pyeong: number) => {
-    const m2 = Math.round(pyeong * PYEONG_TO_M2 * 100) / 100;
-    updateFormData({ area: m2 });
+  const handleFloorNumberChange = (value: string) => {
+    setFloorNumber(value);
   };
 
-  const handleM2Change = (m2: number) => {
-    updateFormData({ area: m2 });
+  const handlePyeongChange = (value: string) => {
+    setPyeongInput(value);
+    const pyeong = Number(value);
+    if (!isNaN(pyeong) && pyeong > 0) {
+      const m2 = Math.round(pyeong * PYEONG_TO_M2 * 100) / 100;
+      updateFormData({ area: String(m2) });
+    } else {
+      updateFormData({ area: value });
+    }
   };
 
-  const getPyeongFromM2 = () => {
-    if (!formData.area) return '';
-    return Math.round(formData.area * M2_TO_PYEONG * 100) / 100;
+  const handleM2Change = (value: string) => {
+    updateFormData({ area: value });
   };
   return (
     <div className={styles.step}>
@@ -46,19 +81,24 @@ export default function Step3Details({
 
       {/* 주소 */}
       <div className={styles.section}>
-        <label className={styles.label}>주소</label>
+        <label className={styles.label}>
+          주소<span className={styles.required}>*</span>
+        </label>
         <input
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${errors.address ? styles.inputError : ''}`}
           placeholder="예: 서울 강남구 역삼동"
           value={formData.address}
           onChange={(e) => updateFormData({ address: e.target.value })}
         />
+        <p className={styles.error}>{errors.address || '\u00A0'}</p>
       </div>
 
       {/* 상세 주소 */}
       <div className={styles.section}>
-        <label className={styles.label}>상세 주소</label>
+        <label className={styles.label}>
+          상세 주소 <span className={styles.optional}>(선택)</span>
+        </label>
         <input
           type="text"
           className={styles.input}
@@ -72,29 +112,32 @@ export default function Step3Details({
 
       {/* 면적 */}
       <div className={styles.section}>
-        <label className={styles.label}>면적</label>
+        <label className={styles.label}>
+          면적<span className={styles.required}>*</span>
+        </label>
         <div className={styles.areaInputs}>
           <div className={styles.inputGroup}>
             <input
-              type="number"
-              className={styles.input}
+              type="text"
+              className={`${styles.input} ${errors.area ? styles.inputError : ''}`}
               placeholder="0"
-              value={getPyeongFromM2()}
-              onChange={(e) => handlePyeongChange(Number(e.target.value))}
+              value={pyeongInput}
+              onChange={(e) => handlePyeongChange(e.target.value)}
             />
             <span className={styles.inputUnit}>평</span>
           </div>
           <div className={styles.inputGroup}>
             <input
-              type="number"
-              className={styles.input}
+              type="text"
+              className={`${styles.input} ${errors.area ? styles.inputError : ''}`}
               placeholder="0"
-              value={formData.area || ''}
-              onChange={(e) => handleM2Change(Number(e.target.value))}
+              value={formData.area}
+              onChange={(e) => handleM2Change(e.target.value)}
             />
             <span className={styles.inputUnit}>m²</span>
           </div>
         </div>
+        <p className={styles.error}>{errors.area || '\u00A0'}</p>
       </div>
 
       {/* 층수 */}
@@ -123,16 +166,17 @@ export default function Step3Details({
           </div>
           <div className={styles.inputGroup}>
             <input
-              type="number"
-              className={styles.input}
+              type="text"
+              inputMode="numeric"
+              className={`${styles.input} ${floorError ? styles.inputError : ''}`}
               placeholder="1"
-              min="1"
               value={floorNumber}
-              onChange={(e) => setFloorNumber(Number(e.target.value) || 1)}
+              onChange={(e) => handleFloorNumberChange(e.target.value)}
             />
             <span className={styles.inputUnit}>층</span>
           </div>
         </div>
+        <p className={styles.error}>{floorError || '\u00A0'}</p>
       </div>
     </div>
   );
