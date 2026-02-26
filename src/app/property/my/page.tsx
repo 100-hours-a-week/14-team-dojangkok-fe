@@ -69,7 +69,7 @@ export default function MyPropertyPage() {
   }, [searchParams]);
 
   const handleBackClick = () => {
-    router.push('/property');
+    router.back();
   };
 
   const handlePropertyClick = (id: string) => {
@@ -85,8 +85,8 @@ export default function MyPropertyPage() {
   const handleTabChange = (value: string) => {
     const newTab = value as TabType;
     setActiveTab(newTab);
-    // URL 업데이트 (히스토리에 추가)
-    router.push(`/property/my?tab=${newTab}`);
+    // URL 업데이트 (히스토리에 추가하지 않고 대체)
+    router.replace(`/property/my?tab=${newTab}`);
   };
 
   const currentProperties = MOCK_MY_PROPERTIES[activeTab];
