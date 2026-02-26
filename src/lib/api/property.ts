@@ -160,7 +160,7 @@ export async function updatePropertyVisibility(
 ) {
   const body: PropertyVisibilityUpdateDto = { is_hidden: isHidden };
 
-  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/visibility`, {
+  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/post-status`, {
     method: 'PATCH',
     body: JSON.stringify(body),
     requiresAuth: true,
