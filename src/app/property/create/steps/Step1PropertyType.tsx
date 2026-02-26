@@ -7,7 +7,7 @@ interface Step1Props {
   errors: ValidationErrors;
 }
 
-const PROPERTY_TYPES = ['원룸', '투룸', '오피스텔', '아파트'];
+const PROPERTY_TYPES = ['원룸', '투룸 이상', '오피스텔', '아파트', '상가', '주택'];
 
 export default function Step1PropertyType({
   formData,

@@ -35,6 +35,32 @@
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
+/* 업로드 진행 표시 */
+.uploadProgress {
+  margin-bottom: 12px;
+}
+
+.uploadProgressBar {
+  width: 100%;
+  height: 8px;
+  background: var(--gray-200, #e5e7eb);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.uploadProgressFill {
+  height: 100%;
+  background: var(--primary, #10b981);
+  transition: width 0.3s ease;
+}
+
+.uploadProgressText {
+  font-size: 13px;
+  color: var(--gray-600, #4b5563);
+  text-align: center;
+}
+
 @media (prefers-color-scheme: dark) {
   .page {
     background: var(--gray-900, #111827);
@@ -43,5 +69,13 @@
   .footer {
     background: var(--gray-800, #1f2937);
     border-top-color: var(--gray-700, #374151);
+  }
+
+  .uploadProgressBar {
+    background: var(--gray-700, #374151);
+  }
+
+  .uploadProgressText {
+    color: var(--gray-400, #9ca3af);
   }
 }

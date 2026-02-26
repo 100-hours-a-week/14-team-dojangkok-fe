@@ -7,7 +7,7 @@ interface Step2Props {
   errors: ValidationErrors;
 }
 
-const PRICE_TYPES = ['월세', '전세', '매매'];
+const PRICE_TYPES = ['월세', '전세', '반전세', '매매'];
 
 export default function Step2PriceInfo({
   formData,
@@ -33,7 +33,8 @@ export default function Step2PriceInfo({
               onClick={() =>
                 updateFormData({
                   priceType: type,
-                  monthlyRent: type === '월세' ? formData.monthlyRent : 0,
+                  monthlyRent:
+                    type === '월세' || type === '반전세' ? formData.monthlyRent : 0,
                 })
               }
             >
@@ -52,8 +53,8 @@ export default function Step2PriceInfo({
         </label>
         <div className={styles.inputGroup}>
           <input
-            type="text"
-            inputMode="numeric"
+            type="number"
+            min="0"
             className={`${styles.input} ${errors.deposit ? styles.inputError : ''}`}
             placeholder="0"
             value={formData.deposit}
@@ -64,16 +65,16 @@ export default function Step2PriceInfo({
         <p className={styles.error}>{errors.deposit || '\u00A0'}</p>
       </div>
 
-      {/* 월세 (월세인 경우만) */}
-      {formData.priceType === '월세' && (
+      {/* 월세 (월세 또는 반전세인 경우) */}
+      {(formData.priceType === '월세' || formData.priceType === '반전세') && (
         <div className={styles.section}>
           <label className={styles.label}>
             월세<span className={styles.required}>*</span>
           </label>
           <div className={styles.inputGroup}>
             <input
-              type="text"
-              inputMode="numeric"
+              type="number"
+              min="0"
               className={`${styles.input} ${errors.monthlyRent ? styles.inputError : ''}`}
               placeholder="0"
               value={formData.monthlyRent}
@@ -92,8 +93,8 @@ export default function Step2PriceInfo({
         </label>
         <div className={styles.inputGroup}>
           <input
-            type="text"
-            inputMode="numeric"
+            type="number"
+            min="0"
             className={`${styles.input} ${errors.maintenanceFee ? styles.inputError : ''}`}
             placeholder="0"
             value={formData.maintenanceFee}

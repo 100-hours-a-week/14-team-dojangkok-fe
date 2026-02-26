@@ -97,17 +97,19 @@ export default function Step3Details({
       {/* 상세 주소 */}
       <div className={styles.section}>
         <label className={styles.label}>
-          상세 주소 <span className={styles.optional}>(선택)</span>
+          상세 주소 <span className={styles.optional}>(선택, 최대 100자)</span>
         </label>
         <input
           type="text"
-          className={styles.input}
+          className={`${styles.input} ${errors.detailedAddress ? styles.inputError : ''}`}
           placeholder="예: 101동 202호"
+          maxLength={100}
           value={formData.detailedAddress}
           onChange={(e) =>
             updateFormData({ detailedAddress: e.target.value })
           }
         />
+        <p className={styles.error}>{errors.detailedAddress || '\u00A0'}</p>
       </div>
 
       {/* 면적 */}
@@ -164,16 +166,23 @@ export default function Step3Details({
               지하
             </button>
           </div>
-          <div className={styles.inputGroup}>
-            <input
-              type="text"
-              inputMode="numeric"
-              className={`${styles.input} ${floorError ? styles.inputError : ''}`}
-              placeholder="1"
-              value={floorNumber}
-              onChange={(e) => handleFloorNumberChange(e.target.value)}
-            />
-            <span className={styles.inputUnit}>층</span>
+          <div className={styles.inputWithPreview}>
+            <div className={styles.inputGroup}>
+              <input
+                type="text"
+                inputMode="numeric"
+                className={`${styles.input} ${floorError ? styles.inputError : ''}`}
+                placeholder="1"
+                value={floorNumber}
+                onChange={(e) => handleFloorNumberChange(e.target.value)}
+              />
+              <span className={styles.inputUnit}>층</span>
+            </div>
+            {floorNumber && !floorError && (
+              <span className={styles.floorPreview}>
+                {floorType === 'basement' ? `B${floorNumber}` : `${floorNumber}F`}
+              </span>
+            )}
           </div>
         </div>
         <p className={styles.error}>{floorError || '\u00A0'}</p>

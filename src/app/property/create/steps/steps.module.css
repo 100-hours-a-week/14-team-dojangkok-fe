@@ -222,6 +222,24 @@
   gap: 12px;
 }
 
+.inputWithPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floorPreview {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary, #10b981);
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
+}
+
 .textarea {
   width: 100%;
   padding: 14px 16px;
@@ -312,4 +330,25 @@
     border-color: var(--gray-700, #374151);
     color: var(--gray-100, #f3f4f6);
   }
+
+  .charCounter {
+    color: var(--gray-400, #9ca3af);
+  }
+}
+
+/* 글자수 카운터 */
+.labelWithCounter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.charCounter {
+  font-size: 13px;
+  color: var(--gray-500, #6b7280);
+  font-weight: 500;
+}
+
+.charCounterError {
+  color: var(--red-500, #ef4444);
 }
