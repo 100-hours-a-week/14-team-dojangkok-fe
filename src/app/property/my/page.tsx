@@ -69,7 +69,7 @@ export default function MyPropertyPage() {
   }, [searchParams]);
 
   const handleBackClick = () => {
-    router.back();
+    router.push('/property');
   };
 
   const handlePropertyClick = (id: string) => {
