@@ -30,6 +30,20 @@
   background: var(--gray-200, #e5e7eb);
 }
 
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-200, #e5e7eb);
+}
+
+.imagePlaceholder .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--gray-400, #9ca3af);
+}
+
 .image {
   object-fit: cover;
   transition: transform 0.3s;

@@ -43,6 +43,8 @@ export default function PropertyCard({
     return `${diffInDays}일전`;
   };
 
+  const hasImage = property.images && property.images.length > 0 && property.images[0];
+
   return (
     <article
       className={styles.card}
@@ -51,21 +53,29 @@ export default function PropertyCard({
       tabIndex={0}
     >
       <div className={styles.imageContainer}>
-        <Image
-          src={property.images[0]}
-          alt={property.title}
-          fill
-          className={styles.image}
-          sizes="110px"
-        />
+        {hasImage ? (
+          <Image
+            src={property.images[0]}
+            alt={property.title}
+            fill
+            className={styles.image}
+            sizes="110px"
+          />
+        ) : (
+          <div className={styles.imagePlaceholder}>
+            <span className="material-symbols-outlined">home</span>
+          </div>
+        )}
         {property.isReviewed && (
           <div className={styles.stampContainer}>
             <StampBadge size="medium" />
           </div>
         )}
-        <div className={styles.imageCount}>
-          1/{property.images.length}
-        </div>
+        {hasImage && (
+          <div className={styles.imageCount}>
+            1/{property.images.length}
+          </div>
+        )}
       </div>
 
       <div className={styles.content}>
