@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { Header, StampBadge } from '@/components/common';
+import { StampBadge } from '@/components/common';
 import styles from './detail.module.css';
 
 // Mock data - 실제로는 API에서 가져와야 함
@@ -101,14 +101,23 @@ export default function PropertyDetailPage() {
 
   return (
     <div className={styles.page}>
-      <Header
-        title=""
-        showBackButton
-        onBackClick={handleBackClick}
-        rightIcon="more_vert"
-        onRightClick={handleMenuClick}
-        rightIconColor="#111827"
-      />
+      {/* 상단 네비게이션 버튼 (이미지 위에 플로팅) */}
+      <div className={styles.topNavigation}>
+        <button
+          className={styles.navIconButton}
+          onClick={handleBackClick}
+          aria-label="뒤로가기"
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <button
+          className={styles.navIconButton}
+          onClick={handleMenuClick}
+          aria-label="메뉴"
+        >
+          <span className="material-symbols-outlined">more_vert</span>
+        </button>
+      </div>
 
       {/* 이미지 갤러리 */}
       <section className={styles.imageGallery}>
