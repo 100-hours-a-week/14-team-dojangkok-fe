@@ -206,7 +206,8 @@ export default function PropertyFilterPage() {
       }
     }
 
-    router.push(`/property?${params.toString()}`);
+    // router.replace를 사용하여 필터 페이지를 히스토리에서 제거
+    router.replace(`/property?${params.toString()}`);
   };
 
   const getTotalCount = () => {
