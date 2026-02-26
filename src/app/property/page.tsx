@@ -11,97 +11,154 @@ import {
   StampBadge,
 } from '@/components/common';
 import { Property } from '@/types/property';
+import type {
+  PropertyPostSearchRequestDto,
+  PropertyType,
+  RentType,
+} from '@/types/property';
+import { PROPERTY_TYPE_MAP, RENT_TYPE_MAP } from '@/types/property';
+import { getAllPropertyPosts, searchPropertyPosts } from '@/lib/api/property';
+import { convertToPropertyList } from '@/utils/propertyAdapter';
 import styles from './property.module.css';
-
-const MOCK_PROPERTIES: Property[] = [
-  {
-    id: '1',
-    title: '공도읍 진사리 조용한 풀옵션 원룸',
-    address: '경기 안성시 공도읍',
-    detailedAddress: '경기 안성시 공도읍 진사리',
-    priceType: '월세',
-    deposit: 300,
-    monthlyRent: 35,
-    propertyType: '원룸',
-    floor: 1,
-    area: 23,
-    maintenanceFee: 5,
-    images: [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-    ],
-    isReviewed: true,
-    isFavorite: false,
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    title: '채광 좋은 신축 투룸, 즉시 입주 가능',
-    address: '서울 관악구',
-    detailedAddress: '서울 관악구 신림동',
-    priceType: '전세',
-    deposit: 5000,
-    propertyType: '투룸',
-    floor: 3,
-    area: 45,
-    maintenanceFee: 7,
-    images: [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-    ],
-    isReviewed: true,
-    isFavorite: true,
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    title: '대학가 근처 깔끔한 오피스텔',
-    address: '서울 서대문구',
-    detailedAddress: '서울 서대문구 창천동',
-    priceType: '월세',
-    deposit: 500,
-    monthlyRent: 45,
-    propertyType: '오피스텔',
-    floor: 5,
-    area: 28,
-    maintenanceFee: 8,
-    images: [
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-    ],
-    isReviewed: true,
-    isFavorite: false,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
 
 export default function PropertyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showReviewedOnly, setShowReviewedOnly] = useState(true);
-  const [properties, setProperties] = useState(MOCK_PROPERTIES);
+  const [showReviewedOnly, setShowReviewedOnly] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasNext, setHasNext] = useState(false);
 
   // 필터 활성 상태
   const [hasPropertyTypeFilter, setHasPropertyTypeFilter] = useState(false);
   const [hasLeaseTypeFilter, setHasLeaseTypeFilter] = useState(false);
   const [hasPriceFilter, setHasPriceFilter] = useState(false);
 
-  // URL 쿼리 파라미터에서 필터 상태 읽기
+  // URL 파라미터를 API 요청 형식으로 변환
+  const buildSearchRequest = (): PropertyPostSearchRequestDto | null => {
+    const propertyTypesParam = searchParams.get('propertyTypes');
+    const leaseTypesParam = searchParams.get('leaseTypes');
+
+    // 필터가 하나도 없으면 null 반환
+    if (!propertyTypesParam && !leaseTypesParam && !hasPriceFilter) {
+      return null;
+    }
+
+    const request: PropertyPostSearchRequestDto = {};
+
+    // 매물 유형
+    if (propertyTypesParam) {
+      request.property_type = propertyTypesParam
+        .split(',')
+        .map((type) => PROPERTY_TYPE_MAP[type] as PropertyType)
+        .filter(Boolean);
+    }
+
+    // 임대 형태
+    if (leaseTypesParam) {
+      request.rent_type = leaseTypesParam
+        .split(',')
+        .map((type) => RENT_TYPE_MAP[type] as RentType)
+        .filter(Boolean);
+    }
+
+    // 가격 필터 (월세)
+    const monthlyDeposit = searchParams.get('monthlyDeposit');
+    const monthlyRent = searchParams.get('monthlyRent');
+    if (monthlyDeposit) {
+      const [min, max] = monthlyDeposit.split('-').map(Number);
+      request.price_main_min = min;
+      request.price_main_max = max;
+    }
+    if (monthlyRent) {
+      const [min, max] = monthlyRent.split('-').map(Number);
+      request.price_monthly_min = min;
+      request.price_monthly_max = max;
+    }
+
+    // 가격 필터 (전세)
+    const jeonsaeDeposit = searchParams.get('jeonsaeDeposit');
+    if (jeonsaeDeposit) {
+      const [min, max] = jeonsaeDeposit.split('-').map(Number);
+      request.price_main_min = min;
+      request.price_main_max = max;
+    }
+
+    // 가격 필터 (반전세)
+    const semiJeonsaeDeposit = searchParams.get('semiJeonsaeDeposit');
+    const semiJeonsaeRent = searchParams.get('semiJeonsaeRent');
+    if (semiJeonsaeDeposit) {
+      const [min, max] = semiJeonsaeDeposit.split('-').map(Number);
+      request.price_main_min = min;
+      request.price_main_max = max;
+    }
+    if (semiJeonsaeRent) {
+      const [min, max] = semiJeonsaeRent.split('-').map(Number);
+      request.price_monthly_min = min;
+      request.price_monthly_max = max;
+    }
+
+    // 가격 필터 (매매)
+    const purchasePrice = searchParams.get('purchasePrice');
+    if (purchasePrice) {
+      const [min, max] = purchasePrice.split('-').map(Number);
+      request.price_main_min = min;
+      request.price_main_max = max;
+    }
+
+    return request;
+  };
+
+  // 매물 목록 API 호출
+  const fetchProperties = async (cursor?: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const searchRequest = buildSearchRequest();
+
+      if (searchRequest) {
+        // 필터가 있으면 검색 API 사용
+        const response = await searchPropertyPosts(searchRequest, cursor);
+        const convertedProperties = convertToPropertyList(
+          response.data.items
+        );
+
+        setProperties((prev) =>
+          cursor ? [...prev, ...convertedProperties] : convertedProperties
+        );
+        setNextCursor(response.data.next_cursor);
+        setHasNext(response.data.hasNext);
+      } else {
+        // 필터가 없으면 전체 목록 API 사용
+        const response = await getAllPropertyPosts(cursor);
+        const convertedProperties = convertToPropertyList(
+          response.data.property_post_items
+        );
+
+        setProperties((prev) =>
+          cursor ? [...prev, ...convertedProperties] : convertedProperties
+        );
+        setNextCursor(response.data.next_cursor);
+        setHasNext(response.data.hasNext);
+      }
+    } catch (err) {
+      setError('매물을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 더보기 버튼 클릭
+  const handleLoadMore = () => {
+    if (nextCursor && hasNext && !loading) {
+      fetchProperties(nextCursor);
+    }
+  };
+
+  // URL 쿼리 파라미터 변경 시 목록 새로고침
   useEffect(() => {
     const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
     const propertyTypes = searchParams.get('propertyTypes');
@@ -118,6 +175,10 @@ export default function PropertyPage() {
     setHasPropertyTypeFilter(!!propertyTypes);
     setHasLeaseTypeFilter(!!leaseTypes);
     setHasPriceFilter(hasPrice);
+
+    // API 호출
+    fetchProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handlePropertyClick = (id: string) => {
@@ -209,15 +270,35 @@ export default function PropertyPage() {
       </div>
 
       <main className={styles.main}>
-        {filteredProperties.length > 0 ? (
-          filteredProperties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              onClick={handlePropertyClick}
-              onFavoriteClick={handleFavoriteClick}
-            />
-          ))
+        {loading && properties.length === 0 ? (
+          <div className={styles.loadingState}>
+            <p>매물을 불러오는 중...</p>
+          </div>
+        ) : error ? (
+          <div className={styles.errorState}>
+            <p>{error}</p>
+            <button onClick={() => fetchProperties()}>다시 시도</button>
+          </div>
+        ) : filteredProperties.length > 0 ? (
+          <>
+            {filteredProperties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+                onClick={handlePropertyClick}
+                onFavoriteClick={handleFavoriteClick}
+              />
+            ))}
+            {hasNext && (
+              <button
+                className={styles.loadMoreButton}
+                onClick={handleLoadMore}
+                disabled={loading}
+              >
+                {loading ? '로딩 중...' : '더보기'}
+              </button>
+            )}
+          </>
         ) : (
           <div className={styles.emptyState}>
             <p>매물이 없습니다</p>

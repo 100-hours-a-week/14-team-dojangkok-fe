@@ -46,6 +46,65 @@
   color: var(--gray-500, #6b7280);
 }
 
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--gray-500, #6b7280);
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--error, #ef4444);
+  gap: 16px;
+}
+
+.errorState button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--primary, #10b981);
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.errorState button:hover {
+  background: #059669;
+}
+
+.loadMoreButton {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid var(--gray-300, #d1d5db);
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.loadMoreButton:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (prefers-color-scheme: dark) {
   .page {
     background: var(--gray-900, #111827);
@@ -54,5 +113,15 @@
   .searchSection,
   .filterSection {
     background: var(--gray-800, #1f2937);
+  }
+
+  .loadMoreButton {
+    background: var(--gray-800, #1f2937);
+    border-color: var(--gray-700, #374151);
+    color: var(--gray-300, #d1d5db);
+  }
+
+  .loadMoreButton:hover {
+    background: var(--gray-700, #374151);
   }
 }
