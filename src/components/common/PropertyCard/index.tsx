@@ -8,13 +8,17 @@ import { Property } from '@/types/property';
 interface PropertyCardProps {
   property: Property;
   onClick: (id: string) => void;
-  onFavoriteClick: (id: string, event: React.MouseEvent) => void;
+  onFavoriteClick?: (id: string, event: React.MouseEvent) => void;
+  showDetails?: boolean;
+  footer?: React.ReactNode;
 }
 
 export default function PropertyCard({
   property,
   onClick,
   onFavoriteClick,
+  showDetails = true,
+  footer,
 }: PropertyCardProps) {
   const formatPrice = () => {
     if (property.priceType === '월세') {
@@ -68,19 +72,21 @@ export default function PropertyCard({
         <div className={styles.contentInner}>
           <div className={styles.header}>
             <h3 className={styles.price}>{formatPrice()}</h3>
-            <button
-              className={styles.favoriteButton}
-              onClick={(e) => onFavoriteClick(property.id, e)}
-              aria-label={
-                property.isFavorite ? '찜 해제' : '찜하기'
-              }
-            >
-              <span
-                className={`material-symbols-outlined ${styles.favoriteIcon}`}
+            {onFavoriteClick && (
+              <button
+                className={styles.favoriteButton}
+                onClick={(e) => onFavoriteClick(property.id, e)}
+                aria-label={
+                  property.isFavorite ? '찜 해제' : '찜하기'
+                }
               >
-                {property.isFavorite ? 'favorite' : 'favorite_border'}
-              </span>
-            </button>
+                <span
+                  className={`material-symbols-outlined ${styles.favoriteIcon}`}
+                >
+                  {property.isFavorite ? 'favorite' : 'favorite_border'}
+                </span>
+              </button>
+            )}
           </div>
 
           <h4 className={styles.title}>{property.title}</h4>
@@ -88,18 +94,22 @@ export default function PropertyCard({
           <p className={styles.address}>{property.detailedAddress}</p>
         </div>
 
-        <div className={styles.details}>
-          <div className={styles.detailsLeft}>
-            <span>{property.propertyType}</span>
-            <span className={styles.dot}></span>
-            <span>{property.floor}층</span>
-            <span className={styles.dot}></span>
-            <span>{property.area}m²</span>
-            <span className={styles.dot}></span>
-            <span>관리비 {property.maintenanceFee}만</span>
+        {showDetails ? (
+          <div className={styles.details}>
+            <div className={styles.detailsLeft}>
+              <span>{property.propertyType}</span>
+              <span className={styles.dot}></span>
+              <span>{property.floor}층</span>
+              <span className={styles.dot}></span>
+              <span>{property.area}m²</span>
+              <span className={styles.dot}></span>
+              <span>관리비 {property.maintenanceFee}만</span>
+            </div>
+            <span className={styles.time}>{getTimeAgo(property.createdAt)}</span>
           </div>
-          <span className={styles.time}>{getTimeAgo(property.createdAt)}</span>
-        </div>
+        ) : (
+          footer && <div className={styles.footer}>{footer}</div>
+        )}
       </div>
     </article>
   );

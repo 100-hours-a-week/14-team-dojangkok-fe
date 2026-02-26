@@ -51,8 +51,48 @@ const MOCK_MY_PROPERTIES: Record<TabType, Property[]> = {
       createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
     },
   ],
-  completed: [],
-  hidden: [],
+  completed: [
+    {
+      id: '3',
+      title: '역세권 풀옵션 오피스텔',
+      address: '서울 마포구',
+      detailedAddress: '서울 마포구 공덕동',
+      priceType: '월세',
+      deposit: 500,
+      monthlyRent: 55,
+      propertyType: '오피스텔',
+      floor: 8,
+      area: 33,
+      maintenanceFee: 10,
+      images: [
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
+      ],
+      isReviewed: true,
+      isFavorite: false,
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
+  hidden: [
+    {
+      id: '4',
+      title: '저렴한 원룸, 보증금 협의 가능',
+      address: '경기 부천시',
+      detailedAddress: '경기 부천시 원미구',
+      priceType: '월세',
+      deposit: 200,
+      monthlyRent: 30,
+      propertyType: '원룸',
+      floor: 2,
+      area: 19,
+      maintenanceFee: 4,
+      images: [
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
+      ],
+      isReviewed: false,
+      isFavorite: false,
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
 };
 
 export default function MyPropertyPage() {
@@ -80,6 +120,12 @@ export default function MyPropertyPage() {
     event.stopPropagation();
     console.log('Toggle favorite:', id);
     // TODO: API 호출하여 스크랩 토글
+  };
+
+  const handleStatusChange = (id: string, newStatus: TabType, event: React.MouseEvent) => {
+    event.stopPropagation();
+    console.log(`Change status: ${id} to ${newStatus}`);
+    // TODO: API 호출하여 상태 변경
   };
 
   const handleTabChange = (value: string) => {
@@ -117,15 +163,78 @@ export default function MyPropertyPage() {
           <>
             <p className={styles.count}>총 {currentProperties.length}건</p>
             <div className={styles.propertyList}>
-              {currentProperties.map((property) => (
-                <div key={property.id} className={styles.propertyCardWrapper}>
-                  <PropertyCard
-                    property={property}
-                    onClick={handlePropertyClick}
-                    onFavoriteClick={handleFavoriteClick}
-                  />
-                </div>
-              ))}
+              {currentProperties.map((property) => {
+                // 상태 변경 버튼 렌더링
+                const renderStatusButtons = () => {
+                  if (activeTab === 'ongoing') {
+                    return (
+                      <div className={styles.statusButtons}>
+                        <button
+                          className={styles.statusButton}
+                          onClick={(e) => handleStatusChange(property.id, 'completed', e)}
+                        >
+                          완료
+                        </button>
+                        <button
+                          className={styles.statusButton}
+                          onClick={(e) => handleStatusChange(property.id, 'hidden', e)}
+                        >
+                          숨김
+                        </button>
+                      </div>
+                    );
+                  }
+                  if (activeTab === 'completed') {
+                    return (
+                      <div className={styles.statusButtons}>
+                        <button
+                          className={styles.statusButton}
+                          onClick={(e) => handleStatusChange(property.id, 'ongoing', e)}
+                        >
+                          진행중
+                        </button>
+                        <button
+                          className={styles.statusButton}
+                          onClick={(e) => handleStatusChange(property.id, 'hidden', e)}
+                        >
+                          숨김
+                        </button>
+                      </div>
+                    );
+                  }
+                  if (activeTab === 'hidden') {
+                    return (
+                      <div className={styles.statusButtons}>
+                        <button
+                          className={styles.statusButton}
+                          onClick={(e) => handleStatusChange(property.id, 'ongoing', e)}
+                        >
+                          진행중
+                        </button>
+                        <button
+                          className={styles.statusButton}
+                          onClick={(e) => handleStatusChange(property.id, 'completed', e)}
+                        >
+                          완료
+                        </button>
+                      </div>
+                    );
+                  }
+                  return null;
+                };
+
+                return (
+                  <div key={property.id} className={styles.propertyCardWrapper}>
+                    <PropertyCard
+                      property={property}
+                      onClick={handlePropertyClick}
+                      onFavoriteClick={activeTab === 'scraped' ? handleFavoriteClick : undefined}
+                      showDetails={activeTab === 'scraped'}
+                      footer={renderStatusButtons()}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </>
         ) : (

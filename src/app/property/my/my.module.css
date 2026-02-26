@@ -34,6 +34,45 @@
   position: relative;
 }
 
+/* 상태 변경 버튼 */
+.statusButtons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.statusButton {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  background: white;
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.statusButton:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+.statusButton:active {
+  transform: scale(0.98);
+}
+
+/* 첫 번째 버튼 - MainButton과 동일한 초록색 */
+.statusButton:first-child {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.statusButton:first-child:hover {
+  background: #059669;
+}
+
 /* 빈 상태 */
 .emptyState {
   display: flex;

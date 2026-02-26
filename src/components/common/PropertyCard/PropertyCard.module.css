@@ -15,6 +15,11 @@
   opacity: 0.8;
 }
 
+/* footer(버튼 영역)에 마우스를 올렸을 때는 카드의 hover 효과 제거 */
+.card:has(.footer:hover) {
+  opacity: 1;
+}
+
 .imageContainer {
   position: relative;
   width: 110px;
@@ -153,6 +158,13 @@
   height: 2px;
   background: var(--gray-300, #d1d5db);
   border-radius: 50%;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--gray-500, #6b7280);
 }
 
 @media (prefers-color-scheme: dark) {
