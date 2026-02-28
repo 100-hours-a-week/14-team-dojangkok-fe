@@ -2,11 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLayout } from '@/contexts/LayoutContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useToast } from '@/contexts/ToastContext';
-import { uploadFiles, deleteUploadedFile } from '@/lib/api/contract';
-import { ApiError } from '@/lib/api/client';
+import {
+  uploadFiles,
+  createEasyContract,
+  deleteUploadedFile,
+} from '@/lib/api/contract';
+import { ApiError, ensureValidToken } from '@/lib/api/client';
 import { validateEasyContractFiles } from '@/utils/fileValidation';
 import dynamic from 'next/dynamic';
 import {
@@ -25,32 +28,35 @@ interface ImageItem {
   id: string;
   url: string;
   file: File;
-  fileAssetId?: number; // 업로드된 파일의 서버 ID
+  fileAssetId?: number;
 }
 
-export default function HomePage() {
+export default function RegistryDocumentPage() {
   const router = useRouter();
   const toast = useToast();
   const [images, setImages] = useState<ImageItem[]>([]);
-  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBackModalOpen, setIsBackModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { setNavigationGuard } = useLayout();
-  const { analysisState, clearAnalysis } = useAnalysis();
+  const [contractFileIds, setContractFileIds] = useState<number[]>([]);
+  const { startAnalysis, completeAnalysis, failAnalysis } = useAnalysis();
 
   useEffect(() => {
-    if (images.length > 0) {
-      setNavigationGuard({
-        message: '페이지를 이동할까요?',
-        subMessage: '첨부된 이미지가 사라집니다.',
-      });
-    } else {
-      setNavigationGuard(null);
+    const stored = sessionStorage.getItem('contractFileAssetIds');
+    if (!stored) {
+      router.replace('/');
+      return;
     }
+    setContractFileIds(JSON.parse(stored));
+  }, [router]);
 
-    return () => {
-      setNavigationGuard(null);
-    };
-  }, [images.length, setNavigationGuard]);
+  const handleBackClick = () => {
+    if (images.length > 0) {
+      setIsBackModalOpen(true);
+    } else {
+      router.push('/');
+    }
+  };
 
   const handleUpload = async (files: FileList) => {
     if (isUploading) return;
@@ -59,7 +65,6 @@ export default function HomePage() {
     const currentCount = images.length;
     const filesToAdd = Array.from(files);
 
-    // 현재 개수 + 선택한 파일 개수가 최대치를 초과하면 전체 거부
     if (currentCount + filesToAdd.length > MAX_IMAGES) {
       toast.error(
         `최대 5장까지만 선택할 수 있습니다. (현재: ${currentCount}장, 선택: ${filesToAdd.length}장)`
@@ -67,7 +72,6 @@ export default function HomePage() {
       return;
     }
 
-    // 프론트엔드 검증 (파일 선택 시점)
     const validationError = validateEasyContractFiles(filesToAdd);
     if (validationError) {
       toast.error(validationError.message);
@@ -77,10 +81,8 @@ export default function HomePage() {
     try {
       setIsUploading(true);
 
-      // 즉시 API 호출하여 파일 업로드 (Presigned URL → S3 → 완료 알림)
       const fileAssetIds = await uploadFiles(filesToAdd);
 
-      // 업로드된 파일 정보를 상태에 저장
       const newImages: ImageItem[] = filesToAdd.map((file, index) => ({
         id: fileAssetIds[index].toString(),
         url: URL.createObjectURL(file),
@@ -91,7 +93,6 @@ export default function HomePage() {
       setImages((prev) => [...prev, ...newImages]);
       toast.success(`${filesToAdd.length}개 업로드 완료`);
     } catch (err) {
-      console.error('이미지 업로드 실패:', err);
       if (err instanceof ApiError) {
         toast.error(err.message);
       } else {
@@ -113,32 +114,62 @@ export default function HomePage() {
   };
 
   const handleAnalyzeClick = () => {
-    // 이미 분석이 진행 중이거나 완료 대기 중이면 경고 모달
-    if (
-      analysisState.status === 'PROCESSING' ||
-      analysisState.status === 'COMPLETED'
-    ) {
-      setIsWarningModalOpen(true);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmAnalyze = async () => {
+    const isTokenValid = await ensureValidToken();
+    if (!isTokenValid) {
+      setIsModalOpen(false);
+      toast.error('로그인이 만료되었습니다. 다시 로그인해주세요.');
+      setTimeout(() => {
+        router.push('/signin');
+      }, 1500);
       return;
     }
 
-    // 업로드된 파일 ID 확인
-    const fileAssetIds = images
+    const registryFileIds = images
       .map((img) => img.fileAssetId)
       .filter((id): id is number => id !== undefined);
 
-    // 계약서 파일 ID를 sessionStorage에 저장 후 등기부등본 페이지로 이동
-    sessionStorage.setItem(
-      'contractFileAssetIds',
-      JSON.stringify(fileAssetIds)
-    );
-    setNavigationGuard(null);
-    router.push('/registry-document');
+    if (images.length > 0 && registryFileIds.length !== images.length) {
+      toast.error(
+        '일부 이미지가 아직 업로드 중입니다. 잠시 후 다시 시도해주세요.'
+      );
+      return;
+    }
+
+    sessionStorage.removeItem('contractFileAssetIds');
+
+    startAnalysis(0);
+    setIsModalOpen(false);
+    router.push('/loading-analysis');
+
+    (async () => {
+      try {
+        const response = await createEasyContract(
+          contractFileIds,
+          registryFileIds
+        );
+        const easyContractId = response.data.easy_contract_id;
+        completeAnalysis(easyContractId);
+      } catch (err) {
+        if (err instanceof ApiError) {
+          failAnalysis(0, err.message);
+        } else {
+          failAnalysis(0, '분석 요청에 실패했습니다.');
+        }
+      }
+    })();
   };
 
   return (
     <>
-      <Header title="도장콕" />
+      <Header
+        title="등기부등본 첨부"
+        showBackButton
+        onBackClick={handleBackClick}
+      />
       <main style={{ paddingBottom: 180 }}>
         {/* 서비스 소개 카드 */}
         <div style={{ padding: '20px 16px' }}>
@@ -148,8 +179,8 @@ export default function HomePage() {
               width: '100%',
               borderRadius: 16,
               background:
-                'linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 50%, #ECFDF5 100%)',
-              border: '1px solid #D1FAE5',
+                'linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 50%, #EFF6FF 100%)',
+              border: '1px solid #BFDBFE',
               padding: '20px 24px',
               overflow: 'hidden',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
@@ -161,13 +192,13 @@ export default function HomePage() {
                 position: 'absolute',
                 top: 16,
                 right: 16,
-                background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
+                background: 'linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)',
                 color: 'white',
                 fontSize: 10,
                 fontWeight: 700,
                 padding: '4px 10px',
                 borderRadius: 9999,
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
@@ -191,15 +222,15 @@ export default function HomePage() {
                 justifyContent: 'center',
                 padding: 12,
                 borderRadius: 9999,
-                backgroundColor: '#D1FAE5',
-                color: '#10b981',
+                backgroundColor: '#DBEAFE',
+                color: '#3B82F6',
               }}
             >
               <span
                 className="material-symbols-outlined"
                 style={{ fontSize: 32 }}
               >
-                task_alt
+                article
               </span>
             </div>
 
@@ -210,12 +241,11 @@ export default function HomePage() {
                 fontSize: 20,
                 fontWeight: 700,
                 lineHeight: 1.3,
-                marginBottom: 12,
                 paddingRight: 80,
-                margin: 0,
+                margin: '0 0 12px 0',
               }}
             >
-              도장 찍기 전에, 도장콕!
+              등기부등본도 함께 분석해요
             </h1>
 
             {/* 설명 박스 */}
@@ -229,19 +259,11 @@ export default function HomePage() {
               }}
             >
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 8,
-                }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}
               >
                 <span
                   className="material-symbols-outlined"
-                  style={{
-                    color: '#10b981',
-                    fontSize: 16,
-                    marginTop: 2,
-                  }}
+                  style={{ color: '#3B82F6', fontSize: 16, marginTop: 2 }}
                 >
                   check_circle
                 </span>
@@ -254,7 +276,7 @@ export default function HomePage() {
                     margin: 0,
                   }}
                 >
-                  계약서 내용을 쉬운 말로 읽어봐요
+                  등기부등본으로 권리관계를 꼼꼼히 확인해요
                 </p>
               </div>
             </div>
@@ -267,13 +289,39 @@ export default function HomePage() {
                 right: -24,
                 width: 96,
                 height: 96,
-                backgroundColor: 'rgba(167, 243, 208, 0.2)',
+                backgroundColor: 'rgba(191, 219, 254, 0.2)',
                 borderRadius: '50%',
                 filter: 'blur(40px)',
                 pointerEvents: 'none',
               }}
             />
           </div>
+        </div>
+
+        {/* 업로더 헤더 */}
+        <div
+          style={{
+            padding: '4px 16px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#111418' }}>
+            등기부등본
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: '#6366F1',
+              backgroundColor: '#EEF2FF',
+              padding: '2px 8px',
+              borderRadius: 9999,
+            }}
+          >
+            선택
+          </span>
         </div>
 
         {/* 이미지 업로더 */}
@@ -283,7 +331,7 @@ export default function HomePage() {
             mainText={
               isUploading
                 ? '이미지 업로드 중...'
-                : '계약서 이미지를 첨부해주세요'
+                : '등기부등본 이미지를 첨부해주세요'
             }
             subText="JPG, PNG, PDF 지원 · 한장 당 15MB, 최대 5장"
           />
@@ -296,127 +344,20 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
       <BottomFixedArea>
-        <MainButton
-          onClick={handleAnalyzeClick}
-          disabled={images.length === 0 || isUploading}
-        >
-          {isUploading ? '이미지 업로드 중...' : '다음'}
+        <MainButton onClick={handleAnalyzeClick} disabled={isUploading}>
+          {isUploading ? '이미지 업로드 중...' : '분석 요청하기'}
         </MainButton>
       </BottomFixedArea>
 
-      {/* 분석 진행 중 플로팅 버튼 */}
-      {analysisState.status === 'PROCESSING' && (
-        <button
-          onClick={() => router.push('/loading-analysis')}
-          style={{
-            position: 'fixed',
-            bottom: '200px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#4F46E5',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '24px',
-            border: 'none',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            zIndex: 1000,
-          }}
-        >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '20px', animation: 'spin 1s linear infinite' }}
-          >
-            progress_activity
-          </span>
-          분석 진행 중
-        </button>
-      )}
-
-      {/* 분석 완료 플로팅 버튼 */}
-      {analysisState.status === 'COMPLETED' && analysisState.easyContractId && (
-        <button
-          onClick={() => {
-            router.push(`/analysis-result?id=${analysisState.easyContractId}`);
-            clearAnalysis();
-          }}
-          style={{
-            position: 'fixed',
-            bottom: '200px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#10B981',
-            color: 'white',
-            padding: '12px 20px',
-            borderRadius: '24px',
-            border: 'none',
-            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            zIndex: 1000,
-            animation: 'bounce 0.5s ease-in-out',
-          }}
-        >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: '20px' }}
-          >
-            check_circle
-          </span>
-          분석 완료!
-        </button>
-      )}
-
-      <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        @keyframes bounce {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
-      `}</style>
-
-      {/* 분석 진행 중 경고 모달 */}
+      {/* 분석 확인 모달 */}
       <Modal
-        isOpen={isWarningModalOpen}
-        onClose={() => setIsWarningModalOpen(false)}
-        onConfirm={() => {
-          setIsWarningModalOpen(false);
-          if (analysisState.status === 'PROCESSING') {
-            router.push('/loading-analysis');
-          } else if (
-            analysisState.status === 'COMPLETED' &&
-            analysisState.easyContractId
-          ) {
-            router.push(`/analysis-result?id=${analysisState.easyContractId}`);
-            clearAnalysis();
-          }
-        }}
-        title="이미 분석이 진행 중입니다"
-        confirmText={
-          analysisState.status === 'COMPLETED' ? '결과 확인하기' : '확인하기'
-        }
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmAnalyze}
+        title="계약서 분석을 시작할까요?"
+        confirmText="분석 시작"
         cancelText="취소"
       >
         <p
@@ -427,9 +368,33 @@ export default function HomePage() {
             textAlign: 'center',
           }}
         >
-          {analysisState.status === 'PROCESSING'
-            ? '현재 계약서 분석이 진행 중입니다.\n로딩 페이지에서 진행 상태를 확인하세요.'
-            : '분석이 완료되었습니다.\n결과 페이지로 이동하시겠어요?'}
+          분석은 1~10분 소요되며,
+          <br />
+          분석 상태는 홈에서 확인할 수 있어요.
+        </p>
+      </Modal>
+
+      {/* 뒤로가기 확인 모달 */}
+      <Modal
+        isOpen={isBackModalOpen}
+        onClose={() => setIsBackModalOpen(false)}
+        onConfirm={() => {
+          setIsBackModalOpen(false);
+          router.push('/');
+        }}
+        title="이전 페이지로 이동할까요?"
+        confirmText="이동"
+        cancelText="취소"
+      >
+        <p
+          style={{
+            color: '#666',
+            fontSize: 14,
+            lineHeight: 1.6,
+            textAlign: 'center',
+          }}
+        >
+          첨부된 이미지가 사라집니다.
         </p>
       </Modal>
     </>
