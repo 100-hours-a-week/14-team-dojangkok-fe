@@ -174,11 +174,14 @@ export async function updatePropertyVisibility(
 ) {
   const body: PropertyVisibilityUpdateDto = { is_hidden: isHidden };
 
-  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/post-status`, {
-    method: 'PATCH',
-    body: JSON.stringify(body),
-    requiresAuth: true,
-  });
+  return apiClient<{ data: null }>(
+    `${BASE_URL}/${propertyPostId}/post-status`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+      requiresAuth: true,
+    }
+  );
 }
 
 /**
@@ -213,12 +216,29 @@ export async function deletePropertyPost(propertyPostId: number) {
   });
 }
 
+export interface PropertyPostUpdateRequestDto {
+  title?: string;
+  price_main?: number;
+  price_monthly?: number;
+  content?: string;
+  easy_contract_id?: number;
+}
+
 /**
- * 매물 수정 (임시 placeholder)
+ * 매물 수정
  */
-export async function updatePropertyPost(propertyPostId: number, data: Record<string, unknown>) {
-  console.log('수정 API 호출 시뮬레이션:', propertyPostId, data);
-  return Promise.resolve({ data: null });
+export async function updatePropertyPost(
+  propertyPostId: number,
+  data: PropertyPostUpdateRequestDto
+) {
+  return apiClient<{ data: PropertyPostDetailDto }>(
+    `${BASE_URL}/${propertyPostId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+      requiresAuth: true,
+    }
+  );
 }
 
 // ===== 매물 생성 =====
@@ -237,7 +257,6 @@ export interface PropertyPostCreateRequestDto {
   floor: number;
   maintenance_fee: number;
   easy_contract_id?: number;
-  file_asset_ids?: number[];
 }
 
 export interface PropertyPostCreateResponseDto {
@@ -310,7 +329,7 @@ export async function getPresignedUrl(
   };
 
   return apiClient<{ data: PresignedUrlResponseDto }>(
-    `${BASE_URL}/${propertyPostId}/files/presigned-urls`,
+    `${BASE_URL}/files/presigned-urls`,
     {
       method: 'POST',
       body: JSON.stringify(body),
@@ -363,6 +382,17 @@ export async function completePropertyFileUpload(fileAssetId: number) {
  * @param propertyPostId 매물 게시글 ID
  * @param fileAssetIds 파일 에셋 ID 목록
  */
+/**
+ * 매물 이미지 삭제
+ * @param fileAssetId 파일 에셋 ID
+ */
+export async function deletePropertyFile(fileAssetId: number) {
+  return apiClient<{ data: null }>(`${BASE_URL}/files/${fileAssetId}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  });
+}
+
 export async function attachFilesToPost(
   propertyPostId: number,
   fileAssetIds: number[]
@@ -371,12 +401,9 @@ export async function attachFilesToPost(
     items: fileAssetIds.map((id) => ({ file_asset_id: id })),
   };
 
-  return apiClient<{ data: null }>(
-    `${BASE_URL}/${propertyPostId}/files`,
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-      requiresAuth: true,
-    }
-  );
+  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/files`, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    requiresAuth: true,
+  });
 }

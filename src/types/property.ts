@@ -45,7 +45,7 @@ export interface PropertyPostListItemDto {
   is_verified: boolean;
   is_hidden: boolean;
   is_bookmarked: boolean;
-  created_at: string;
+  created_at: string | number[];
   thumbnail: FileAssetDto | null;
 }
 
@@ -66,6 +66,7 @@ export interface PropertyPostDetailDto {
   easy_contract_id: number | null;
   title: string;
   address: string;
+  address_detail?: string;
   price_main: number;
   price_monthly: number | null;
   content: string;
@@ -80,7 +81,7 @@ export interface PropertyPostDetailDto {
   is_hidden: boolean;
   is_verified: boolean;
   is_bookmarked: boolean;
-  created_at: string;
+  created_at: string | number[];
   images: PropertyPostDetailImageDto[];
 }
 

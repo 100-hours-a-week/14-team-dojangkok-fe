@@ -10,6 +10,19 @@ import {
 } from '@/types/property';
 
 /**
+ * Java LocalDateTime 배열 [year, month, day, hour, minute, second, nano] 또는
+ * ISO 문자열을 ISO 문자열로 변환
+ */
+function parseCreatedAt(value: string | number[]): string {
+  if (Array.isArray(value)) {
+    const [year, month, day, hour, minute, second, nano] = value;
+    const ms = Math.floor((nano ?? 0) / 1_000_000);
+    return new Date(year, month - 1, day, hour, minute, second, ms).toISOString();
+  }
+  return value;
+}
+
+/**
  * API 응답(PropertyPostListItemDto)을 레거시 Property 타입으로 변환
  */
 export function convertToProperty(dto: PropertyPostListItemDto): Property {
@@ -51,7 +64,7 @@ export function convertToProperty(dto: PropertyPostListItemDto): Property {
     images,
     isReviewed: dto.is_verified,
     isFavorite: is_bookmarked,
-    createdAt: dto.created_at,
+    createdAt: parseCreatedAt(dto.created_at),
   };
 }
 
