@@ -9,6 +9,10 @@ interface PropertyCardProps {
   property: Property;
   onClick: (id: string) => void;
   onFavoriteClick?: (id: string, event: React.MouseEvent) => void;
+  onOptionClick?: (
+    property: Property,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => void;
   showDetails?: boolean;
   footer?: React.ReactNode;
 }
@@ -17,6 +21,7 @@ export default function PropertyCard({
   property,
   onClick,
   onFavoriteClick,
+  onOptionClick,
   showDetails = true,
   footer,
 }: PropertyCardProps) {
@@ -31,7 +36,9 @@ export default function PropertyCard({
   };
 
   const getTimeAgo = (dateString: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
     const now = new Date();
     const diffInHours = Math.floor(
       (now.getTime() - date.getTime()) / (1000 * 60 * 60)
@@ -71,37 +78,46 @@ export default function PropertyCard({
             <StampBadge size="medium" />
           </div>
         )}
-        {hasImage && (
-          <div className={styles.imageCount}>
-            1/{property.images.length}
-          </div>
-        )}
       </div>
 
       <div className={styles.content}>
         <div className={styles.contentInner}>
           <div className={styles.header}>
             <h3 className={styles.price}>{formatPrice()}</h3>
-            {onFavoriteClick && (
-              <button
-                className={styles.favoriteButton}
-                onClick={(e) => onFavoriteClick(property.id, e)}
-                aria-label={
-                  property.isFavorite ? '찜 해제' : '찜하기'
-                }
-              >
-                <span
-                  className={`material-symbols-outlined ${styles.favoriteIcon}`}
+            <div className={styles.headerActions}>
+              {onFavoriteClick && (
+                <button
+                  className={styles.favoriteButton}
+                  onClick={(e) => onFavoriteClick(property.id, e)}
+                  aria-label={property.isFavorite ? '찜 해제' : '찜하기'}
                 >
-                  {property.isFavorite ? 'favorite' : 'favorite_border'}
-                </span>
-              </button>
-            )}
+                  <span
+                    className={`material-symbols-outlined ${
+                      styles.favoriteIcon
+                    } ${property.isFavorite ? styles.favoriteActive : ''}`}
+                  >
+                    {property.isFavorite ? 'favorite' : 'favorite_border'}
+                  </span>
+                </button>
+              )}
+              {onOptionClick && (
+                <button
+                  className={styles.optionButton}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOptionClick(property, e);
+                  }}
+                  aria-label="옵션 더보기"
+                >
+                  <span className="material-symbols-outlined">more_vert</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <h4 className={styles.title}>{property.title}</h4>
 
-          <p className={styles.address}>{property.detailedAddress}</p>
+          {showDetails && <p className={styles.address}>{property.detailedAddress}</p>}
         </div>
 
         {showDetails ? (
@@ -113,7 +129,7 @@ export default function PropertyCard({
               <span className={styles.dot}></span>
               <span>{property.area}m²</span>
               <span className={styles.dot}></span>
-              <span>관리비 {property.maintenanceFee}만</span>
+              <span>{property.maintenanceFee ? `관리비 ${property.maintenanceFee}만` : '관리비 없음'}</span>
             </div>
             <span className={styles.time}>{getTimeAgo(property.createdAt)}</span>
           </div>

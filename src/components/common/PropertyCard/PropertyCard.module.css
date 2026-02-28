@@ -104,6 +104,12 @@
   color: var(--primary);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .favoriteButton {
   padding: 4px;
   margin: -4px -8px -4px 0;
@@ -111,7 +117,7 @@
   border: none;
   cursor: pointer;
   color: var(--gray-400, #9ca3af);
-  transition: color 0.2s;
+  transition: all 0.2s;
 }
 
 .favoriteButton:hover {
@@ -120,12 +126,27 @@
 
 .favoriteIcon {
   font-size: 20px;
+  color: inherit;
   font-variation-settings: 'FILL' 0, 'wght' 400;
 }
 
-.favoriteButton:hover .favoriteIcon,
-.favoriteButton .favoriteIcon {
-  color: var(--error, #ef4444);
+.favoriteActive {
+  color: var(--error, #ef4444) !important;
+  font-variation-settings: 'FILL' 1, 'wght' 400 !important;
+}
+
+.optionButton {
+  padding: 4px;
+  margin: -4px -8px -4px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-500, #6b7280);
+  transition: color 0.2s;
+}
+
+.optionButton:hover {
+  color: var(--gray-900, #111827);
 }
 
 .title {
