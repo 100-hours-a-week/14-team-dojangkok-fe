@@ -365,7 +365,20 @@ export default function MyPropertyPage() {
             {hasNext && <div ref={sentinelRef} style={{ height: 1 }} />}
           </>
         ) : (
-          <div className={styles.emptyState}>...</div>
+          <div className={styles.emptyState}>
+            <span className={`material-symbols-outlined ${styles.emptyIcon}`}>
+              {activeTab === 'scraped' && 'bookmark_border'}
+              {activeTab === 'ongoing' && 'home'}
+              {activeTab === 'completed' && 'check_circle'}
+              {activeTab === 'hidden' && 'visibility_off'}
+            </span>
+            <p className={styles.emptyText}>
+              {activeTab === 'scraped' && '스크랩한 매물이 없어요'}
+              {activeTab === 'ongoing' && '진행 중인 매물이 없어요'}
+              {activeTab === 'completed' && '완료된 매물이 없어요'}
+              {activeTab === 'hidden' && '숨김 처리한 매물이 없어요'}
+            </p>
+          </div>
         )}
       </main>
 
