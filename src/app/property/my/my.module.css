@@ -62,15 +62,37 @@
   transform: scale(0.98);
 }
 
-/* 첫 번째 버튼 - MainButton과 동일한 초록색 */
-.statusButton:first-child {
+/* 첫 번째 버튼 - 진행중/완료 등 상태 변경용 */
+.statusButton.primary {
   background: #10b981;
   color: white;
   border-color: #10b981;
 }
 
-.statusButton:first-child:hover {
+.statusButton.primary:hover {
   background: #059669;
+}
+
+/* 두 번째 버튼 - 숨김 등 보조 상태 변경용 */
+.statusButton.secondary {
+  background: white;
+  color: var(--gray-700, #374151);
+  border-color: var(--gray-300, #d1d5db);
+}
+
+.statusButton.secondary:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+/* 세 번째 버튼 - 삭제용 */
+.statusButton.danger {
+  border-color: #fee2e2;
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.statusButton.danger:hover {
+  background: #fee2e2;
 }
 
 /* 로딩 상태 */
