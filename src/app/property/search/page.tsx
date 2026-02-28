@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './search.module.css';
 
 interface RecentSearch {
@@ -11,11 +11,13 @@ interface RecentSearch {
 
 export default function PropertySearchPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get('keyword') || ''
+  );
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
 
   useEffect(() => {
-    // Load recent searches from localStorage
     const saved = localStorage.getItem('recentPropertySearches');
     if (saved) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -24,32 +26,41 @@ export default function PropertySearchPage() {
   }, []);
 
   const handleBackClick = () => {
-    router.back();
+    const params = searchParams.toString();
+    router.replace(`/property${params ? `?${params}` : ''}`);
+  };
+
+  const navigateToResults = (query: string) => {
+    const trimmed = query.trim();
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (trimmed) {
+      // 최근 검색어 저장
+      const newSearch: RecentSearch = {
+        query: trimmed,
+        date: new Date().toISOString(),
+      };
+      const updated = [
+        newSearch,
+        ...recentSearches.filter((s) => s.query !== trimmed),
+      ].slice(0, 10);
+      setRecentSearches(updated);
+      localStorage.setItem('recentPropertySearches', JSON.stringify(updated));
+      params.set('keyword', trimmed);
+    } else {
+      params.delete('keyword');
+    }
+
+    router.replace(`/property${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-
-    // Save to recent searches
-    const newSearch: RecentSearch = {
-      query: searchQuery.trim(),
-      date: new Date().toISOString(),
-    };
-
-    const updated = [
-      newSearch,
-      ...recentSearches.filter((s) => s.query !== searchQuery.trim()),
-    ].slice(0, 10); // Keep only 10 recent searches
-
-    setRecentSearches(updated);
-    localStorage.setItem('recentPropertySearches', JSON.stringify(updated));
-
-    // Navigate to results (or implement search logic)
-    console.log('Search for:', searchQuery);
+    navigateToResults(searchQuery);
   };
 
   const handleRecentSearchClick = (query: string) => {
     setSearchQuery(query);
+    navigateToResults(query);
   };
 
   const handleDeleteSearch = (query: string) => {
@@ -110,6 +121,14 @@ export default function PropertySearchPage() {
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             autoFocus
           />
+          {searchQuery && (
+            <button
+              className={styles.clearButton}
+              onClick={() => setSearchQuery('')}
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          )}
           <button className={styles.searchButton} onClick={handleSearch}>
             <span className="material-symbols-outlined">search</span>
           </button>

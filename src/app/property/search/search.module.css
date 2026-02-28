@@ -66,6 +66,31 @@
   box-shadow: 0 0 0 2px var(--primary, #10b981);
 }
 
+.clearButton {
+  position: absolute;
+  right: 52px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gray-300, #d1d5db);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clearButton:hover {
+  background: var(--gray-400, #9ca3af);
+}
+
+.clearButton .material-symbols-outlined {
+  font-size: 14px;
+}
+
 .searchButton {
   position: absolute;
   right: 8px;
