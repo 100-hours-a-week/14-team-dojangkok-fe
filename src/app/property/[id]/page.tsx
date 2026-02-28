@@ -295,8 +295,9 @@ export default function PropertyDetailPage() {
           <h1 className={styles.price}>{formatPrice(property)}</h1>
           <h2 className={styles.title}>{property.title}</h2>
           <p className={styles.address}>
-            {property.address}
-            {property.address_detail ? ` ${property.address_detail}` : ''}
+            {[property.address_main, property.address_detail]
+              .filter(Boolean)
+              .join(' ')}
           </p>
         </section>
 

@@ -65,8 +65,8 @@ export interface PropertyPostDetailDto {
   };
   easy_contract_id: number | null;
   title: string;
-  address: string;
-  address_detail?: string;
+  address_main: string;
+  address_detail: string;
   price_main: number;
   price_monthly: number | null;
   content: string;
