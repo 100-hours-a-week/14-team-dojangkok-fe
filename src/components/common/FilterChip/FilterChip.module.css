@@ -43,7 +43,6 @@
   color: var(--gray-400, #9ca3af);
 }
 
-
 @media (prefers-color-scheme: dark) {
   .chip {
     background: var(--gray-800, #1f2937);

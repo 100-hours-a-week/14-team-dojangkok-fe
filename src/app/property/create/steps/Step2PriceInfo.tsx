@@ -34,7 +34,9 @@ export default function Step2PriceInfo({
                 updateFormData({
                   priceType: type,
                   monthlyRent:
-                    type === '월세' || type === '반전세' ? formData.monthlyRent : 0,
+                    type === '월세' || type === '반전세'
+                      ? formData.monthlyRent
+                      : 0,
                 })
               }
             >
@@ -98,9 +100,7 @@ export default function Step2PriceInfo({
             className={`${styles.input} ${errors.maintenanceFee ? styles.inputError : ''}`}
             placeholder="0"
             value={formData.maintenanceFee ?? ''}
-            onChange={(e) =>
-              updateFormData({ maintenanceFee: e.target.value })
-            }
+            onChange={(e) => updateFormData({ maintenanceFee: e.target.value })}
           />
           <span className={styles.inputUnit}>만원</span>
         </div>

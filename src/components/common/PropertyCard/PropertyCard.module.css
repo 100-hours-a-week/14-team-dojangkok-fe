@@ -127,12 +127,16 @@
 .favoriteIcon {
   font-size: 20px;
   color: inherit;
-  font-variation-settings: 'FILL' 0, 'wght' 400;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400;
 }
 
 .favoriteActive {
   color: var(--error, #ef4444) !important;
-  font-variation-settings: 'FILL' 1, 'wght' 400 !important;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400 !important;
 }
 
 .optionButton {

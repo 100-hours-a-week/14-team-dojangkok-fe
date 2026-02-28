@@ -93,7 +93,9 @@ export default function Step3Details({
           onChange={(e) => updateFormData({ address: e.target.value })}
           disabled={isEditMode}
         />
-        {isEditMode && <p className={styles.disabledHint}>주소는 수정할 수 없습니다</p>}
+        {isEditMode && (
+          <p className={styles.disabledHint}>주소는 수정할 수 없습니다</p>
+        )}
         <p className={styles.error}>{errors.address || '\u00A0'}</p>
       </div>
 
@@ -108,9 +110,7 @@ export default function Step3Details({
           placeholder="예: 101동 202호"
           maxLength={100}
           value={formData.detailedAddress ?? ''}
-          onChange={(e) =>
-            updateFormData({ detailedAddress: e.target.value })
-          }
+          onChange={(e) => updateFormData({ detailedAddress: e.target.value })}
           disabled={isEditMode}
         />
         <p className={styles.error}>{errors.detailedAddress || '\u00A0'}</p>
@@ -184,7 +184,9 @@ export default function Step3Details({
             </div>
             {floorNumber && !floorError && (
               <span className={styles.floorPreview}>
-                {floorType === 'basement' ? `B${floorNumber}` : `${floorNumber}F`}
+                {floorType === 'basement'
+                  ? `B${floorNumber}`
+                  : `${floorNumber}F`}
               </span>
             )}
           </div>

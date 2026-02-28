@@ -12,10 +12,7 @@ const ImageViewerModal = dynamic(
 );
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import {
-  getPropertyPost,
-  deletePropertyPost,
-} from '@/lib/api/property';
+import { getPropertyPost, deletePropertyPost } from '@/lib/api/property';
 import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import type { PropertyPostDetailDto } from '@/types/property';
 import { PROPERTY_TYPE_LABELS, RENT_TYPE_LABELS } from '@/types/property';
@@ -90,7 +87,7 @@ export default function PropertyDetailPage() {
     : [];
 
   useEffect(() => {
-// ... (fetch implementation 생략 가능하도록 정확한 위치 지정)
+    // ... (fetch implementation 생략 가능하도록 정확한 위치 지정)
     const fetch = async () => {
       setLoading(true);
       try {
@@ -297,7 +294,10 @@ export default function PropertyDetailPage() {
           )}
           <h1 className={styles.price}>{formatPrice(property)}</h1>
           <h2 className={styles.title}>{property.title}</h2>
-          <p className={styles.address}>{property.address}{property.address_detail ? ` ${property.address_detail}` : ''}</p>
+          <p className={styles.address}>
+            {property.address}
+            {property.address_detail ? ` ${property.address_detail}` : ''}
+          </p>
         </section>
 
         {/* 매물 정보 */}
@@ -319,13 +319,17 @@ export default function PropertyDetailPage() {
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>면적</span>
               <span className={styles.infoValue}>
-                {property.exclusive_area_m2}m²({to평(property.exclusive_area_m2)}평)
+                {property.exclusive_area_m2}m²(
+                {to평(property.exclusive_area_m2)}평)
               </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>층수</span>
               <span className={styles.infoValue}>
-                {property.is_basement ? `B${Math.abs(property.floor)}` : `${property.floor}`}층
+                {property.is_basement
+                  ? `B${Math.abs(property.floor)}`
+                  : `${property.floor}`}
+                층
               </span>
             </div>
             <div className={styles.infoItem}>
@@ -425,7 +429,11 @@ export default function PropertyDetailPage() {
         currentIndex={currentImageIndex}
         onClose={() => setIsViewerOpen(false)}
         onPrevious={() => setCurrentImageIndex((prev) => Math.max(prev - 1, 0))}
-        onNext={() => setCurrentImageIndex((prev) => Math.min(prev + 1, sortedImages.length - 1))}
+        onNext={() =>
+          setCurrentImageIndex((prev) =>
+            Math.min(prev + 1, sortedImages.length - 1)
+          )
+        }
       />
 
       <Modal

@@ -23,7 +23,12 @@ import {
   type PropertyPostCreateRequestDto,
   type PropertyPostUpdateRequestDto,
 } from '@/lib/api/property';
-import { PROPERTY_TYPE_MAP, RENT_TYPE_MAP, PROPERTY_TYPE_LABELS, RENT_TYPE_LABELS } from '@/types/property';
+import {
+  PROPERTY_TYPE_MAP,
+  RENT_TYPE_MAP,
+  PROPERTY_TYPE_LABELS,
+  RENT_TYPE_LABELS,
+} from '@/types/property';
 
 function resolveContentType(file: File): string {
   if (file.type) return file.type;
@@ -67,7 +72,9 @@ export interface ValidationErrors {
 export default function PropertyCreatePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const editId = searchParams.get('edit') ? Number(searchParams.get('edit')) : null;
+  const editId = searchParams.get('edit')
+    ? Number(searchParams.get('edit'))
+    : null;
   const isEditMode = editId !== null;
 
   const { success, error: showError } = useToast();
@@ -129,7 +136,7 @@ export default function PropertyCreatePage() {
       }
     };
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId]);
 
   const handleBackClick = () => {
@@ -140,7 +147,10 @@ export default function PropertyCreatePage() {
     }
   };
 
-  const validateStep = (step: number, data: PropertyFormData = formData): ValidationErrors => {
+  const validateStep = (
+    step: number,
+    data: PropertyFormData = formData
+  ): ValidationErrors => {
     const newErrors: ValidationErrors = {};
 
     switch (step) {
@@ -161,12 +171,18 @@ export default function PropertyCreatePage() {
         if (data.priceType === '월세' || data.priceType === '반전세') {
           if (!data.monthlyRent || data.monthlyRent === '') {
             newErrors.monthlyRent = '월세를 입력해주세요';
-          } else if (isNaN(Number(data.monthlyRent)) || Number(data.monthlyRent) <= 0) {
+          } else if (
+            isNaN(Number(data.monthlyRent)) ||
+            Number(data.monthlyRent) <= 0
+          ) {
             newErrors.monthlyRent = '올바른 숫자를 입력해주세요';
           }
         }
         if (data.maintenanceFee && data.maintenanceFee !== '') {
-          if (isNaN(Number(data.maintenanceFee)) || Number(data.maintenanceFee) < 0) {
+          if (
+            isNaN(Number(data.maintenanceFee)) ||
+            Number(data.maintenanceFee) < 0
+          ) {
             newErrors.maintenanceFee = '올바른 숫자를 입력해주세요';
           }
         }
@@ -196,7 +212,7 @@ export default function PropertyCreatePage() {
         if (data.description && data.description.trim() === '') {
           newErrors.description = '설명을 입력하시거나 비워두세요';
         }
-        const imageFiles = uploadedImages.map(img => img.file);
+        const imageFiles = uploadedImages.map((img) => img.file);
         if (imageFiles.length > 10) {
           newErrors.images = '최대 10장까지 업로드 가능합니다';
         }
@@ -227,7 +243,8 @@ export default function PropertyCreatePage() {
     for (const file of imageFiles) {
       try {
         const contentType = resolveContentType(file);
-        const presignedResponse = await getPresignedUrl(0, { // propertyId 0으로 임시 전송
+        const presignedResponse = await getPresignedUrl(0, {
+          // propertyId 0으로 임시 전송
           file_name: file.name,
           size_bytes: file.size,
           content_type: contentType,
@@ -286,7 +303,9 @@ export default function PropertyCreatePage() {
       exclusive_area_m2: Number(formData.area),
       is_basement: formData.floor < 0,
       floor: formData.floor,
-      maintenance_fee: formData.maintenanceFee ? Number(formData.maintenanceFee) : 0,
+      maintenance_fee: formData.maintenanceFee
+        ? Number(formData.maintenanceFee)
+        : 0,
       easy_contract_id: formData.homeNoteId,
     };
   };
@@ -314,12 +333,17 @@ export default function PropertyCreatePage() {
         await updatePropertyPost(editId, updateRequest);
 
         if (pendingDeleteIds.length > 0) {
-          await Promise.all(pendingDeleteIds.map((id) => deletePropertyFile(id)));
+          await Promise.all(
+            pendingDeleteIds.map((id) => deletePropertyFile(id))
+          );
         }
 
         const newImages = uploadedImages.filter((img) => img.file);
         if (newImages.length > 0) {
-          await attachFilesToPost(editId, newImages.map((img) => img.fileAssetId));
+          await attachFilesToPost(
+            editId,
+            newImages.map((img) => img.fileAssetId)
+          );
         }
 
         success('매물이 수정되었습니다!');
@@ -329,14 +353,22 @@ export default function PropertyCreatePage() {
         const propertyPostId = response.data.property_post_id;
 
         if (uploadedImages.length > 0) {
-          await attachFilesToPost(propertyPostId, uploadedImages.map((img) => img.fileAssetId));
+          await attachFilesToPost(
+            propertyPostId,
+            uploadedImages.map((img) => img.fileAssetId)
+          );
         }
 
         success('매물이 성공적으로 등록되었습니다!');
         router.replace(`/property/${propertyPostId}`);
       }
     } catch (error: unknown) {
-      showError((error as { message?: string })?.message || (isEditMode ? '매물 수정에 실패했습니다.' : '매물 등록에 실패했습니다.'));
+      showError(
+        (error as { message?: string })?.message ||
+          (isEditMode
+            ? '매물 수정에 실패했습니다.'
+            : '매물 등록에 실패했습니다.')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -357,11 +389,16 @@ export default function PropertyCreatePage() {
   const getStepTitle = () => {
     const prefix = isEditMode ? '매물 수정 - ' : '';
     switch (currentStep) {
-      case 1: return `${prefix}매물 유형`;
-      case 2: return `${prefix}거래 정보`;
-      case 3: return `${prefix}매물 상세`;
-      case 4: return `${prefix}사진 및 설명`;
-      default: return '';
+      case 1:
+        return `${prefix}매물 유형`;
+      case 2:
+        return `${prefix}거래 정보`;
+      case 3:
+        return `${prefix}매물 상세`;
+      case 4:
+        return `${prefix}사진 및 설명`;
+      default:
+        return '';
     }
   };
 
@@ -419,10 +456,14 @@ export default function PropertyCreatePage() {
           disabled={isSubmitting}
         >
           {isSubmitting
-            ? (isEditMode ? '수정 중...' : '등록 중...')
+            ? isEditMode
+              ? '수정 중...'
+              : '등록 중...'
             : currentStep < totalSteps
               ? '다음'
-              : (isEditMode ? '수정하기' : '등록하기')}
+              : isEditMode
+                ? '수정하기'
+                : '등록하기'}
         </MainButton>
       </footer>
     </div>

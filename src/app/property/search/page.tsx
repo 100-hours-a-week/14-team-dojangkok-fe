@@ -51,7 +51,9 @@ export default function PropertySearchPage() {
       params.delete('keyword');
     }
 
-    router.replace(`/property${params.toString() ? `?${params.toString()}` : ''}`);
+    router.replace(
+      `/property${params.toString() ? `?${params.toString()}` : ''}`
+    );
   };
 
   const handleSearch = () => {
@@ -143,7 +145,10 @@ export default function PropertySearchPage() {
                 {searchQuery ? '검색 결과' : '최근 검색어'}
               </h2>
               {!searchQuery && (
-                <button className={styles.clearAllButton} onClick={handleClearAll}>
+                <button
+                  className={styles.clearAllButton}
+                  onClick={handleClearAll}
+                >
                   전체 삭제
                 </button>
               )}

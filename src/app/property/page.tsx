@@ -40,90 +40,97 @@ export default function PropertyPage() {
   const [hasPriceFilter, setHasPriceFilter] = useState(false);
 
   // URL 파라미터를 API 요청 형식으로 변환
-  const buildSearchRequest = useCallback((): PropertyPostSearchRequestDto | null => {
-    const keywordParam = searchParams.get('keyword') || '';
-    const propertyTypesParam = searchParams.get('propertyTypes');
-    const leaseTypesParam = searchParams.get('leaseTypes');
-    const hasPrice =
-      searchParams.has('monthlyDeposit') ||
-      searchParams.has('monthlyRent') ||
-      searchParams.has('jeonsaeDeposit') ||
-      searchParams.has('semiJeonsaeDeposit') ||
-      searchParams.has('semiJeonsaeRent') ||
-      searchParams.has('purchasePrice');
+  const buildSearchRequest =
+    useCallback((): PropertyPostSearchRequestDto | null => {
+      const keywordParam = searchParams.get('keyword') || '';
+      const propertyTypesParam = searchParams.get('propertyTypes');
+      const leaseTypesParam = searchParams.get('leaseTypes');
+      const hasPrice =
+        searchParams.has('monthlyDeposit') ||
+        searchParams.has('monthlyRent') ||
+        searchParams.has('jeonsaeDeposit') ||
+        searchParams.has('semiJeonsaeDeposit') ||
+        searchParams.has('semiJeonsaeRent') ||
+        searchParams.has('purchasePrice');
 
-    const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
+      const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
 
-    if (!keywordParam && !propertyTypesParam && !leaseTypesParam && !hasPrice && !reviewedOnly) {
-      return null;
-    }
+      if (
+        !keywordParam &&
+        !propertyTypesParam &&
+        !leaseTypesParam &&
+        !hasPrice &&
+        !reviewedOnly
+      ) {
+        return null;
+      }
 
-    const request: PropertyPostSearchRequestDto = {};
+      const request: PropertyPostSearchRequestDto = {};
 
-    if (keywordParam) {
-      request.keyword = keywordParam;
-    }
+      if (keywordParam) {
+        request.keyword = keywordParam;
+      }
 
-    if (reviewedOnly) {
-      request.is_verified = true;
-    }
+      if (reviewedOnly) {
+        request.is_verified = true;
+      }
 
-    if (propertyTypesParam) {
-      request.property_type = propertyTypesParam
-        .split(',')
-        .map((type) => PROPERTY_TYPE_MAP[type] as PropertyType)
-        .filter(Boolean);
-    }
+      if (propertyTypesParam) {
+        request.property_type = propertyTypesParam
+          .split(',')
+          .map((type) => PROPERTY_TYPE_MAP[type] as PropertyType)
+          .filter(Boolean);
+      }
 
-    if (leaseTypesParam) {
-      request.rent_type = leaseTypesParam
-        .split(',')
-        .map((type) => RENT_TYPE_MAP[type] as RentType)
-        .filter(Boolean);
-    }
+      if (leaseTypesParam) {
+        request.rent_type = leaseTypesParam
+          .split(',')
+          .map((type) => RENT_TYPE_MAP[type] as RentType)
+          .filter(Boolean);
+      }
 
-    const monthlyDeposit = searchParams.get('monthlyDeposit');
-    const monthlyRent = searchParams.get('monthlyRent');
-    if (monthlyDeposit) {
-      const [min, max] = monthlyDeposit.split('-').map(Number);
-      request.price_main_min = min;
-      request.price_main_max = max;
-    }
-    if (monthlyRent) {
-      const [min, max] = monthlyRent.split('-').map(Number);
-      request.price_monthly_min = min;
-      request.price_monthly_max = max;
-    }
+      const monthlyDeposit = searchParams.get('monthlyDeposit');
+      const monthlyRent = searchParams.get('monthlyRent');
+      if (monthlyDeposit) {
+        const [min, max] = monthlyDeposit.split('-').map(Number);
+        request.price_main_min = min;
+        request.price_main_max = max;
+      }
+      if (monthlyRent) {
+        const [min, max] = monthlyRent.split('-').map(Number);
+        request.price_monthly_min = min;
+        request.price_monthly_max = max;
+      }
 
-    const jeonsaeDeposit = searchParams.get('jeonsaeDeposit');
-    if (jeonsaeDeposit) {
-      const [min, max] = jeonsaeDeposit.split('-').map(Number);
-      request.price_main_min = min;
-      request.price_main_max = max;
-    }
+      const jeonsaeDeposit = searchParams.get('jeonsaeDeposit');
+      if (jeonsaeDeposit) {
+        const [min, max] = jeonsaeDeposit.split('-').map(Number);
+        request.price_main_min = min;
+        request.price_main_max = max;
+      }
 
-    const semiJeonsaeDeposit = searchParams.get('semiJeonsaeDeposit');
-    const semiJeonsaeRent = searchParams.get('semiJeonsaeRent');
-    if (semiJeonsaeDeposit) {
-      const [min, max] = semiJeonsaeDeposit.split('-').map(Number);
-      request.price_main_min = min;
-      request.price_main_max = max;
-    }
-    if (semiJeonsaeRent) {
-      const [min, max] = semiJeonsaeRent.split('-').map(Number);
-      request.price_monthly_min = min;
-      request.price_monthly_max = max;
-    }
+      const semiJeonsaeDeposit = searchParams.get('semiJeonsaeDeposit');
+      const semiJeonsaeRent = searchParams.get('semiJeonsaeRent');
+      if (semiJeonsaeDeposit) {
+        const [min, max] = semiJeonsaeDeposit.split('-').map(Number);
+        request.price_main_min = min;
+        request.price_main_max = max;
+      }
+      if (semiJeonsaeRent) {
+        const [min, max] = semiJeonsaeRent.split('-').map(Number);
+        request.price_monthly_min = min;
+        request.price_monthly_max = max;
+      }
 
-    const purchasePrice = searchParams.get('purchasePrice');
-    if (purchasePrice) {
-      const [min, max] = purchasePrice.split('-').map(Number);
-      request.price_main_min = min;
-      request.price_main_max = max;
-    }
+      const purchasePrice = searchParams.get('purchasePrice');
+      if (purchasePrice) {
+        const [min, max] = purchasePrice.split('-').map(Number);
+        request.price_main_min = min;
+        request.price_main_max = max;
+      }
 
-    return request;
-  }, [searchParams]);
+      return request;
+    }, [searchParams]);
 
   const fetchProperties = useCallback(
     async (cursor?: string) => {
@@ -137,7 +144,9 @@ export default function PropertyPage() {
 
         if (searchRequest) {
           const response = await searchPropertyPosts(searchRequest, cursor);
-          const convertedProperties = convertToPropertyList(response.data.items);
+          const convertedProperties = convertToPropertyList(
+            response.data.items
+          );
           setProperties((prev) =>
             cursor ? [...prev, ...convertedProperties] : convertedProperties
           );
@@ -235,7 +244,9 @@ export default function PropertyPage() {
 
   const handleSearchClick = () => {
     const currentParams = searchParams.toString();
-    router.replace(`/property/search${currentParams ? `?${currentParams}` : ''}`);
+    router.replace(
+      `/property/search${currentParams ? `?${currentParams}` : ''}`
+    );
   };
 
   const handleFilterClick = () => {
@@ -244,7 +255,6 @@ export default function PropertyPage() {
       `/property/filter${currentParams ? `?${currentParams}` : ''}`
     );
   };
-
 
   const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
   const filteredProperties = properties;
@@ -275,7 +285,9 @@ export default function PropertyPage() {
               onClick={() => {
                 const params = new URLSearchParams(searchParams.toString());
                 params.delete('keyword');
-                router.replace(`/property${params.toString() ? `?${params.toString()}` : ''}`);
+                router.replace(
+                  `/property${params.toString() ? `?${params.toString()}` : ''}`
+                );
               }}
             >
               검색어: {keyword}
@@ -290,7 +302,9 @@ export default function PropertyPage() {
               } else {
                 params.set('reviewedOnly', 'true');
               }
-              router.replace(`/property${params.toString() ? `?${params.toString()}` : ''}`);
+              router.replace(
+                `/property${params.toString() ? `?${params.toString()}` : ''}`
+              );
             }}
             badge={<StampBadge size="small" />}
           >

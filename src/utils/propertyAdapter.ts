@@ -1,13 +1,8 @@
 // API 응답을 프론트엔드 Property 타입으로 변환
 
-import type {
-  PropertyPostListItemDto,
-} from '@/types/property';
+import type { PropertyPostListItemDto } from '@/types/property';
 import type { Property } from '@/types/property';
-import {
-  RENT_TYPE_LABELS,
-  PROPERTY_TYPE_LABELS,
-} from '@/types/property';
+import { RENT_TYPE_LABELS, PROPERTY_TYPE_LABELS } from '@/types/property';
 
 /**
  * Java LocalDateTime 배열 [year, month, day, hour, minute, second, nano] 또는
@@ -17,7 +12,15 @@ function parseCreatedAt(value: string | number[]): string {
   if (Array.isArray(value)) {
     const [year, month, day, hour, minute, second, nano] = value;
     const ms = Math.floor((nano ?? 0) / 1_000_000);
-    return new Date(year, month - 1, day, hour, minute, second, ms).toISOString();
+    return new Date(
+      year,
+      month - 1,
+      day,
+      hour,
+      minute,
+      second,
+      ms
+    ).toISOString();
   }
   return value;
 }

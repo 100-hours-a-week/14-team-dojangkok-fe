@@ -22,9 +22,7 @@ export default function SearchBar({
       className={`${styles.container} ${isClickable ? styles.clickable : ''}`}
       onClick={isClickable ? onClick : undefined}
     >
-      <span className={`material-symbols-outlined ${styles.icon}`}>
-        search
-      </span>
+      <span className={`material-symbols-outlined ${styles.icon}`}>search</span>
       <input
         type="text"
         className={styles.input}
