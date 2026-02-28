@@ -11,6 +11,8 @@ import {
   logout as logoutApi,
   deleteAccount as deleteAccountApi,
 } from '@/lib/api/auth';
+import { useToast } from '@/contexts/ToastContext';
+import { useSseConnection, SseEvent } from '@/hooks/useSseConnection';
 
 interface AuthContextType extends AuthState {
   login: (code: string) => Promise<void>;
@@ -28,6 +30,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   });
   const router = useRouter();
+  const { info } = useToast();
+
+  const handleSseEvent = (event: SseEvent) => {
+    if (event.name === 'connect') return;
+    try {
+      const parsed = JSON.parse(event.data);
+      const message = parsed?.message ?? parsed?.content;
+      if (message) info(String(message));
+    } catch {
+      if (event.data) info(event.data);
+    }
+  };
+
+  useSseConnection(authState.isAuthenticated, handleSseEvent);
 
   useEffect(() => {
     const initAuth = async () => {
