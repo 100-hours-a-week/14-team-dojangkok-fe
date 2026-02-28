@@ -44,8 +44,44 @@ export interface PropertyPostListItemDto {
   post_status: PostStatus;
   is_verified: boolean;
   is_hidden: boolean;
+  is_bookmarked: boolean;
   created_at: string;
   thumbnail: FileAssetDto | null;
+}
+
+export interface PropertyPostDetailImageDto {
+  file_asset_id: number;
+  presigned_url: string;
+  sort_order: number;
+  is_primary: boolean;
+}
+
+export interface PropertyPostDetailDto {
+  property_post_id: number;
+  writer: {
+    member_id: number;
+    nickname: string;
+    profile_image_url: string | null;
+  };
+  easy_contract_id: number | null;
+  title: string;
+  address: string;
+  price_main: number;
+  price_monthly: number | null;
+  content: string;
+  property_type: PropertyType;
+  rent_type: RentType;
+  exclusive_area_m2: number;
+  is_basement: boolean;
+  floor: number;
+  maintenance_fee: number;
+  deal_status: DealStatus;
+  post_status: PostStatus;
+  is_hidden: boolean;
+  is_verified: boolean;
+  is_bookmarked: boolean;
+  created_at: string;
+  images: PropertyPostDetailImageDto[];
 }
 
 // ===== API Request DTOs =====
@@ -58,6 +94,7 @@ export interface PropertyPostSearchRequestDto {
   price_main_max?: number;
   price_monthly_min?: number;
   price_monthly_max?: number;
+  is_verified?: boolean;
   sort?: PropertyPostSort;
 }
 
@@ -72,6 +109,7 @@ export interface PropertyDealStatusUpdateDto {
 // ===== API Response DTOs =====
 
 export interface PropertyPostListResponseDto {
+  total_count: number;
   limit: number;
   hasNext: boolean;
   next_cursor: string | null;

@@ -8,6 +8,7 @@ import type {
   PropertyPostSearchCountResponseDto,
   PropertyVisibilityUpdateDto,
   PropertyDealStatusUpdateDto,
+  PropertyPostDetailDto,
 } from '@/types/property';
 
 const BASE_URL = '/v2/property-posts';
@@ -125,6 +126,19 @@ export async function getSearchCount(
   );
 }
 
+// ===== 매물 상세 조회 =====
+
+/**
+ * 매물 상세 조회
+ * @param propertyPostId 매물 게시글 ID
+ */
+export async function getPropertyPost(propertyPostId: number) {
+  return apiClient<{ data: PropertyPostDetailDto }>(
+    `${BASE_URL}/${propertyPostId}`,
+    { requiresAuth: true }
+  );
+}
+
 // ===== 매물 액션 =====
 
 /**
@@ -132,7 +146,7 @@ export async function getSearchCount(
  * @param propertyPostId 매물 게시글 ID
  */
 export async function addBookmark(propertyPostId: number) {
-  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/bookmark`, {
+  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/bookmarks`, {
     method: 'POST',
     requiresAuth: true,
   });
@@ -143,7 +157,7 @@ export async function addBookmark(propertyPostId: number) {
  * @param propertyPostId 매물 게시글 ID
  */
 export async function removeBookmark(propertyPostId: number) {
-  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/bookmark`, {
+  return apiClient<{ data: null }>(`${BASE_URL}/${propertyPostId}/bookmarks`, {
     method: 'DELETE',
     requiresAuth: true,
   });
@@ -199,6 +213,14 @@ export async function deletePropertyPost(propertyPostId: number) {
   });
 }
 
+/**
+ * 매물 수정 (임시 placeholder)
+ */
+export async function updatePropertyPost(propertyPostId: number, data: Record<string, unknown>) {
+  console.log('수정 API 호출 시뮬레이션:', propertyPostId, data);
+  return Promise.resolve({ data: null });
+}
+
 // ===== 매물 생성 =====
 
 export interface PropertyPostCreateRequestDto {
@@ -215,6 +237,7 @@ export interface PropertyPostCreateRequestDto {
   floor: number;
   maintenance_fee: number;
   easy_contract_id?: number;
+  file_asset_ids?: number[];
 }
 
 export interface PropertyPostCreateResponseDto {
@@ -325,14 +348,12 @@ export async function uploadToS3(
 /**
  * 업로드 완료 통보 (S3 업로드 직후 호출)
  */
-export async function completePropertyFileUpload(fileInfo: {
-  file_asset_id: number;
-  size_bytes: number;
-  content_type: string;
-}) {
+export async function completePropertyFileUpload(fileAssetId: number) {
   return apiClient<{ data: null }>(`${BASE_URL}/files/complete`, {
     method: 'POST',
-    body: JSON.stringify(fileInfo),
+    body: JSON.stringify({
+      file_items: [{ file_asset_id: fileAssetId }],
+    }),
     requiresAuth: true,
   });
 }

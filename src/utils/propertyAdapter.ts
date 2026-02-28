@@ -2,8 +2,6 @@
 
 import type {
   PropertyPostListItemDto,
-  RentType,
-  PropertyType,
 } from '@/types/property';
 import type { Property } from '@/types/property';
 import {
@@ -15,7 +13,14 @@ import {
  * API 응답(PropertyPostListItemDto)을 레거시 Property 타입으로 변환
  */
 export function convertToProperty(dto: PropertyPostListItemDto): Property {
-  const { rent_type, property_type, thumbnail, price_main, price_monthly } = dto;
+  const {
+    rent_type,
+    property_type,
+    thumbnail,
+    price_main,
+    price_monthly,
+    is_bookmarked,
+  } = dto;
 
   // RentType을 한글로 변환
   const priceType = RENT_TYPE_LABELS[rent_type] as '월세' | '전세' | '매매';
@@ -45,7 +50,7 @@ export function convertToProperty(dto: PropertyPostListItemDto): Property {
     maintenanceFee: dto.maintenance_fee,
     images,
     isReviewed: dto.is_verified,
-    isFavorite: false, // 초기값 (필요 시 별도 API로 관리)
+    isFavorite: is_bookmarked,
     createdAt: dto.created_at,
   };
 }
