@@ -19,6 +19,7 @@ import type {
 import { PROPERTY_TYPE_MAP, RENT_TYPE_MAP } from '@/types/property';
 import { getAllPropertyPosts, searchPropertyPosts } from '@/lib/api/property';
 import { convertToPropertyList } from '@/utils/propertyAdapter';
+import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import styles from './property.module.css';
 
 export default function PropertyPage() {
@@ -223,11 +224,26 @@ export default function PropertyPage() {
     router.push(`/property/${id}`);
   };
 
+  const { toggleBookmark } = usePropertyBookmark({
+    onOptimisticUpdate: (propertyId, nextState) =>
+      setProperties((prev) =>
+        prev.map((p) =>
+          p.id === String(propertyId) ? { ...p, isFavorite: nextState } : p
+        )
+      ),
+    onRollback: (propertyId, prevState) =>
+      setProperties((prev) =>
+        prev.map((p) =>
+          p.id === String(propertyId) ? { ...p, isFavorite: prevState } : p
+        )
+      ),
+  });
+
   const handleFavoriteClick = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setProperties((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isFavorite: !p.isFavorite } : p))
-    );
+    const property = properties.find((p) => p.id === id);
+    if (!property) return;
+    toggleBookmark(Number(id), property.isFavorite);
   };
 
   const handleAddClick = () => {
