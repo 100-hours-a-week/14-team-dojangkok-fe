@@ -1,25 +1,53 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { ImageUploader } from '@/components/common';
-import { PropertyFormData, ValidationErrors } from '../page';
+import { PropertyFormData, ValidationErrors, UploadedImage } from '../page';
 import { getEasyContractList } from '@/lib/api/contract';
 import { EasyContractListItem } from '@/types/contract';
 import styles from './steps.module.css';
+
+const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
+  ssr: false,
+});
 
 interface Step4Props {
   formData: PropertyFormData;
   updateFormData: (data: Partial<PropertyFormData>) => void;
   errors: ValidationErrors;
+  images: UploadedImage[];
+  onImageUpload: (files: FileList) => void;
+  onImageRemove: (fileAssetId: number, url: string) => void;
 }
 
 export default function Step4ImagesAndDescription({
   formData,
   updateFormData,
   errors,
+  images,
+  onImageUpload,
+  onImageRemove,
 }: Step4Props) {
   const [contracts, setContracts] = useState<EasyContractListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const imageGridRef = useRef<HTMLDivElement>(null);
 
-  // 계약서 목록 불러오기
+  const prevImageCount = useRef(images.length);
+
+  useEffect(() => {
+    // 이미지가 새로 추가되었을 때만 스크롤
+    if (images.length > prevImageCount.current) {
+      setTimeout(() => {
+        imageGridRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 100);
+    }
+    prevImageCount.current = images.length;
+  }, [images.length]);
+
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -32,27 +60,26 @@ export default function Step4ImagesAndDescription({
         setIsLoading(false);
       }
     };
-
     fetchContracts();
   }, []);
 
   const handleContractChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === '') {
-      updateFormData({ homeNoteId: undefined });
-    } else {
-      updateFormData({ homeNoteId: Number(value) });
+    updateFormData({ homeNoteId: value ? Number(value) : undefined });
+  };
+
+  const imageGridItems = images.map((img) => ({
+    id: String(img.fileAssetId),
+    url: img.url,
+    file: img.file,
+  }));
+
+  const handleGridRemove = (id: string) => {
+    const numericId = Number(id);
+    const imageToRemove = images.find((img) => img.fileAssetId === numericId);
+    if (imageToRemove) {
+      onImageRemove(numericId, imageToRemove.url);
     }
-  };
-
-  const handleImageUpload = (files: FileList) => {
-    const imageFiles = Array.from(files);
-    updateFormData({ images: [...formData.images, ...imageFiles] });
-  };
-
-  const removeImage = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
-    updateFormData({ images: newImages });
   };
 
   return (
@@ -61,14 +88,24 @@ export default function Step4ImagesAndDescription({
 
       {/* 제목 */}
       <div className={styles.section}>
-        <label className={styles.label}>
-          제목<span className={styles.required}>*</span>
-        </label>
+        <div className={styles.labelWithCounter}>
+          <label className={styles.label}>
+            제목<span className={styles.required}>*</span>
+          </label>
+          <span
+            className={`${styles.charCounter} ${
+              formData.title.length > 50 ? styles.charCounterError : ''
+            }`}
+          >
+            {formData.title.length}/50
+          </span>
+        </div>
         <input
           type="text"
           className={`${styles.input} ${errors.title ? styles.inputError : ''}`}
           placeholder="매물 제목을 입력하세요"
-          value={formData.title}
+          value={formData.title ?? ''}
+          maxLength={50}
           onChange={(e) => updateFormData({ title: e.target.value })}
         />
         <p className={styles.error}>{errors.title || '\u00A0'}</p>
@@ -81,7 +118,7 @@ export default function Step4ImagesAndDescription({
           className={styles.textarea}
           placeholder="매물에 대한 상세 설명을 입력하세요"
           rows={6}
-          value={formData.description}
+          value={formData.description ?? ''}
           onChange={(e) => updateFormData({ description: e.target.value })}
         />
       </div>
@@ -111,38 +148,22 @@ export default function Step4ImagesAndDescription({
 
       {/* 이미지 업로드 */}
       <div className={styles.section}>
-        <label className={styles.label}>
-          매물 사진<span className={styles.required}>*</span>
-        </label>
+        <label className={styles.label}>매물 사진</label>
         <ImageUploader
-          onUpload={handleImageUpload}
-          accept="image/*"
+          onUpload={onImageUpload}
+          accept="image/jpeg,image/jpg,image/png,image/webp"
           multiple
           mainText="사진 추가"
-          subText="JPG, PNG 지원"
+          subText="JPG, PNG, WEBP 지원 (최대 10장, 5MB 이하)"
         />
         <p className={styles.error}>{errors.images || '\u00A0'}</p>
 
-        {formData.images.length > 0 && (
-          <div className={styles.imagePreviewGrid}>
-            {formData.images.map((image, index) => (
-              <div key={index} className={styles.imagePreview}>
-                <img
-                  src={URL.createObjectURL(image)}
-                  alt={`Preview ${index + 1}`}
-                />
-                <button
-                  className={styles.imageRemoveButton}
-                  onClick={() => removeImage(index)}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
-              </div>
-            ))}
+        {imageGridItems.length > 0 && (
+          <div style={{ marginTop: 12 }} ref={imageGridRef}>
+            <ImageGrid images={imageGridItems} onDelete={handleGridRemove} />
           </div>
         )}
       </div>
-
     </div>
   );
 }

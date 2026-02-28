@@ -57,7 +57,7 @@ export default function Step2PriceInfo({
             min="0"
             className={`${styles.input} ${errors.deposit ? styles.inputError : ''}`}
             placeholder="0"
-            value={formData.deposit}
+            value={formData.deposit ?? ''}
             onChange={(e) => updateFormData({ deposit: e.target.value })}
           />
           <span className={styles.inputUnit}>만원</span>
@@ -77,7 +77,7 @@ export default function Step2PriceInfo({
               min="0"
               className={`${styles.input} ${errors.monthlyRent ? styles.inputError : ''}`}
               placeholder="0"
-              value={formData.monthlyRent}
+              value={formData.monthlyRent ?? ''}
               onChange={(e) => updateFormData({ monthlyRent: e.target.value })}
             />
             <span className={styles.inputUnit}>만원</span>
@@ -97,7 +97,7 @@ export default function Step2PriceInfo({
             min="0"
             className={`${styles.input} ${errors.maintenanceFee ? styles.inputError : ''}`}
             placeholder="0"
-            value={formData.maintenanceFee}
+            value={formData.maintenanceFee ?? ''}
             onChange={(e) =>
               updateFormData({ maintenanceFee: e.target.value })
             }

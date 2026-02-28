@@ -6,12 +6,14 @@ interface Step3Props {
   formData: PropertyFormData;
   updateFormData: (data: Partial<PropertyFormData>) => void;
   errors: ValidationErrors;
+  isEditMode?: boolean;
 }
 
 export default function Step3Details({
   formData,
   updateFormData,
   errors,
+  isEditMode = false,
 }: Step3Props) {
   // 평 ↔ m² 변환 상수
   const PYEONG_TO_M2 = 3.3058;
@@ -43,7 +45,6 @@ export default function Step3Details({
   }, [formData.area]);
 
   useEffect(() => {
-    // 숫자 검증
     const num = Number(floorNumber);
     if (floorNumber && (isNaN(num) || num <= 0)) {
       setFloorError('올바른 숫자를 입력해주세요');
@@ -51,10 +52,10 @@ export default function Step3Details({
     }
     setFloorError('');
 
-    // 지하일 경우 음수로, 지상일 경우 양수로 저장
     const validNumber = num > 0 ? num : 1;
     const actualFloor = floorType === 'basement' ? -validNumber : validNumber;
     updateFormData({ floor: actualFloor });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [floorType, floorNumber]);
 
   const handleFloorNumberChange = (value: string) => {
@@ -86,11 +87,13 @@ export default function Step3Details({
         </label>
         <input
           type="text"
-          className={`${styles.input} ${errors.address ? styles.inputError : ''}`}
+          className={`${styles.input} ${errors.address ? styles.inputError : ''} ${isEditMode ? styles.inputDisabled : ''}`}
           placeholder="예: 서울 강남구 역삼동"
-          value={formData.address}
+          value={formData.address ?? ''}
           onChange={(e) => updateFormData({ address: e.target.value })}
+          disabled={isEditMode}
         />
+        {isEditMode && <p className={styles.disabledHint}>주소는 수정할 수 없습니다</p>}
         <p className={styles.error}>{errors.address || '\u00A0'}</p>
       </div>
 
@@ -101,13 +104,14 @@ export default function Step3Details({
         </label>
         <input
           type="text"
-          className={`${styles.input} ${errors.detailedAddress ? styles.inputError : ''}`}
+          className={`${styles.input} ${errors.detailedAddress ? styles.inputError : ''} ${isEditMode ? styles.inputDisabled : ''}`}
           placeholder="예: 101동 202호"
           maxLength={100}
-          value={formData.detailedAddress}
+          value={formData.detailedAddress ?? ''}
           onChange={(e) =>
             updateFormData({ detailedAddress: e.target.value })
           }
+          disabled={isEditMode}
         />
         <p className={styles.error}>{errors.detailedAddress || '\u00A0'}</p>
       </div>
