@@ -1,0 +1,44 @@
+.stamp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stamp span {
+  color: var(--primary);
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}
+
+.stamp.small {
+  width: 10px;
+  height: 10px;
+}
+
+.stamp.medium {
+  width: 14px;
+  height: 14px;
+}
+
+.stamp.large {
+  width: 18px;
+  height: 18px;
+}
+
+.small span {
+  font-size: 24px;
+}
+
+.medium span {
+  font-size: 24px;
+}
+
+.large span {
+  font-size: 30px;
+}

@@ -1,0 +1,163 @@
+.page {
+  min-height: 100dvh;
+  background: var(--gray-50, #f9fafb);
+  display: flex;
+  flex-direction: column;
+}
+
+.tabSection {
+  padding: 16px;
+  background: white;
+  border-bottom: 1px solid var(--gray-200, #e5e7eb);
+}
+
+.main {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.count {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-600, #4b5563);
+  margin-bottom: 12px;
+}
+
+.propertyList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.propertyCardWrapper {
+  position: relative;
+}
+
+/* 상태 변경 버튼 */
+.statusButtons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.statusButton {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  background: white;
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.statusButton:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+.statusButton:active {
+  transform: scale(0.98);
+}
+
+/* 첫 번째 버튼 - 진행중/완료 등 상태 변경용 */
+.statusButton.primary {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.statusButton.primary:hover {
+  background: #059669;
+}
+
+/* 두 번째 버튼 - 숨김 등 보조 상태 변경용 */
+.statusButton.secondary {
+  background: white;
+  color: var(--gray-700, #374151);
+  border-color: var(--gray-300, #d1d5db);
+}
+
+.statusButton.secondary:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+/* 세 번째 버튼 - 삭제용 */
+.statusButton.danger {
+  border-color: #fee2e2;
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.statusButton.danger:hover {
+  background: #fee2e2;
+}
+
+/* 로딩 상태 */
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  color: var(--gray-500, #6b7280);
+  font-size: 14px;
+}
+
+/* 더보기 버튼 */
+.loadMoreButton {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid var(--gray-300, #d1d5db);
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.loadMoreButton:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 빈 상태 */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  color: var(--gray-300, #d1d5db);
+  margin-bottom: 16px;
+}
+
+.emptyText {
+  font-size: 15px;
+  color: var(--gray-500, #6b7280);
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page {
+    background: var(--gray-900, #111827);
+  }
+
+  .tabSection {
+    background: var(--gray-800, #1f2937);
+    border-bottom-color: var(--gray-700, #374151);
+  }
+}

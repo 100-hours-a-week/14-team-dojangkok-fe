@@ -1,0 +1,217 @@
+.card {
+  display: flex;
+  gap: 16px;
+  border-bottom: 1px solid var(--gray-100, #f3f4f6);
+  padding-bottom: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.card:last-child {
+  border-bottom: none;
+}
+
+.card:hover {
+  opacity: 0.8;
+}
+
+/* footer(버튼 영역)에 마우스를 올렸을 때는 카드의 hover 효과 제거 */
+.card:has(.footer:hover) {
+  opacity: 1;
+}
+
+.imageContainer {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--gray-200, #e5e7eb);
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-200, #e5e7eb);
+}
+
+.imagePlaceholder .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--gray-400, #9ca3af);
+}
+
+.image {
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.card:hover .image {
+  transform: scale(1.05);
+}
+
+.stampContainer {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.imageCount {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.contentInner {
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.favoriteButton {
+  padding: 4px;
+  margin: -4px -8px -4px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-400, #9ca3af);
+  transition: all 0.2s;
+}
+
+.favoriteButton:hover {
+  color: var(--error, #ef4444);
+}
+
+.favoriteIcon {
+  font-size: 20px;
+  color: inherit;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400;
+}
+
+.favoriteActive {
+  color: var(--error, #ef4444) !important;
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400 !important;
+}
+
+.optionButton {
+  padding: 4px;
+  margin: -4px -8px -4px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-500, #6b7280);
+  transition: color 0.2s;
+}
+
+.optionButton:hover {
+  color: var(--gray-900, #111827);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-900, #111827);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address {
+  font-size: 12px;
+  color: var(--gray-500, #6b7280);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 8px;
+}
+
+.time {
+  font-size: 12px;
+  color: var(--gray-400, #9ca3af);
+  white-space: nowrap;
+}
+
+.details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--gray-500, #6b7280);
+}
+
+.detailsLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 2px;
+  height: 2px;
+  background: var(--gray-300, #d1d5db);
+  border-radius: 50%;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--gray-500, #6b7280);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    border-bottom-color: var(--gray-800, #1f2937);
+  }
+
+  .title {
+    color: white;
+  }
+}

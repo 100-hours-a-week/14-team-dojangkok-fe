@@ -25,12 +25,12 @@ const NAV_ITEMS: NavItem[] = [
     iconFilled: 'edit_note',
     label: '집노트',
   },
-  // {
-  //   path: '/property',
-  //   icon: 'apartment',
-  //   iconFilled: 'apartment',
-  //   label: '매물',
-  // },
+  {
+    path: '/property',
+    icon: 'apartment',
+    iconFilled: 'apartment',
+    label: '매물',
+  },
   {
     path: '/mypage',
     icon: 'person',

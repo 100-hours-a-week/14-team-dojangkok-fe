@@ -177,7 +177,9 @@ export default function HomeNotesPage() {
           </div>
         )}
       </main>
-      {!isEditMode && <FloatingAddButton onClick={handleAddClick} />}
+      {!isEditMode && (
+        <FloatingAddButton onClick={handleAddClick} withBottomNav />
+      )}
       <TextFieldModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}
