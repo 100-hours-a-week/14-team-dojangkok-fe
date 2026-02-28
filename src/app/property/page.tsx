@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Header,
@@ -24,12 +24,15 @@ import styles from './property.module.css';
 export default function PropertyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showReviewedOnly, setShowReviewedOnly] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasNext, setHasNext] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef(false);
 
   // 필터 활성 상태
   const [hasPropertyTypeFilter, setHasPropertyTypeFilter] = useState(false);
@@ -37,18 +40,34 @@ export default function PropertyPage() {
   const [hasPriceFilter, setHasPriceFilter] = useState(false);
 
   // URL 파라미터를 API 요청 형식으로 변환
-  const buildSearchRequest = (): PropertyPostSearchRequestDto | null => {
+  const buildSearchRequest = useCallback((): PropertyPostSearchRequestDto | null => {
+    const keywordParam = searchParams.get('keyword') || '';
     const propertyTypesParam = searchParams.get('propertyTypes');
     const leaseTypesParam = searchParams.get('leaseTypes');
+    const hasPrice =
+      searchParams.has('monthlyDeposit') ||
+      searchParams.has('monthlyRent') ||
+      searchParams.has('jeonsaeDeposit') ||
+      searchParams.has('semiJeonsaeDeposit') ||
+      searchParams.has('semiJeonsaeRent') ||
+      searchParams.has('purchasePrice');
 
-    // 필터가 하나도 없으면 null 반환
-    if (!propertyTypesParam && !leaseTypesParam && !hasPriceFilter) {
+    const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
+
+    if (!keywordParam && !propertyTypesParam && !leaseTypesParam && !hasPrice && !reviewedOnly) {
       return null;
     }
 
     const request: PropertyPostSearchRequestDto = {};
 
-    // 매물 유형
+    if (keywordParam) {
+      request.keyword = keywordParam;
+    }
+
+    if (reviewedOnly) {
+      request.is_verified = true;
+    }
+
     if (propertyTypesParam) {
       request.property_type = propertyTypesParam
         .split(',')
@@ -56,7 +75,6 @@ export default function PropertyPage() {
         .filter(Boolean);
     }
 
-    // 임대 형태
     if (leaseTypesParam) {
       request.rent_type = leaseTypesParam
         .split(',')
@@ -64,7 +82,6 @@ export default function PropertyPage() {
         .filter(Boolean);
     }
 
-    // 가격 필터 (월세)
     const monthlyDeposit = searchParams.get('monthlyDeposit');
     const monthlyRent = searchParams.get('monthlyRent');
     if (monthlyDeposit) {
@@ -78,7 +95,6 @@ export default function PropertyPage() {
       request.price_monthly_max = max;
     }
 
-    // 가격 필터 (전세)
     const jeonsaeDeposit = searchParams.get('jeonsaeDeposit');
     if (jeonsaeDeposit) {
       const [min, max] = jeonsaeDeposit.split('-').map(Number);
@@ -86,7 +102,6 @@ export default function PropertyPage() {
       request.price_main_max = max;
     }
 
-    // 가격 필터 (반전세)
     const semiJeonsaeDeposit = searchParams.get('semiJeonsaeDeposit');
     const semiJeonsaeRent = searchParams.get('semiJeonsaeRent');
     if (semiJeonsaeDeposit) {
@@ -100,7 +115,6 @@ export default function PropertyPage() {
       request.price_monthly_max = max;
     }
 
-    // 가격 필터 (매매)
     const purchasePrice = searchParams.get('purchasePrice');
     if (purchasePrice) {
       const [min, max] = purchasePrice.split('-').map(Number);
@@ -109,58 +123,69 @@ export default function PropertyPage() {
     }
 
     return request;
-  };
+  }, [searchParams]);
 
-  // 매물 목록 API 호출
-  const fetchProperties = async (cursor?: string) => {
-    setLoading(true);
-    setError(null);
+  const fetchProperties = useCallback(
+    async (cursor?: string) => {
+      if (loadingRef.current && cursor) return;
+      loadingRef.current = true;
+      setLoading(true);
+      setError(null);
 
-    try {
-      const searchRequest = buildSearchRequest();
+      try {
+        const searchRequest = buildSearchRequest();
 
-      if (searchRequest) {
-        // 필터가 있으면 검색 API 사용
-        const response = await searchPropertyPosts(searchRequest, cursor);
-        const convertedProperties = convertToPropertyList(
-          response.data.items
-        );
-
-        setProperties((prev) =>
-          cursor ? [...prev, ...convertedProperties] : convertedProperties
-        );
-        setNextCursor(response.data.next_cursor);
-        setHasNext(response.data.hasNext);
-      } else {
-        // 필터가 없으면 전체 목록 API 사용
-        const response = await getAllPropertyPosts(cursor);
-        const convertedProperties = convertToPropertyList(
-          response.data.property_post_items
-        );
-
-        setProperties((prev) =>
-          cursor ? [...prev, ...convertedProperties] : convertedProperties
-        );
-        setNextCursor(response.data.next_cursor);
-        setHasNext(response.data.hasNext);
+        if (searchRequest) {
+          const response = await searchPropertyPosts(searchRequest, cursor);
+          const convertedProperties = convertToPropertyList(response.data.items);
+          setProperties((prev) =>
+            cursor ? [...prev, ...convertedProperties] : convertedProperties
+          );
+          if (!cursor) setTotalCount(response.data.total_count);
+          setNextCursor(response.data.next_cursor);
+          setHasNext(response.data.hasNext);
+        } else {
+          const response = await getAllPropertyPosts(cursor);
+          const convertedProperties = convertToPropertyList(
+            response.data.property_post_items
+          );
+          setProperties((prev) =>
+            cursor ? [...prev, ...convertedProperties] : convertedProperties
+          );
+          if (!cursor) setTotalCount(response.data.total_count);
+          setNextCursor(response.data.next_cursor);
+          setHasNext(response.data.hasNext);
+        }
+      } catch {
+        setError('매물을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+        loadingRef.current = false;
       }
-    } catch (err) {
-      setError('매물을 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [buildSearchRequest]
+  );
 
-  // 더보기 버튼 클릭
-  const handleLoadMore = () => {
-    if (nextCursor && hasNext && !loading) {
-      fetchProperties(nextCursor);
-    }
-  };
+  // 무한 스크롤
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNext && !loadingRef.current) {
+          fetchProperties(nextCursor ?? undefined);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNext, nextCursor, fetchProperties]);
 
   // URL 쿼리 파라미터 변경 시 목록 새로고침
   useEffect(() => {
-    const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
     const propertyTypes = searchParams.get('propertyTypes');
     const leaseTypes = searchParams.get('leaseTypes');
     const hasPrice =
@@ -171,12 +196,16 @@ export default function PropertyPage() {
       searchParams.has('semiJeonsaeRent') ||
       searchParams.has('purchasePrice');
 
-    setShowReviewedOnly(reviewedOnly);
+    setKeyword(searchParams.get('keyword') || '');
     setHasPropertyTypeFilter(!!propertyTypes);
     setHasLeaseTypeFilter(!!leaseTypes);
     setHasPriceFilter(hasPrice);
 
-    // API 호출
+    setProperties([]);
+    setTotalCount(null);
+    setNextCursor(null);
+    setHasNext(false);
+
     fetchProperties();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -205,19 +234,20 @@ export default function PropertyPage() {
   };
 
   const handleSearchClick = () => {
-    router.push('/property/search');
+    const currentParams = searchParams.toString();
+    router.replace(`/property/search${currentParams ? `?${currentParams}` : ''}`);
   };
 
   const handleFilterClick = () => {
     const currentParams = searchParams.toString();
-    router.push(
+    router.replace(
       `/property/filter${currentParams ? `?${currentParams}` : ''}`
     );
   };
 
-  const filteredProperties = showReviewedOnly
-    ? properties.filter((property) => property.isReviewed)
-    : properties;
+
+  const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
+  const filteredProperties = properties;
 
   return (
     <div className={styles.page}>
@@ -232,15 +262,36 @@ export default function PropertyPage() {
       <div className={styles.searchSection}>
         <SearchBar
           placeholder="어떤 집을 찾으시나요?"
+          value={keyword}
           onClick={handleSearchClick}
         />
       </div>
 
       <div className={styles.filterSection}>
         <div className={styles.filterChips}>
+          {keyword && (
+            <FilterChip
+              active
+              onClick={() => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.delete('keyword');
+                router.replace(`/property${params.toString() ? `?${params.toString()}` : ''}`);
+              }}
+            >
+              검색어: {keyword}
+            </FilterChip>
+          )}
           <FilterChip
-            active={showReviewedOnly}
-            onClick={() => setShowReviewedOnly(!showReviewedOnly)}
+            active={reviewedOnly}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              if (reviewedOnly) {
+                params.delete('reviewedOnly');
+              } else {
+                params.set('reviewedOnly', 'true');
+              }
+              router.replace(`/property${params.toString() ? `?${params.toString()}` : ''}`);
+            }}
             badge={<StampBadge size="small" />}
           >
             검토 완료
@@ -281,6 +332,9 @@ export default function PropertyPage() {
           </div>
         ) : filteredProperties.length > 0 ? (
           <>
+            {totalCount !== null && (
+              <p className={styles.totalCount}>총 {totalCount}개</p>
+            )}
             {filteredProperties.map((property) => (
               <PropertyCard
                 key={property.id}
@@ -289,15 +343,10 @@ export default function PropertyPage() {
                 onFavoriteClick={handleFavoriteClick}
               />
             ))}
-            {hasNext && (
-              <button
-                className={styles.loadMoreButton}
-                onClick={handleLoadMore}
-                disabled={loading}
-              >
-                {loading ? '로딩 중...' : '더보기'}
-              </button>
+            {loading && (
+              <div className={styles.loadingMore}>불러오는 중...</div>
             )}
+            {hasNext && <div ref={sentinelRef} style={{ height: 1 }} />}
           </>
         ) : (
           <div className={styles.emptyState}>
