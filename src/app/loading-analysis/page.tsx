@@ -6,12 +6,15 @@ import Header from '@/components/common/Header';
 import Modal from '@/components/common/Modal';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useToast } from '@/contexts/ToastContext';
+import { cancelEasyContract } from '@/lib/api/contract';
 import styles from './page.module.css';
 
 export default function AnalyzingPage() {
   const router = useRouter();
   const toast = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const { analysisState, clearAnalysis } = useAnalysis();
 
   // 분석 완료 시 자동으로 결과 페이지로 이동
@@ -30,22 +33,37 @@ export default function AnalyzingPage() {
     }
   }, [analysisState, router, clearAnalysis, toast]);
 
-  const handleCancel = () => {
-    setIsModalOpen(true);
+  const handleBackClick = () => {
+    setIsLeaveModalOpen(true);
   };
 
   const handleGoHome = () => {
-    setIsModalOpen(false);
+    setIsLeaveModalOpen(false);
     router.push('/');
   };
 
-  const handleContinueWaiting = () => {
-    setIsModalOpen(false);
+  const handleStopAnalysis = async () => {
+    if (!analysisState.easyContractId || isCancelling) return;
+    setIsCancelling(true);
+    try {
+      await cancelEasyContract(analysisState.easyContractId);
+    } catch {
+      toast.error('중단 요청에 실패했습니다.');
+    } finally {
+      setIsCancelling(false);
+    }
+    clearAnalysis();
+    setIsCancelModalOpen(false);
+    router.push('/');
   };
 
   return (
     <div className={styles.container}>
-      <Header title="계약서 분석" showBackButton onBackClick={handleCancel} />
+      <Header
+        title="계약서 분석"
+        showBackButton
+        onBackClick={handleBackClick}
+      />
 
       <main className={styles.main}>
         <div className={styles.loaderWrapper}>
@@ -79,13 +97,22 @@ export default function AnalyzingPage() {
             </p>
           </div>
         </div>
+
+        <button
+          className={styles.cancelButton}
+          onClick={() => setIsCancelModalOpen(true)}
+          disabled={isCancelling}
+        >
+          분석 중단
+        </button>
       </main>
 
       <div className={styles.backgroundBlur} />
 
+      {/* 페이지 이탈 모달 (분석은 계속됨) */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={handleContinueWaiting}
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
         onConfirm={handleGoHome}
         title="페이지를 나가시겠어요?"
         confirmText="홈으로 가기"
@@ -94,6 +121,22 @@ export default function AnalyzingPage() {
         <p className={styles.modalDescription}>
           화면을 나가더라도 분석은 백그라운드에서 계속 진행되며, 홈 화면에서
           상태를 확인할 수 있어요.
+        </p>
+      </Modal>
+
+      {/* 분석 중단 확인 모달 */}
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleStopAnalysis}
+        title="분석을 중단할까요?"
+        confirmText={isCancelling ? '중단 중...' : '중단하기'}
+        cancelText="계속 분석하기"
+      >
+        <p className={styles.modalDescription}>
+          중단하면 분석이 취소되며
+          <br />
+          처음부터 다시 시작해야 해요.
         </p>
       </Modal>
     </div>
