@@ -48,6 +48,16 @@
   color: var(--gray-900, #111827);
 }
 
+.headerActions {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.navIconButton.dangerIcon {
+  color: #ef4444;
+}
+
 /* 이미지 갤러리 */
 .imageGallery {
   position: relative;
@@ -59,9 +69,12 @@
   width: 100%;
   height: 400px;
   background: var(--gray-200, #e5e7eb);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 .image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -107,24 +120,27 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
+  background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: opacity 0.2s;
+  color: var(--primary);
+  opacity: 0;
 }
 
-.navButton:hover {
-  background: rgba(0, 0, 0, 0.5);
+.imageContainer:hover .navButton {
+  opacity: 1;
 }
 
 .navButton:active {
   transform: translateY(-50%) scale(0.95);
 }
 
-.navButton .material-symbols-outlined {
-  color: white;
-  font-size: 24px;
+.navButton :global(.material-symbols-outlined) {
+  font-size: 64px;
+  font-variation-settings: 'wght' 200;
+  color: #fff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 .navButtonPrev {
@@ -348,6 +364,46 @@
   transform: scale(0.98);
 }
 
+.ownerButtons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.deleteButton {
+  flex: 1;
+  height: 56px;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteButton:hover {
+  background: #fef2f2;
+}
+
+.editButton {
+  flex: 2;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--gray-900, #111827);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.editButton:hover {
+  background: #000;
+}
+
 @media (prefers-color-scheme: dark) {
   .page {
     background: var(--gray-900, #111827);
@@ -374,4 +430,60 @@
   .favoriteButton:hover {
     background: var(--gray-700, #374151);
   }
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--gray-500, #6b7280);
+  font-size: 14px;
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-200, #e5e7eb);
+}
+
+.imagePlaceholder .material-symbols-outlined {
+  font-size: 64px;
+  color: var(--gray-400, #9ca3af);
+}
+
+.authorName {
+  font-size: 16px;
+  color: var(--gray-800, #1f2937);
+  font-weight: 600;
+}
+
+.authorProfile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.authorImageContainer {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden; /* 이미지가 원을 벗어나지 않도록 */
+  background: var(--gray-200);
+}
+
+.authorImage {
+  object-fit: cover;
+}
+
+.authorImagePlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

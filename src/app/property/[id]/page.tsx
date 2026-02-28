@@ -1,71 +1,157 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { StampBadge } from '@/components/common';
+import dynamic from 'next/dynamic';
+import { StampBadge, Modal } from '@/components/common';
+
+const ImageViewerModal = dynamic(
+  () => import('@/components/common/ImageViewerModal'),
+  { ssr: false }
+);
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import {
+  getPropertyPost,
+  deletePropertyPost,
+} from '@/lib/api/property';
+import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
+import type { PropertyPostDetailDto } from '@/types/property';
+import { PROPERTY_TYPE_LABELS, RENT_TYPE_LABELS } from '@/types/property';
 import styles from './detail.module.css';
 
-// Mock data - 실제로는 API에서 가져와야 함
-const MOCK_PROPERTY = {
-  id: '1',
-  title: '공도읍 진사리 조용한 풀옵션 원룸',
-  address: '경기 안성시 공도읍',
-  detailedAddress: '경기 안성시 공도읍 진사리',
-  priceType: '월세' as const,
-  deposit: 300,
-  monthlyRent: 35,
-  propertyType: '원룸' as const,
-  floor: 1,
-  area: 23,
-  maintenanceFee: 5,
-  images: [
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuC4wfKVm7MojDryiO2uc1ZYt6myT7i-r_X72pWulXWOcYcZxyHvMmyruKovCen8cZoSpVnYcDDYQZ9VyEbIkIVCl5oWglCkUkizcTAKjcSikZbRaFs7-v5KJXOS_2VNTmkyJj77DTrssBuGrX6mJ3AvNUJmVD-Ls80HtOB6lnBigk7KlfwX490ZBwAgRzGeei7lgfd23Rccs8LovX8YL1gU237RjjV7FEBAu_FrtI21wq23ESMI-ISNzEurcGcXOy31C4pkVodkcuo',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuA-1snA-komCYUsSqZ-4y-Ft-TVlJqdSuOAIsdOxQnpYdccLBxvIIhj7QIEVAWPYvoiYdtLahgVEWsbWllZpwxs_WF5cWzHAfI0H7O6k7SxJn38eD2gPAwgDt_a5-1iTMYtRBPhO6hkKppLkSVKrrljr8uh7RWSAgViiPRBVmQEmvbummGmJkKkDdwfQEmfUUvnC4p7lrcX7969cr05XAZgWPkrYAp4_SrMv14Xxbu7EUJ1JU_37JOu09He3h4LWYsV2fgi0RLg9bs',
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuBdl6fSPdf1nAO8y3ZAHecxID49fwhRWwg6npOqsUUzHONoxxHaQ2OMjn8Nv6P13oJq-195UMJtRFk7GYyuCXTU4Q1nXqVNRCSkGAt_UitiezQ7V7C-EWr416x8AYu4e6oTEzh1fia2WarghYnXZQzk0J255y4jkXNxeJb3j73h-_XVhV5QQv9IKiRiedYiZOho0Y-Ms9ytWkAjnvHYTPF4UbB2tsjqDpLW70E_uXVq8UJDTRt_Ilak0lDjXzfHIeCSK_tKL2q0CL4',
-  ],
-  isReviewed: true,
-  isFavorite: false,
-  createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  description:
-    '조용하고 깔끔한 풀옵션 원룸입니다. 대중교통 접근성이 좋고, 주변 편의시설이 가까워 생활하기 편리합니다. 신축 건물로 시설이 깨끗하며, 관리가 잘 되고 있습니다.',
-};
+function getCorrectProfileImageUrl(url: string | null): string | null {
+  if (!url) {
+    return null;
+  }
+  // 잘못된 S3 URL인지 확인 (S3 주소 안에 http가 또 들어있는 경우)
+  if (url.includes('s3.ap-northeast-2.amazonaws.com/http')) {
+    try {
+      // ? 앞부분(경로)과 뒷부분(쿼리 파라미터) 분리
+      const urlParts = url.split('?');
+      const pathPart = urlParts[0];
+      // 경로에서 http로 시작하는 인코딩된 URL 부분 추출
+      const encodedUrlPart = pathPart.substring(pathPart.indexOf('http'));
+      // 디코딩하여 원래의 카카오 URL로 복원
+      return decodeURIComponent(encodedUrlPart);
+    } catch (e) {
+      console.error('Failed to decode profile image URL:', url, e);
+      return null; // 복원 실패 시 null 반환
+    }
+  }
+  // 정상적인 URL은 그대로 반환
+  return url;
+}
+
+function formatPrice(dto: PropertyPostDetailDto): string {
+  const main = dto.price_main.toLocaleString();
+  switch (dto.rent_type) {
+    case 'MONTHLY':
+      return `월세 ${main}/${dto.price_monthly?.toLocaleString() ?? 0}`;
+    case 'JEONSE':
+      return `전세 ${main}`;
+    case 'JEONSE_MONTHLY':
+      return `반전세 ${main}/${dto.price_monthly?.toLocaleString() ?? 0}`;
+    case 'SALE':
+      return `매매 ${main}`;
+  }
+}
+
+function to평(m2: number): string {
+  return (m2 / 3.3058).toFixed(1);
+}
 
 export default function PropertyDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { user } = useAuth();
+  const { error: showError, success } = useToast();
+
+  const [property, setProperty] = useState<PropertyPostDetailDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState(MOCK_PROPERTY.isFavorite);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  const { toggleBookmark } = usePropertyBookmark({
+    onOptimisticUpdate: (_, nextState) => setIsFavorite(nextState),
+    onRollback: (_, prevState) => setIsFavorite(prevState),
+  });
+
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  const handleBackClick = () => {
-    router.back();
+  const propertyId = Number(params.id);
+  const isOwner = user?.id === String(property?.writer.member_id);
+  const sortedImages = property
+    ? [...property.images].sort((a, b) => a.sort_order - b.sort_order)
+    : [];
+
+  useEffect(() => {
+// ... (fetch implementation 생략 가능하도록 정확한 위치 지정)
+    const fetch = async () => {
+      setLoading(true);
+      try {
+        const response = await getPropertyPost(propertyId);
+        setProperty(response.data);
+        setIsFavorite(response.data.is_bookmarked);
+      } catch (err: unknown) {
+        const apiErr = err as { status?: number; statusCode?: number };
+        const status = apiErr?.status ?? apiErr?.statusCode;
+        if (status === 410) {
+          showError('삭제된 게시글입니다.');
+          router.replace('/property');
+        } else if (status === 404) {
+          showError('존재하지 않는 매물입니다.');
+          router.replace('/property');
+        } else {
+          showError('매물 정보를 불러오는데 실패했습니다.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId]);
+
+  const handleBackClick = () => router.back();
+
+  const handleFavoriteClick = async () => {
+    await toggleBookmark(propertyId, isFavorite);
   };
 
-  const handleMenuClick = () => {
-    // TODO: 메뉴 기능 구현
-    console.log('Menu clicked');
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
   };
 
-  const handleFavoriteClick = () => {
-    setIsFavorite(!isFavorite);
+  const handleConfirmDelete = async () => {
+    try {
+      await deletePropertyPost(propertyId);
+      success('매물이 삭제되었습니다.');
+      router.replace('/property');
+    } catch {
+      showError('매물 삭제에 실패했습니다.');
+    } finally {
+      setIsDeleteModalOpen(false);
+    }
   };
 
-  const handleContactClick = () => {
-    // TODO: 문의하기 기능 구현
-    console.log('Contact clicked');
+  const handleEditClick = () => {
+    router.push(`/property/create?edit=${propertyId}`);
   };
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? MOCK_PROPERTY.images.length - 1 : prev - 1
+      prev === 0 ? sortedImages.length - 1 : prev - 1
     );
   };
 
   const handleNextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === MOCK_PROPERTY.images.length - 1 ? 0 : prev + 1
+      prev === sortedImages.length - 1 ? 0 : prev + 1
     );
   };
 
@@ -78,30 +164,34 @@ export default function PropertyDetailPage() {
   };
 
   const handleTouchEnd = () => {
-    if (touchStart - touchEnd > 75) {
-      // 왼쪽으로 스와이프 (다음 이미지)
-      handleNextImage();
-    }
-
-    if (touchStart - touchEnd < -75) {
-      // 오른쪽으로 스와이프 (이전 이미지)
-      handlePrevImage();
-    }
+    if (touchStart - touchEnd > 75) handleNextImage();
+    if (touchStart - touchEnd < -75) handlePrevImage();
   };
 
-  const formatPrice = () => {
-    if (MOCK_PROPERTY.priceType === '월세') {
-      return `월세 ${MOCK_PROPERTY.deposit}/${MOCK_PROPERTY.monthlyRent}`;
-    } else if (MOCK_PROPERTY.priceType === '전세') {
-      return `전세 ${MOCK_PROPERTY.deposit.toLocaleString()}`;
-    } else {
-      return `매매 ${MOCK_PROPERTY.deposit.toLocaleString()}`;
-    }
-  };
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.topNavigation}>
+          <button
+            className={styles.navIconButton}
+            onClick={handleBackClick}
+            aria-label="뒤로가기"
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+        </div>
+        <div className={styles.loadingState}>
+          <p>매물 정보를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!property) return null;
 
   return (
     <div className={styles.page}>
-      {/* 상단 네비게이션 버튼 (이미지 위에 플로팅) */}
+      {/* 상단 네비게이션 버튼 */}
       <div className={styles.topNavigation}>
         <button
           className={styles.navIconButton}
@@ -110,13 +200,25 @@ export default function PropertyDetailPage() {
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <button
-          className={styles.navIconButton}
-          onClick={handleMenuClick}
-          aria-label="메뉴"
-        >
-          <span className="material-symbols-outlined">more_vert</span>
-        </button>
+
+        {isOwner && (
+          <div className={styles.headerActions}>
+            <button
+              className={styles.navIconButton}
+              onClick={handleEditClick}
+              aria-label="수정하기"
+            >
+              <span className="material-symbols-outlined">edit</span>
+            </button>
+            <button
+              className={`${styles.navIconButton} ${styles.dangerIcon}`}
+              onClick={handleDeleteClick}
+              aria-label="삭제하기"
+            >
+              <span className="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 이미지 갤러리 */}
@@ -127,43 +229,50 @@ export default function PropertyDetailPage() {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {MOCK_PROPERTY.images.length > 1 && (
+          {sortedImages.length > 1 && (
             <>
               <button
                 className={`${styles.navButton} ${styles.navButtonPrev}`}
                 onClick={handlePrevImage}
                 aria-label="이전 이미지"
               >
-                <span className="material-symbols-outlined">
-                  chevron_left
-                </span>
+                <span className="material-symbols-outlined">chevron_left</span>
               </button>
               <button
                 className={`${styles.navButton} ${styles.navButtonNext}`}
                 onClick={handleNextImage}
                 aria-label="다음 이미지"
               >
-                <span className="material-symbols-outlined">
-                  chevron_right
-                </span>
+                <span className="material-symbols-outlined">chevron_right</span>
               </button>
             </>
           )}
 
-          <Image
-            src={MOCK_PROPERTY.images[currentImageIndex]}
-            alt={MOCK_PROPERTY.title}
-            fill
-            className={styles.image}
-            priority
-          />
+          {sortedImages.length > 0 ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={sortedImages[currentImageIndex].presigned_url}
+              alt={property.title}
+              className={styles.image}
+              onClick={() => setIsViewerOpen(true)}
+              style={{ cursor: 'pointer' }}
+            />
+          ) : (
+            <div className={styles.imagePlaceholder}>
+              <span className="material-symbols-outlined">home</span>
+            </div>
+          )}
+
           <div className={styles.imageCounter}>
-            {currentImageIndex + 1} / {MOCK_PROPERTY.images.length}
+            {sortedImages.length > 0
+              ? `${currentImageIndex + 1} / ${sortedImages.length}`
+              : '이미지 없음'}
           </div>
         </div>
-        {MOCK_PROPERTY.images.length > 1 && (
+
+        {sortedImages.length > 1 && (
           <div className={styles.imageIndicators}>
-            {MOCK_PROPERTY.images.map((_, index) => (
+            {sortedImages.map((_, index) => (
               <button
                 key={index}
                 className={`${styles.indicator} ${
@@ -180,15 +289,15 @@ export default function PropertyDetailPage() {
       <main className={styles.main}>
         {/* 가격 정보 */}
         <section className={styles.section}>
-          {MOCK_PROPERTY.isReviewed && (
+          {property.is_verified && (
             <div className={styles.reviewedBadge}>
               <StampBadge size="small" />
               <span>AI가 계약서 검토를 마친 매물이에요</span>
             </div>
           )}
-          <h1 className={styles.price}>{formatPrice()}</h1>
-          <h2 className={styles.title}>{MOCK_PROPERTY.title}</h2>
-          <p className={styles.address}>{MOCK_PROPERTY.detailedAddress}</p>
+          <h1 className={styles.price}>{formatPrice(property)}</h1>
+          <h2 className={styles.title}>{property.title}</h2>
+          <p className={styles.address}>{property.address}{property.address_detail ? ` ${property.address_detail}` : ''}</p>
         </section>
 
         {/* 매물 정보 */}
@@ -198,52 +307,140 @@ export default function PropertyDetailPage() {
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>매물 유형</span>
               <span className={styles.infoValue}>
-                {MOCK_PROPERTY.propertyType}
+                {PROPERTY_TYPE_LABELS[property.property_type]}
+              </span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>거래 유형</span>
+              <span className={styles.infoValue}>
+                {RENT_TYPE_LABELS[property.rent_type]}
               </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>면적</span>
-              <span className={styles.infoValue}>{MOCK_PROPERTY.area}m²</span>
+              <span className={styles.infoValue}>
+                {property.exclusive_area_m2}m²({to평(property.exclusive_area_m2)}평)
+              </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>층수</span>
-              <span className={styles.infoValue}>{MOCK_PROPERTY.floor}층</span>
+              <span className={styles.infoValue}>
+                {property.is_basement ? `B${Math.abs(property.floor)}` : `${property.floor}`}층
+              </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>관리비</span>
               <span className={styles.infoValue}>
-                {MOCK_PROPERTY.maintenanceFee}만원
+                {property.maintenance_fee > 0
+                  ? `${property.maintenance_fee}만원`
+                  : '없음'}
+              </span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>거래 상태</span>
+              <span className={styles.infoValue}>
+                {property.deal_status === 'TRADING' ? '거래중' : '거래완료'}
               </span>
             </div>
           </div>
         </section>
 
         {/* 상세 설명 */}
+        {property.content && (
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>상세 설명</h3>
+            <p className={styles.description}>{property.content}</p>
+          </section>
+        )}
+
+        {/* 작성자 정보 */}
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>상세 설명</h3>
-          <p className={styles.description}>{MOCK_PROPERTY.description}</p>
+          <h3 className={styles.sectionTitle}>작성자</h3>
+          <div className={styles.authorProfile}>
+            <div className={styles.authorImageContainer}>
+              {(() => {
+                const correctedUrl = getCorrectProfileImageUrl(
+                  property.writer.profile_image_url
+                );
+                if (correctedUrl) {
+                  return (
+                    <Image
+                      src={correctedUrl}
+                      alt="작성자 프로필 이미지"
+                      fill
+                      sizes="56px"
+                      className={styles.authorImage}
+                    />
+                  );
+                }
+                return (
+                  <div className={styles.authorImagePlaceholder}>
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: 32, color: 'var(--gray-400)' }}
+                    >
+                      person
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+            <p className={styles.authorName}>{property.writer.nickname}</p>
+          </div>
         </section>
       </main>
 
       {/* 하단 고정 버튼 */}
       <footer className={styles.footer}>
-        <button
-          className={styles.favoriteButton}
-          onClick={handleFavoriteClick}
-          aria-label={isFavorite ? '찜 해제' : '찜하기'}
-        >
-          <span
-            className={`material-symbols-outlined ${
-              isFavorite ? styles.favoriteActive : ''
-            }`}
-          >
-            {isFavorite ? 'favorite' : 'favorite_border'}
-          </span>
-        </button>
-        <button className={styles.contactButton} onClick={handleContactClick}>
-          문의하기
-        </button>
+        {isOwner ? (
+          <button className={styles.contactButton} disabled>
+            내 매물입니다
+          </button>
+        ) : (
+          <>
+            <button
+              className={styles.favoriteButton}
+              onClick={handleFavoriteClick}
+              aria-label={isFavorite ? '스크랩 해제' : '스크랩'}
+            >
+              <span
+                className={`material-symbols-outlined ${
+                  isFavorite ? styles.favoriteActive : ''
+                }`}
+              >
+                {isFavorite ? 'favorite' : 'favorite_border'}
+              </span>
+            </button>
+            <button className={styles.contactButton}>문의하기</button>
+          </>
+        )}
       </footer>
+
+      <ImageViewerModal
+        isOpen={isViewerOpen}
+        images={sortedImages.map((img) => ({
+          id: String(img.file_asset_id),
+          url: img.presigned_url,
+        }))}
+        currentIndex={currentImageIndex}
+        onClose={() => setIsViewerOpen(false)}
+        onPrevious={() => setCurrentImageIndex((prev) => Math.max(prev - 1, 0))}
+        onNext={() => setCurrentImageIndex((prev) => Math.min(prev + 1, sortedImages.length - 1))}
+      />
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="매물을 삭제할까요?"
+        confirmText="삭제"
+        cancelText="취소"
+        variant="destructive"
+      >
+        <p style={{ textAlign: 'center', color: '#666', fontSize: '14px' }}>
+          삭제된 매물은 복구할 수 없습니다.
+        </p>
+      </Modal>
     </div>
   );
 }
