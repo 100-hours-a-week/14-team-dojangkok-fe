@@ -184,6 +184,7 @@ export default function MyPage() {
               src={user.profileImageUrl || '/default-profile.png'}
               alt="프로필 이미지"
               fill
+              sizes="80px"
               className={styles.image}
             />
           </div>

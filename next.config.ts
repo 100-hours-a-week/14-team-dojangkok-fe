@@ -39,6 +39,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'img1.kakaocdn.net',
       },
+      {
+        protocol: 'https',
+        hostname: 'ktb-team14-dojangkok-bucket.s3.ap-northeast-2.amazonaws.com',
+      },
     ],
   },
 };
