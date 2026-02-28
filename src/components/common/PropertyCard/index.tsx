@@ -50,7 +50,8 @@ export default function PropertyCard({
     return `${diffInDays}일전`;
   };
 
-  const hasImage = property.images && property.images.length > 0 && property.images[0];
+  const hasImage =
+    property.images && property.images.length > 0 && property.images[0];
 
   return (
     <article
@@ -117,7 +118,9 @@ export default function PropertyCard({
 
           <h4 className={styles.title}>{property.title}</h4>
 
-          {showDetails && <p className={styles.address}>{property.detailedAddress}</p>}
+          {showDetails && (
+            <p className={styles.address}>{property.detailedAddress}</p>
+          )}
         </div>
 
         {showDetails ? (
@@ -129,12 +132,22 @@ export default function PropertyCard({
               <span className={styles.dot}></span>
               <span>{property.area}m²</span>
               <span className={styles.dot}></span>
-              <span>{property.maintenanceFee ? `관리비 ${property.maintenanceFee}만` : '관리비 없음'}</span>
+              <span>
+                {property.maintenanceFee
+                  ? `관리비 ${property.maintenanceFee}만`
+                  : '관리비 없음'}
+              </span>
             </div>
-            <span className={styles.time}>{getTimeAgo(property.createdAt)}</span>
+            <span className={styles.time}>
+              {getTimeAgo(property.createdAt)}
+            </span>
           </div>
         ) : (
-          footer && <div className={styles.footer}>{footer}</div>
+          footer && (
+            <div className={styles.footer} onClick={(e) => e.stopPropagation()}>
+              {footer}
+            </div>
+          )
         )}
       </div>
     </article>

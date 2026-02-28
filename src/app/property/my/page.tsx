@@ -190,10 +190,7 @@ export default function MyPropertyPage() {
     }
   };
 
-  const handleStatusChange = async (
-    id: string,
-    newStatus: TabType
-  ) => {
+  const handleStatusChange = async (id: string, newStatus: TabType) => {
     setIsActionSheetOpen(false);
     const postId = Number(id);
     const toastMessages: Partial<
@@ -228,7 +225,9 @@ export default function MyPropertyPage() {
         if (newStatus === 'completed')
           await updateDealStatus(postId, 'COMPLETED');
       }
-      success(toastMessages[activeTab]?.[newStatus] ?? '상태가 변경되었습니다.');
+      success(
+        toastMessages[activeTab]?.[newStatus] ?? '상태가 변경되었습니다.'
+      );
       setProperties((prev) => prev.filter((p) => p.id !== id));
       setTotalCount((prev) => prev - 1);
     } catch {
@@ -277,16 +276,16 @@ export default function MyPropertyPage() {
                       <div className={styles.statusButtons}>
                         <button
                           className={`${styles.statusButton} ${styles.primary}`}
-                          onClick={(e) =>
-                            handleStatusChange(property.id, 'completed', e)
+                          onClick={() =>
+                            handleStatusChange(property.id, 'completed')
                           }
                         >
                           완료
                         </button>
                         <button
                           className={styles.statusButton}
-                          onClick={(e) =>
-                            handleStatusChange(property.id, 'hidden', e)
+                          onClick={() =>
+                            handleStatusChange(property.id, 'hidden')
                           }
                         >
                           숨김
@@ -299,16 +298,16 @@ export default function MyPropertyPage() {
                       <div className={styles.statusButtons}>
                         <button
                           className={`${styles.statusButton} ${styles.primary}`}
-                          onClick={(e) =>
-                            handleStatusChange(property.id, 'ongoing', e)
+                          onClick={() =>
+                            handleStatusChange(property.id, 'ongoing')
                           }
                         >
                           진행중
                         </button>
                         <button
                           className={styles.statusButton}
-                          onClick={(e) =>
-                            handleStatusChange(property.id, 'hidden', e)
+                          onClick={() =>
+                            handleStatusChange(property.id, 'hidden')
                           }
                         >
                           숨김
@@ -321,16 +320,16 @@ export default function MyPropertyPage() {
                       <div className={styles.statusButtons}>
                         <button
                           className={`${styles.statusButton} ${styles.primary}`}
-                          onClick={(e) =>
-                            handleStatusChange(property.id, 'ongoing', e)
+                          onClick={() =>
+                            handleStatusChange(property.id, 'ongoing')
                           }
                         >
                           진행중
                         </button>
                         <button
                           className={styles.statusButton}
-                          onClick={(e) =>
-                            handleStatusChange(property.id, 'completed', e)
+                          onClick={() =>
+                            handleStatusChange(property.id, 'completed')
                           }
                         >
                           완료
@@ -390,7 +389,7 @@ export default function MyPropertyPage() {
           },
         ]}
       />
-      
+
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
