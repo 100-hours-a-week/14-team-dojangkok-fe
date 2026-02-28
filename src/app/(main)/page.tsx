@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useToast } from '@/contexts/ToastContext';
-import { uploadFiles, createEasyContract } from '@/lib/api/contract';
-import { ApiError, ensureValidToken } from '@/lib/api/client';
+import { uploadFiles, deleteUploadedFile } from '@/lib/api/contract';
+import { ApiError } from '@/lib/api/client';
 import { validateEasyContractFiles } from '@/utils/fileValidation';
 import dynamic from 'next/dynamic';
 import {
@@ -32,17 +32,10 @@ export default function HomePage() {
   const router = useRouter();
   const toast = useToast();
   const [images, setImages] = useState<ImageItem[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { setNavigationGuard } = useLayout();
-  const {
-    analysisState,
-    startAnalysis,
-    completeAnalysis,
-    failAnalysis,
-    clearAnalysis,
-  } = useAnalysis();
+  const { analysisState, clearAnalysis } = useAnalysis();
 
   useEffect(() => {
     if (images.length > 0) {
@@ -109,8 +102,14 @@ export default function HomePage() {
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const fileAssetId = parseInt(id, 10);
     setImages((prev) => prev.filter((img) => img.id !== id));
+    try {
+      await deleteUploadedFile(fileAssetId);
+    } catch {
+      toast.error('파일 삭제에 실패했습니다.');
+    }
   };
 
   const handleAnalyzeClick = () => {
@@ -123,60 +122,18 @@ export default function HomePage() {
       return;
     }
 
-    // 일반 분석 요청
-    setIsModalOpen(true);
-  };
-
-  const handleConfirmAnalyze = async () => {
-    // 0. 토큰 검증 및 갱신
-    const isTokenValid = await ensureValidToken();
-    if (!isTokenValid) {
-      setIsModalOpen(false);
-      toast.error('로그인이 만료되었습니다. 다시 로그인해주세요.');
-      setTimeout(() => {
-        router.push('/signin');
-      }, 1500);
-      return;
-    }
-
-    // 0-1. 업로드된 파일 ID 확인
+    // 업로드된 파일 ID 확인
     const fileAssetIds = images
       .map((img) => img.fileAssetId)
       .filter((id): id is number => id !== undefined);
 
-    if (fileAssetIds.length !== images.length) {
-      toast.error(
-        '일부 이미지가 아직 업로드 중입니다. 잠시 후 다시 시도해주세요.'
-      );
-      return;
-    }
-
-    // 1. 즉시 전역 상태를 PROCESSING으로 설정 (임시 ID)
-    startAnalysis(0);
-
-    // 2. 모달 닫고 로딩 페이지로 이동
-    setIsModalOpen(false);
+    // 계약서 파일 ID를 sessionStorage에 저장 후 등기부등본 페이지로 이동
+    sessionStorage.setItem(
+      'contractFileAssetIds',
+      JSON.stringify(fileAssetIds)
+    );
     setNavigationGuard(null);
-    router.push('/loading-analysis');
-
-    // 3. 백그라운드에서 API 호출 (페이지 이동과 독립적으로 실행)
-    (async () => {
-      try {
-        // 쉬운 계약서 생성 및 분석 (이미 업로드된 파일 ID 사용)
-        const response = await createEasyContract(fileAssetIds);
-        const easyContractId = response.data.easy_contract_id;
-
-        // 분석 완료 처리
-        completeAnalysis(easyContractId);
-      } catch (err) {
-        console.error('분석 요청 실패:', err);
-        if (err instanceof ApiError) {
-          failAnalysis(0, err.message);
-        } else {
-          failAnalysis(0, '분석 요청에 실패했습니다.');
-        }
-      }
-    })();
+    router.push('/registry-document');
   };
 
   return (
@@ -344,7 +301,7 @@ export default function HomePage() {
           onClick={handleAnalyzeClick}
           disabled={images.length === 0 || isUploading}
         >
-          {isUploading ? '이미지 업로드 중...' : '분석 요청하기'}
+          {isUploading ? '이미지 업로드 중...' : '다음'}
         </MainButton>
       </BottomFixedArea>
 
@@ -439,28 +396,6 @@ export default function HomePage() {
           }
         }
       `}</style>
-
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmAnalyze}
-        title="계약서 분석을 시작할까요?"
-        confirmText="분석 시작"
-        cancelText="취소"
-      >
-        <p
-          style={{
-            color: '#666',
-            fontSize: 14,
-            lineHeight: 1.6,
-            textAlign: 'center',
-          }}
-        >
-          분석은 1~10분 소요되며,
-          <br />
-          분석 상태는 홈에서 확인할 수 있어요.
-        </p>
-      </Modal>
 
       {/* 분석 진행 중 경고 모달 */}
       <Modal
