@@ -19,6 +19,7 @@ interface Step4Props {
   images: UploadedImage[];
   onImageUpload: (files: FileList) => void;
   onImageRemove: (fileAssetId: number, url: string) => void;
+  isEditMode?: boolean;
 }
 
 export default function Step4ImagesAndDescription({
@@ -28,6 +29,7 @@ export default function Step4ImagesAndDescription({
   images,
   onImageUpload,
   onImageRemove,
+  isEditMode = false,
 }: Step4Props) {
   const [contracts, setContracts] = useState<EasyContractListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -124,27 +126,29 @@ export default function Step4ImagesAndDescription({
       </div>
 
       {/* 계약서 연결 */}
-      <div className={styles.section}>
-        <label className={styles.label}>
-          계약서 연결 <span className={styles.optional}>(선택)</span>
-        </label>
-        <select
-          className={styles.select}
-          value={formData.homeNoteId || ''}
-          onChange={handleContractChange}
-          disabled={isLoading}
-        >
-          <option value="">계약서를 선택하세요</option>
-          {contracts.map((contract) => (
-            <option
-              key={contract.easy_contract_id}
-              value={contract.easy_contract_id}
-            >
-              {contract.title}
-            </option>
-          ))}
-        </select>
-      </div>
+      {!isEditMode && (
+        <div className={styles.section}>
+          <label className={styles.label}>
+            계약서 연결 <span className={styles.optional}>(선택)</span>
+          </label>
+          <select
+            className={styles.select}
+            value={formData.homeNoteId || ''}
+            onChange={handleContractChange}
+            disabled={isLoading}
+          >
+            <option value="">계약서를 선택하세요</option>
+            {contracts.map((contract) => (
+              <option
+                key={contract.easy_contract_id}
+                value={contract.easy_contract_id}
+              >
+                {contract.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* 이미지 업로드 */}
       <div className={styles.section}>

@@ -117,8 +117,8 @@ export default function PropertyCreatePage() {
           floor: p.is_basement ? -p.floor : p.floor,
           isBasement: p.is_basement,
           maintenanceFee: p.maintenance_fee,
-          address: '',
-          detailedAddress: p.address ?? '',
+          address: p.address_main,
+          detailedAddress: p.address_detail ?? '',
           title: p.title,
           description: p.content,
           homeNoteId: undefined,
@@ -289,15 +289,15 @@ export default function PropertyCreatePage() {
 
   const buildCreateRequest = (): PropertyPostCreateRequestDto => {
     return {
-      title: formData.title || '제목 미입력',
+      title: formData.title,
       address_main: formData.address,
-      address_detail: formData.detailedAddress.trim() || '상세주소 미입력',
+      address_detail: formData.detailedAddress.trim() || undefined,
       price_main: Number(formData.deposit),
       price_monthly:
         formData.priceType === '월세' || formData.priceType === '반전세'
           ? Number(formData.monthlyRent)
           : undefined,
-      content: formData.description.trim() || '상세 설명이 없습니다.',
+      content: formData.description.trim(),
       property_type: PROPERTY_TYPE_MAP[formData.propertyType],
       rent_type: RENT_TYPE_MAP[formData.priceType],
       exclusive_area_m2: Number(formData.area),
@@ -322,13 +322,23 @@ export default function PropertyCreatePage() {
       if (isEditMode && editId) {
         const updateRequest: PropertyPostUpdateRequestDto = {
           title: formData.title,
+          easy_contract_id: formData.homeNoteId,
+          address_main: formData.address,
+          address_detail: formData.detailedAddress.trim() || undefined,
           price_main: Number(formData.deposit),
           price_monthly:
             formData.priceType === '월세' || formData.priceType === '반전세'
               ? Number(formData.monthlyRent)
               : undefined,
-          content: formData.description.trim() || '상세 설명이 없습니다.',
-          easy_contract_id: formData.homeNoteId,
+          content: formData.description.trim(),
+          property_type: PROPERTY_TYPE_MAP[formData.propertyType],
+          rent_type: RENT_TYPE_MAP[formData.priceType],
+          exclusive_area_m2: Number(formData.area),
+          is_basement: formData.floor < 0,
+          floor: formData.floor,
+          maintenance_fee: formData.maintenanceFee
+            ? Number(formData.maintenanceFee)
+            : 0,
         };
         await updatePropertyPost(editId, updateRequest);
 
@@ -446,6 +456,7 @@ export default function PropertyCreatePage() {
             images={uploadedImages}
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
+            isEditMode={isEditMode}
           />
         )}
       </main>

@@ -117,7 +117,7 @@ export async function getSearchCount(
   searchRequest: PropertyPostSearchRequestDto
 ) {
   return apiClient<{ data: PropertyPostSearchCountResponseDto }>(
-    `${BASE_URL}/searches/count`,
+    `${BASE_URL}/searches/counts`,
     {
       method: 'POST',
       body: JSON.stringify(searchRequest),
@@ -218,10 +218,18 @@ export async function deletePropertyPost(propertyPostId: number) {
 
 export interface PropertyPostUpdateRequestDto {
   title?: string;
+  easy_contract_id?: number;
+  address_main?: string;
+  address_detail?: string;
   price_main?: number;
   price_monthly?: number;
   content?: string;
-  easy_contract_id?: number;
+  property_type?: string;
+  rent_type?: string;
+  exclusive_area_m2?: number;
+  is_basement?: boolean;
+  floor?: number;
+  maintenance_fee?: number;
 }
 
 /**
@@ -246,7 +254,7 @@ export async function updatePropertyPost(
 export interface PropertyPostCreateRequestDto {
   title: string;
   address_main: string;
-  address_detail: string;
+  address_detail?: string;
   price_main: number;
   price_monthly?: number;
   content: string;
