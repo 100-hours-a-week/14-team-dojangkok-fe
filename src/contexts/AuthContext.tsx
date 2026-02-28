@@ -12,6 +12,7 @@ import {
   deleteAccount as deleteAccountApi,
 } from '@/lib/api/auth';
 import { useToast } from '@/contexts/ToastContext';
+import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useSseConnection, SseEvent } from '@/hooks/useSseConnection';
 
 interface AuthContextType extends AuthState {
@@ -31,9 +32,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   const router = useRouter();
   const { info } = useToast();
+  const { analysisState, completeAnalysis, failAnalysis } = useAnalysis();
 
   const handleSseEvent = (event: SseEvent) => {
     if (event.name === 'connect') return;
+
+    if (event.name === 'easy-contract-result') {
+      try {
+        const data = JSON.parse(event.data);
+        if (
+          analysisState.easyContractId &&
+          data.easy_contract_id === analysisState.easyContractId
+        ) {
+          if (data.success) {
+            completeAnalysis(data.easy_contract_id);
+          } else {
+            failAnalysis(
+              data.easy_contract_id,
+              data.error_message || '분석에 실패했습니다.'
+            );
+          }
+        }
+      } catch {
+        // 파싱 실패 시 무시
+      }
+      return;
+    }
+
     try {
       const parsed = JSON.parse(event.data);
       const message = parsed?.message ?? parsed?.content;
