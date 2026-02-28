@@ -4,17 +4,29 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header, StampBadge, RangeSlider } from '@/components/common';
 import { getSearchCount } from '@/lib/api/property';
-import type { PropertyPostSearchRequestDto, PropertyType, RentType } from '@/types/property';
+import type {
+  PropertyPostSearchRequestDto,
+  PropertyType,
+  RentType,
+} from '@/types/property';
 import { PROPERTY_TYPE_MAP, RENT_TYPE_MAP } from '@/types/property';
 import styles from './filter.module.css';
 
-const PROPERTY_TYPES = ['원룸', '투룸 이상', '오피스텔', '아파트', '상가', '주택'];
+const PROPERTY_TYPES = [
+  '원룸',
+  '투룸 이상',
+  '오피스텔',
+  '아파트',
+  '상가',
+  '주택',
+];
 const LEASE_TYPES = ['월세', '전세', '반전세', '매매'];
 
 const formatDeposit = (val: number) => {
   if (val === 20000) return '2억 이상';
   if (val === 0) return '0원';
-  if (val >= 10000) return `${Math.floor(val / 10000)}억${val % 10000 > 0 ? ` ${val % 10000}만` : ''}원`;
+  if (val >= 10000)
+    return `${Math.floor(val / 10000)}억${val % 10000 > 0 ? ` ${val % 10000}만` : ''}원`;
   return `${val}만원`;
 };
 
@@ -27,7 +39,8 @@ const formatRent = (val: number) => {
 const formatPurchasePrice = (val: number) => {
   if (val === 100000) return '10억 이상';
   if (val === 0) return '0원';
-  if (val >= 10000) return `${Math.floor(val / 10000)}억${val % 10000 > 0 ? ` ${val % 10000}만` : ''}원`;
+  if (val >= 10000)
+    return `${Math.floor(val / 10000)}억${val % 10000 > 0 ? ` ${val % 10000}만` : ''}원`;
   return `${val}만원`;
 };
 
@@ -36,7 +49,8 @@ export default function PropertyFilterPage() {
   const searchParams = useSearchParams();
 
   // URL 파라미터에서 초기값 읽기
-  const getInitialReviewedOnly = () => searchParams.get('reviewedOnly') === 'true';
+  const getInitialReviewedOnly = () =>
+    searchParams.get('reviewedOnly') === 'true';
   const getInitialPropertyTypes = () => {
     const types = searchParams.get('propertyTypes');
     return types ? types.split(',') : [];
@@ -45,35 +59,42 @@ export default function PropertyFilterPage() {
     const types = searchParams.get('leaseTypes');
     return types ? types.split(',') : [];
   };
-  const parseRangeParam = (param: string | null, defaultRange: [number, number]): [number, number] => {
+  const parseRangeParam = (
+    param: string | null,
+    defaultRange: [number, number]
+  ): [number, number] => {
     if (!param) return defaultRange;
     const [min, max] = param.split('-').map(Number);
     return [min, max];
   };
 
   const [reviewedOnly, setReviewedOnly] = useState(getInitialReviewedOnly());
-  const [propertyTypes, setPropertyTypes] = useState<string[]>(getInitialPropertyTypes());
-  const [leaseTypes, setLeaseTypes] = useState<string[]>(getInitialLeaseTypes());
+  const [propertyTypes, setPropertyTypes] = useState<string[]>(
+    getInitialPropertyTypes()
+  );
+  const [leaseTypes, setLeaseTypes] = useState<string[]>(
+    getInitialLeaseTypes()
+  );
 
   // 각 임대 형태별 가격 범위
-  const [monthlyDepositRange, setMonthlyDepositRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('monthlyDeposit'), [0, 20000])
-  );
+  const [monthlyDepositRange, setMonthlyDepositRange] = useState<
+    [number, number]
+  >(parseRangeParam(searchParams.get('monthlyDeposit'), [0, 20000]));
   const [monthlyRentRange, setMonthlyRentRange] = useState<[number, number]>(
     parseRangeParam(searchParams.get('monthlyRent'), [0, 200])
   );
-  const [jeonsaeDepositRange, setJeonsaeDepositRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('jeonsaeDeposit'), [0, 20000])
-  );
-  const [semiJeonsaeDepositRange, setSemiJeonsaeDepositRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('semiJeonsaeDeposit'), [0, 20000])
-  );
-  const [semiJeonsaeRentRange, setSemiJeonsaeRentRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('semiJeonsaeRent'), [0, 200])
-  );
-  const [purchasePriceRange, setPurchasePriceRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('purchasePrice'), [0, 100000])
-  );
+  const [jeonsaeDepositRange, setJeonsaeDepositRange] = useState<
+    [number, number]
+  >(parseRangeParam(searchParams.get('jeonsaeDeposit'), [0, 20000]));
+  const [semiJeonsaeDepositRange, setSemiJeonsaeDepositRange] = useState<
+    [number, number]
+  >(parseRangeParam(searchParams.get('semiJeonsaeDeposit'), [0, 20000]));
+  const [semiJeonsaeRentRange, setSemiJeonsaeRentRange] = useState<
+    [number, number]
+  >(parseRangeParam(searchParams.get('semiJeonsaeRent'), [0, 200]));
+  const [purchasePriceRange, setPurchasePriceRange] = useState<
+    [number, number]
+  >(parseRangeParam(searchParams.get('purchasePrice'), [0, 100000]));
 
   // 각 임대 형태 섹션에 대한 ref
   const monthlyRef = useRef<HTMLDivElement>(null);
@@ -129,7 +150,10 @@ export default function PropertyFilterPage() {
     }
 
     if (leaseTypes.includes('반전세')) {
-      if (semiJeonsaeDepositRange[0] !== 0 || semiJeonsaeDepositRange[1] !== 20000) {
+      if (
+        semiJeonsaeDepositRange[0] !== 0 ||
+        semiJeonsaeDepositRange[1] !== 20000
+      ) {
         request.price_main_min = semiJeonsaeDepositRange[0];
         request.price_main_max = semiJeonsaeDepositRange[1];
       }
@@ -221,7 +245,7 @@ export default function PropertyFilterPage() {
     if (newLeaseTypes.length > 0) {
       // 새로 추가된 임대 형태 중 마지막 항목으로 스크롤
       const newType = newLeaseTypes[newLeaseTypes.length - 1];
-      let targetRef: React.RefObject<HTMLDivElement> | null = null;
+      let targetRef: React.RefObject<HTMLDivElement | null> | null = null;
 
       switch (newType) {
         case '월세':
@@ -301,31 +325,52 @@ export default function PropertyFilterPage() {
     // 가격 필터 추가 (기본값이 아닌 경우만)
     if (leaseTypes.includes('월세')) {
       if (monthlyDepositRange[0] !== 0 || monthlyDepositRange[1] !== 20000) {
-        params.set('monthlyDeposit', `${monthlyDepositRange[0]}-${monthlyDepositRange[1]}`);
+        params.set(
+          'monthlyDeposit',
+          `${monthlyDepositRange[0]}-${monthlyDepositRange[1]}`
+        );
       }
       if (monthlyRentRange[0] !== 0 || monthlyRentRange[1] !== 200) {
-        params.set('monthlyRent', `${monthlyRentRange[0]}-${monthlyRentRange[1]}`);
+        params.set(
+          'monthlyRent',
+          `${monthlyRentRange[0]}-${monthlyRentRange[1]}`
+        );
       }
     }
 
     if (leaseTypes.includes('전세')) {
       if (jeonsaeDepositRange[0] !== 0 || jeonsaeDepositRange[1] !== 20000) {
-        params.set('jeonsaeDeposit', `${jeonsaeDepositRange[0]}-${jeonsaeDepositRange[1]}`);
+        params.set(
+          'jeonsaeDeposit',
+          `${jeonsaeDepositRange[0]}-${jeonsaeDepositRange[1]}`
+        );
       }
     }
 
     if (leaseTypes.includes('반전세')) {
-      if (semiJeonsaeDepositRange[0] !== 0 || semiJeonsaeDepositRange[1] !== 20000) {
-        params.set('semiJeonsaeDeposit', `${semiJeonsaeDepositRange[0]}-${semiJeonsaeDepositRange[1]}`);
+      if (
+        semiJeonsaeDepositRange[0] !== 0 ||
+        semiJeonsaeDepositRange[1] !== 20000
+      ) {
+        params.set(
+          'semiJeonsaeDeposit',
+          `${semiJeonsaeDepositRange[0]}-${semiJeonsaeDepositRange[1]}`
+        );
       }
       if (semiJeonsaeRentRange[0] !== 0 || semiJeonsaeRentRange[1] !== 200) {
-        params.set('semiJeonsaeRent', `${semiJeonsaeRentRange[0]}-${semiJeonsaeRentRange[1]}`);
+        params.set(
+          'semiJeonsaeRent',
+          `${semiJeonsaeRentRange[0]}-${semiJeonsaeRentRange[1]}`
+        );
       }
     }
 
     if (leaseTypes.includes('매매')) {
       if (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000) {
-        params.set('purchasePrice', `${purchasePriceRange[0]}-${purchasePriceRange[1]}`);
+        params.set(
+          'purchasePrice',
+          `${purchasePriceRange[0]}-${purchasePriceRange[1]}`
+        );
       }
     }
 
@@ -404,7 +449,8 @@ export default function PropertyFilterPage() {
             <div className={styles.priceHeader}>
               <h3 className={styles.subTitle}>보증금</h3>
               <span className={styles.priceValue}>
-                {monthlyDepositRange[0] === 0 && monthlyDepositRange[1] === 20000
+                {monthlyDepositRange[0] === 0 &&
+                monthlyDepositRange[1] === 20000
                   ? '전체'
                   : `${formatDeposit(monthlyDepositRange[0])} ~ ${formatDeposit(monthlyDepositRange[1])}`}
               </span>
@@ -447,7 +493,8 @@ export default function PropertyFilterPage() {
             <div className={styles.priceHeader}>
               <h3 className={styles.subTitle}>보증금</h3>
               <span className={styles.priceValue}>
-                {jeonsaeDepositRange[0] === 0 && jeonsaeDepositRange[1] === 20000
+                {jeonsaeDepositRange[0] === 0 &&
+                jeonsaeDepositRange[1] === 20000
                   ? '전체'
                   : `${formatDeposit(jeonsaeDepositRange[0])} ~ ${formatDeposit(jeonsaeDepositRange[1])}`}
               </span>
@@ -472,7 +519,8 @@ export default function PropertyFilterPage() {
             <div className={styles.priceHeader}>
               <h3 className={styles.subTitle}>보증금</h3>
               <span className={styles.priceValue}>
-                {semiJeonsaeDepositRange[0] === 0 && semiJeonsaeDepositRange[1] === 20000
+                {semiJeonsaeDepositRange[0] === 0 &&
+                semiJeonsaeDepositRange[1] === 20000
                   ? '전체'
                   : `${formatDeposit(semiJeonsaeDepositRange[0])} ~ ${formatDeposit(semiJeonsaeDepositRange[1])}`}
               </span>
@@ -490,7 +538,8 @@ export default function PropertyFilterPage() {
             <div className={styles.priceHeader} style={{ marginTop: '24px' }}>
               <h3 className={styles.subTitle}>월세</h3>
               <span className={styles.priceValue}>
-                {semiJeonsaeRentRange[0] === 0 && semiJeonsaeRentRange[1] === 200
+                {semiJeonsaeRentRange[0] === 0 &&
+                semiJeonsaeRentRange[1] === 200
                   ? '전체'
                   : `${formatRent(semiJeonsaeRentRange[0])} ~ ${formatRent(semiJeonsaeRentRange[1])}`}
               </span>
