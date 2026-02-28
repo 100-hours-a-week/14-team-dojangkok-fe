@@ -39,7 +39,7 @@ export default function RegistryDocumentPage() {
   const [isBackModalOpen, setIsBackModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [contractFileIds, setContractFileIds] = useState<number[]>([]);
-  const { startAnalysis, completeAnalysis, failAnalysis } = useAnalysis();
+  const { startAnalysis, failAnalysis } = useAnalysis();
 
   useEffect(() => {
     const stored = sessionStorage.getItem('contractFileAssetIds');
@@ -152,7 +152,8 @@ export default function RegistryDocumentPage() {
           registryFileIds
         );
         const easyContractId = response.data.easy_contract_id;
-        completeAnalysis(easyContractId);
+        // 실제 ID로 업데이트 — 완료는 SSE easy-contract-result 이벤트가 처리
+        startAnalysis(easyContractId);
       } catch (err) {
         if (err instanceof ApiError) {
           failAnalysis(0, err.message);
