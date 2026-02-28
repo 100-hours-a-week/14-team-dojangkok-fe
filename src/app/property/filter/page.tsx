@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header, StampBadge, RangeSlider } from '@/components/common';
+import { getSearchCount } from '@/lib/api/property';
+import type { PropertyPostSearchRequestDto, PropertyType, RentType } from '@/types/property';
+import { PROPERTY_TYPE_MAP, RENT_TYPE_MAP } from '@/types/property';
 import styles from './filter.module.css';
 
 const PROPERTY_TYPES = ['원룸', '투룸 이상', '오피스텔', '아파트', '상가', '주택'];
@@ -78,11 +81,128 @@ export default function PropertyFilterPage() {
   const semiJeonsaeRef = useRef<HTMLDivElement>(null);
   const purchaseRef = useRef<HTMLDivElement>(null);
 
+  const [count, setCount] = useState<number | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(false);
+  const isResettingRef = useRef(false);
+
   // 이전 leaseTypes 추적
   const prevLeaseTypesRef = useRef<string[]>([]);
 
   // 초기 마운트 여부 추적
   const isInitialMountRef = useRef(true);
+
+  const buildCountRequest = useCallback((): PropertyPostSearchRequestDto => {
+    const request: PropertyPostSearchRequestDto = {};
+
+    const keyword = searchParams.get('keyword');
+    if (keyword) request.keyword = keyword;
+
+    if (propertyTypes.length > 0) {
+      request.property_type = propertyTypes
+        .map((t) => PROPERTY_TYPE_MAP[t] as PropertyType)
+        .filter(Boolean);
+    }
+
+    if (leaseTypes.length > 0) {
+      request.rent_type = leaseTypes
+        .map((t) => RENT_TYPE_MAP[t] as RentType)
+        .filter(Boolean);
+    }
+
+    if (leaseTypes.includes('월세')) {
+      if (monthlyDepositRange[0] !== 0 || monthlyDepositRange[1] !== 20000) {
+        request.price_main_min = monthlyDepositRange[0];
+        request.price_main_max = monthlyDepositRange[1];
+      }
+      if (monthlyRentRange[0] !== 0 || monthlyRentRange[1] !== 200) {
+        request.price_monthly_min = monthlyRentRange[0];
+        request.price_monthly_max = monthlyRentRange[1];
+      }
+    }
+
+    if (leaseTypes.includes('전세')) {
+      if (jeonsaeDepositRange[0] !== 0 || jeonsaeDepositRange[1] !== 20000) {
+        request.price_main_min = jeonsaeDepositRange[0];
+        request.price_main_max = jeonsaeDepositRange[1];
+      }
+    }
+
+    if (leaseTypes.includes('반전세')) {
+      if (semiJeonsaeDepositRange[0] !== 0 || semiJeonsaeDepositRange[1] !== 20000) {
+        request.price_main_min = semiJeonsaeDepositRange[0];
+        request.price_main_max = semiJeonsaeDepositRange[1];
+      }
+      if (semiJeonsaeRentRange[0] !== 0 || semiJeonsaeRentRange[1] !== 200) {
+        request.price_monthly_min = semiJeonsaeRentRange[0];
+        request.price_monthly_max = semiJeonsaeRentRange[1];
+      }
+    }
+
+    if (leaseTypes.includes('매매')) {
+      if (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000) {
+        request.price_main_min = purchasePriceRange[0];
+        request.price_main_max = purchasePriceRange[1];
+      }
+    }
+
+    if (reviewedOnly) {
+      request.is_verified = true;
+    }
+
+    return request;
+  }, [
+    searchParams,
+    propertyTypes,
+    leaseTypes,
+    monthlyDepositRange,
+    monthlyRentRange,
+    jeonsaeDepositRange,
+    semiJeonsaeDepositRange,
+    semiJeonsaeRentRange,
+    purchasePriceRange,
+    reviewedOnly,
+  ]);
+
+  // 필터 변경 시 debounce 카운트 조회
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
+
+    if (isResettingRef.current) {
+      isResettingRef.current = false;
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      return;
+    }
+
+    const hasActiveFilters =
+      !!searchParams.get('keyword') ||
+      propertyTypes.length > 0 ||
+      leaseTypes.length > 0;
+
+    if (!hasActiveFilters) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCount(null);
+      return;
+    }
+
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const response = await getSearchCount(buildCountRequest());
+        setCount(response.data.count);
+      } catch {
+        setCount(null);
+      }
+    }, 400);
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [buildCountRequest, searchParams, propertyTypes, leaseTypes]);
 
   // 임대 형태 변경 시 스크롤
   useEffect(() => {
@@ -132,7 +252,8 @@ export default function PropertyFilterPage() {
   }, [leaseTypes]);
 
   const handleBackClick = () => {
-    router.back();
+    const params = searchParams.toString();
+    router.replace(`/property${params ? `?${params}` : ''}`);
   };
 
   const togglePropertyType = (type: string) => {
@@ -148,6 +269,8 @@ export default function PropertyFilterPage() {
   };
 
   const handleReset = () => {
+    isResettingRef.current = true;
+    setCount(null);
     setReviewedOnly(false);
     setPropertyTypes([]);
     setLeaseTypes([]);
@@ -206,13 +329,14 @@ export default function PropertyFilterPage() {
       }
     }
 
+    // 검색 키워드 보존
+    const keyword = searchParams.get('keyword');
+    if (keyword) {
+      params.set('keyword', keyword);
+    }
+
     // router.replace를 사용하여 필터 페이지를 히스토리에서 제거
     router.replace(`/property?${params.toString()}`);
-  };
-
-  const getTotalCount = () => {
-    // Mock count - replace with actual filtered count
-    return 30;
   };
 
   return (
@@ -416,7 +540,7 @@ export default function PropertyFilterPage() {
           초기화
         </button>
         <button className={styles.applyButton} onClick={handleApply}>
-          {getTotalCount()}개 매물 보기
+          {count === null ? '전체 보기' : `${count}개 매물 보기`}
         </button>
       </footer>
     </div>
