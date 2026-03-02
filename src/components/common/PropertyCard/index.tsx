@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import StampBadge from '../StampBadge';
 import styles from './PropertyCard.module.css';
 import { Property } from '@/types/property';
@@ -62,12 +61,11 @@ export default function PropertyCard({
     >
       <div className={styles.imageContainer}>
         {hasImage ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={property.images[0]}
             alt={property.title}
-            fill
             className={styles.image}
-            sizes="110px"
           />
         ) : (
           <div className={styles.imagePlaceholder}>

@@ -45,7 +45,8 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'dev-ktb-team14-dojangkok-bucket.s3.ap-northeast-2.amazonaws.com',
+        hostname:
+          'dev-ktb-team14-dojangkok-bucket.s3.ap-northeast-2.amazonaws.com',
       },
     ],
   },
