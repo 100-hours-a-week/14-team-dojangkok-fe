@@ -67,7 +67,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       # 5. 환경변수 파일 다운로드
       - name: Download .env from S3
-        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/dev/.env ./.env
+        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/fis/.env ./.env
       # 6. Next.js 앱 빌드
       - name: Build Next.js App
         run: npm run build
