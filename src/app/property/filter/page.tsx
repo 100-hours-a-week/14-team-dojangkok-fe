@@ -441,144 +441,188 @@ export default function PropertyFilterPage() {
           </div>
         </section>
 
-        {/* 월세 */}
-        {leaseTypes.includes('월세') && (
-          <section ref={monthlyRef} className={styles.section}>
-            <h2 className={styles.sectionTitle}>월세</h2>
-
+        {/* 가격 */}
+        {leaseTypes.length === 0 ? (
+          <section className={`${styles.section} ${styles.sectionDisabled}`}>
+            <h2 className={styles.sectionTitle}>가격</h2>
             <div className={styles.priceHeader}>
               <h3 className={styles.subTitle}>보증금</h3>
-              <span className={styles.priceValue}>
-                {monthlyDepositRange[0] === 0 &&
-                monthlyDepositRange[1] === 20000
-                  ? '전체'
-                  : `${formatDeposit(monthlyDepositRange[0])} ~ ${formatDeposit(monthlyDepositRange[1])}`}
-              </span>
+              <span className={styles.priceValue}>전체</span>
             </div>
             <div className={styles.sliderWrapper}>
               <RangeSlider
                 min={0}
                 max={20000}
                 step={100}
-                value={monthlyDepositRange}
-                onChange={setMonthlyDepositRange}
+                value={[0, 20000]}
+                onChange={() => {}}
+                disabled
               />
             </div>
-
             <div className={styles.priceHeader} style={{ marginTop: '24px' }}>
               <h3 className={styles.subTitle}>월세</h3>
-              <span className={styles.priceValue}>
-                {monthlyRentRange[0] === 0 && monthlyRentRange[1] === 200
-                  ? '전체'
-                  : `${formatRent(monthlyRentRange[0])} ~ ${formatRent(monthlyRentRange[1])}`}
-              </span>
+              <span className={styles.priceValue}>전체</span>
             </div>
             <div className={styles.sliderWrapper}>
               <RangeSlider
                 min={0}
                 max={200}
                 step={5}
-                value={monthlyRentRange}
-                onChange={setMonthlyRentRange}
+                value={[0, 200]}
+                onChange={() => {}}
+                disabled
               />
             </div>
+            <p className={styles.disabledHint}>
+              <span className="material-symbols-outlined">info</span>
+              임대 형태를 선택하면 활성화됩니다
+            </p>
           </section>
-        )}
+        ) : (
+          <>
+            {leaseTypes.includes('월세') && (
+              <section ref={monthlyRef} className={styles.section}>
+                <h2 className={styles.sectionTitle}>월세</h2>
 
-        {/* 전세 */}
-        {leaseTypes.includes('전세') && (
-          <section ref={jeonsaeRef} className={styles.section}>
-            <h2 className={styles.sectionTitle}>전세</h2>
+                <div className={styles.priceHeader}>
+                  <h3 className={styles.subTitle}>보증금</h3>
+                  <span className={styles.priceValue}>
+                    {monthlyDepositRange[0] === 0 &&
+                    monthlyDepositRange[1] === 20000
+                      ? '전체'
+                      : `${formatDeposit(monthlyDepositRange[0])} ~ ${formatDeposit(monthlyDepositRange[1])}`}
+                  </span>
+                </div>
+                <div className={styles.sliderWrapper}>
+                  <RangeSlider
+                    min={0}
+                    max={20000}
+                    step={100}
+                    value={monthlyDepositRange}
+                    onChange={setMonthlyDepositRange}
+                  />
+                </div>
 
-            <div className={styles.priceHeader}>
-              <h3 className={styles.subTitle}>보증금</h3>
-              <span className={styles.priceValue}>
-                {jeonsaeDepositRange[0] === 0 &&
-                jeonsaeDepositRange[1] === 20000
-                  ? '전체'
-                  : `${formatDeposit(jeonsaeDepositRange[0])} ~ ${formatDeposit(jeonsaeDepositRange[1])}`}
-              </span>
-            </div>
-            <div className={styles.sliderWrapper}>
-              <RangeSlider
-                min={0}
-                max={20000}
-                step={100}
-                value={jeonsaeDepositRange}
-                onChange={setJeonsaeDepositRange}
-              />
-            </div>
-          </section>
-        )}
+                <div
+                  className={styles.priceHeader}
+                  style={{ marginTop: '24px' }}
+                >
+                  <h3 className={styles.subTitle}>월세</h3>
+                  <span className={styles.priceValue}>
+                    {monthlyRentRange[0] === 0 && monthlyRentRange[1] === 200
+                      ? '전체'
+                      : `${formatRent(monthlyRentRange[0])} ~ ${formatRent(monthlyRentRange[1])}`}
+                  </span>
+                </div>
+                <div className={styles.sliderWrapper}>
+                  <RangeSlider
+                    min={0}
+                    max={200}
+                    step={5}
+                    value={monthlyRentRange}
+                    onChange={setMonthlyRentRange}
+                  />
+                </div>
+              </section>
+            )}
 
-        {/* 반전세 */}
-        {leaseTypes.includes('반전세') && (
-          <section ref={semiJeonsaeRef} className={styles.section}>
-            <h2 className={styles.sectionTitle}>반전세</h2>
+            {leaseTypes.includes('전세') && (
+              <section ref={jeonsaeRef} className={styles.section}>
+                <h2 className={styles.sectionTitle}>전세</h2>
 
-            <div className={styles.priceHeader}>
-              <h3 className={styles.subTitle}>보증금</h3>
-              <span className={styles.priceValue}>
-                {semiJeonsaeDepositRange[0] === 0 &&
-                semiJeonsaeDepositRange[1] === 20000
-                  ? '전체'
-                  : `${formatDeposit(semiJeonsaeDepositRange[0])} ~ ${formatDeposit(semiJeonsaeDepositRange[1])}`}
-              </span>
-            </div>
-            <div className={styles.sliderWrapper}>
-              <RangeSlider
-                min={0}
-                max={20000}
-                step={100}
-                value={semiJeonsaeDepositRange}
-                onChange={setSemiJeonsaeDepositRange}
-              />
-            </div>
+                <div className={styles.priceHeader}>
+                  <h3 className={styles.subTitle}>보증금</h3>
+                  <span className={styles.priceValue}>
+                    {jeonsaeDepositRange[0] === 0 &&
+                    jeonsaeDepositRange[1] === 20000
+                      ? '전체'
+                      : `${formatDeposit(jeonsaeDepositRange[0])} ~ ${formatDeposit(jeonsaeDepositRange[1])}`}
+                  </span>
+                </div>
+                <div className={styles.sliderWrapper}>
+                  <RangeSlider
+                    min={0}
+                    max={20000}
+                    step={100}
+                    value={jeonsaeDepositRange}
+                    onChange={setJeonsaeDepositRange}
+                  />
+                </div>
+              </section>
+            )}
 
-            <div className={styles.priceHeader} style={{ marginTop: '24px' }}>
-              <h3 className={styles.subTitle}>월세</h3>
-              <span className={styles.priceValue}>
-                {semiJeonsaeRentRange[0] === 0 &&
-                semiJeonsaeRentRange[1] === 200
-                  ? '전체'
-                  : `${formatRent(semiJeonsaeRentRange[0])} ~ ${formatRent(semiJeonsaeRentRange[1])}`}
-              </span>
-            </div>
-            <div className={styles.sliderWrapper}>
-              <RangeSlider
-                min={0}
-                max={200}
-                step={5}
-                value={semiJeonsaeRentRange}
-                onChange={setSemiJeonsaeRentRange}
-              />
-            </div>
-          </section>
-        )}
+            {leaseTypes.includes('반전세') && (
+              <section ref={semiJeonsaeRef} className={styles.section}>
+                <h2 className={styles.sectionTitle}>반전세</h2>
 
-        {/* 매매 */}
-        {leaseTypes.includes('매매') && (
-          <section ref={purchaseRef} className={styles.section}>
-            <h2 className={styles.sectionTitle}>매매</h2>
+                <div className={styles.priceHeader}>
+                  <h3 className={styles.subTitle}>보증금</h3>
+                  <span className={styles.priceValue}>
+                    {semiJeonsaeDepositRange[0] === 0 &&
+                    semiJeonsaeDepositRange[1] === 20000
+                      ? '전체'
+                      : `${formatDeposit(semiJeonsaeDepositRange[0])} ~ ${formatDeposit(semiJeonsaeDepositRange[1])}`}
+                  </span>
+                </div>
+                <div className={styles.sliderWrapper}>
+                  <RangeSlider
+                    min={0}
+                    max={20000}
+                    step={100}
+                    value={semiJeonsaeDepositRange}
+                    onChange={setSemiJeonsaeDepositRange}
+                  />
+                </div>
 
-            <div className={styles.priceHeader}>
-              <h3 className={styles.subTitle}>매매가</h3>
-              <span className={styles.priceValue}>
-                {purchasePriceRange[0] === 0 && purchasePriceRange[1] === 100000
-                  ? '전체'
-                  : `${formatPurchasePrice(purchasePriceRange[0])} ~ ${formatPurchasePrice(purchasePriceRange[1])}`}
-              </span>
-            </div>
-            <div className={styles.sliderWrapper}>
-              <RangeSlider
-                min={0}
-                max={100000}
-                step={1000}
-                value={purchasePriceRange}
-                onChange={setPurchasePriceRange}
-              />
-            </div>
-          </section>
+                <div
+                  className={styles.priceHeader}
+                  style={{ marginTop: '24px' }}
+                >
+                  <h3 className={styles.subTitle}>월세</h3>
+                  <span className={styles.priceValue}>
+                    {semiJeonsaeRentRange[0] === 0 &&
+                    semiJeonsaeRentRange[1] === 200
+                      ? '전체'
+                      : `${formatRent(semiJeonsaeRentRange[0])} ~ ${formatRent(semiJeonsaeRentRange[1])}`}
+                  </span>
+                </div>
+                <div className={styles.sliderWrapper}>
+                  <RangeSlider
+                    min={0}
+                    max={200}
+                    step={5}
+                    value={semiJeonsaeRentRange}
+                    onChange={setSemiJeonsaeRentRange}
+                  />
+                </div>
+              </section>
+            )}
+
+            {leaseTypes.includes('매매') && (
+              <section ref={purchaseRef} className={styles.section}>
+                <h2 className={styles.sectionTitle}>매매</h2>
+
+                <div className={styles.priceHeader}>
+                  <h3 className={styles.subTitle}>매매가</h3>
+                  <span className={styles.priceValue}>
+                    {purchasePriceRange[0] === 0 &&
+                    purchasePriceRange[1] === 100000
+                      ? '전체'
+                      : `${formatPurchasePrice(purchasePriceRange[0])} ~ ${formatPurchasePrice(purchasePriceRange[1])}`}
+                  </span>
+                </div>
+                <div className={styles.sliderWrapper}>
+                  <RangeSlider
+                    min={0}
+                    max={100000}
+                    step={1000}
+                    value={purchasePriceRange}
+                    onChange={setPurchasePriceRange}
+                  />
+                </div>
+              </section>
+            )}
+          </>
         )}
       </main>
 

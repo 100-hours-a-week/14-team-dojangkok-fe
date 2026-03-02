@@ -10,6 +10,7 @@ interface RangeSliderProps {
   value: [number, number];
   onChange: (value: [number, number]) => void;
   formatLabel?: (value: number) => string;
+  disabled?: boolean;
 }
 
 export default function RangeSlider({
@@ -19,6 +20,7 @@ export default function RangeSlider({
   value,
   onChange,
   formatLabel,
+  disabled = false,
 }: RangeSliderProps) {
   const minVal = value[0];
   const maxVal = value[1];
@@ -41,7 +43,7 @@ export default function RangeSlider({
   }, [minVal, maxVal, getPercent]);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} ${disabled ? styles.wrapperDisabled : ''}`}>
       <div className={styles.container}>
         <input
           type="range"
@@ -55,6 +57,7 @@ export default function RangeSlider({
           }}
           className={`${styles.thumb} ${styles.thumbLeft}`}
           style={{ zIndex: minVal > max - 100 ? '5' : '3' }}
+          disabled={disabled}
         />
         <input
           type="range"
@@ -67,11 +70,15 @@ export default function RangeSlider({
             onChange([minVal, val]);
           }}
           className={`${styles.thumb} ${styles.thumbRight}`}
+          disabled={disabled}
         />
 
         <div className={styles.slider}>
           <div className={styles.sliderTrack} />
-          <div ref={range} className={styles.sliderRange} />
+          <div
+            ref={range}
+            className={`${styles.sliderRange} ${disabled ? styles.sliderRangeDisabled : ''}`}
+          />
         </div>
       </div>
       {formatLabel && (

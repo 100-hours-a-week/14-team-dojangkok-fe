@@ -78,6 +78,24 @@
   transform: translateY(-50%);
 }
 
+.wrapperDisabled {
+  pointer-events: none;
+}
+
+.wrapperDisabled .thumb::-webkit-slider-thumb {
+  border-color: var(--gray-300, #d1d5db);
+  cursor: default;
+}
+
+.wrapperDisabled .thumb::-moz-range-thumb {
+  border-color: var(--gray-300, #d1d5db);
+  cursor: default;
+}
+
+.sliderRangeDisabled {
+  background-color: var(--gray-300, #d1d5db);
+}
+
 .labels {
   position: absolute;
   top: 28px;

@@ -83,6 +83,35 @@
   margin-left: 2px;
 }
 
+/* Disabled Section */
+.sectionDisabled {
+  background: var(--gray-50, #f9fafb);
+}
+
+.sectionDisabled .sectionTitle {
+  color: var(--gray-400, #9ca3af);
+}
+
+.sectionDisabled .subTitle {
+  color: var(--gray-400, #9ca3af);
+}
+
+.sectionDisabled .priceValue {
+  color: var(--gray-400, #9ca3af);
+}
+
+.disabledHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--gray-400, #9ca3af);
+}
+
+.disabledHint .material-symbols-outlined {
+  font-size: 16px;
+}
+
 /* Price Section */
 .priceHeader {
   display: flex;
