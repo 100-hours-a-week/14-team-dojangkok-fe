@@ -41,10 +41,11 @@ export async function getPresignedUrls(
  * @returns Presigned URL 정보
  */
 export async function getPresignedUrlsForHomeNote(
+  homeNoteId: number,
   items: PresignedUrlRequest['file_items']
 ): Promise<HomeNotePresignedUrlResponse> {
   return apiClient<HomeNotePresignedUrlResponse>(
-    '/v1/home-notes/files/presigned-urls',
+    `/v1/home-notes/${homeNoteId}/files/presigned-urls`,
     {
       method: 'POST',
       body: JSON.stringify({ file_items: items }),
@@ -378,6 +379,7 @@ export async function deleteUploadedFile(fileAssetId: number): Promise<void> {
  * @returns 업로드된 파일 ID 배열
  */
 export async function uploadHomeNoteFiles(
+  homeNoteId: number,
   files: File[],
   currentFileCount: number = 0
 ): Promise<number[]> {
@@ -396,7 +398,10 @@ export async function uploadHomeNoteFiles(
       size_bytes: file.size,
     }));
 
-    const presignedResponse = await getPresignedUrlsForHomeNote(items);
+    const presignedResponse = await getPresignedUrlsForHomeNote(
+      homeNoteId,
+      items
+    );
 
     // 집노트 API는 success_file_items와 failed_file_items로 구분
     const successItems = presignedResponse.data.success_file_items || [];
