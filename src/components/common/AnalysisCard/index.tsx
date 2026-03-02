@@ -28,7 +28,7 @@ export default function AnalysisCard({
       <div className={styles.colorBar} />
       <div className={styles.content}>
         <div className={styles.info}>
-          <h3 className={styles.title}>{result.address}</h3>
+          <h3 className={styles.title}>{result.address || '제목 없음'}</h3>
           <p className={styles.date}>{result.date}</p>
         </div>
         <button
