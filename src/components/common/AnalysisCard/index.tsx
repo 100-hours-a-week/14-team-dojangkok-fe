@@ -37,7 +37,9 @@ export default function AnalysisCard({
       className={`${styles.card} ${isProcessing ? styles.cardProcessing : ''}`}
       onClick={handleClick}
     >
-      <div className={`${styles.colorBar} ${isProcessing ? styles.colorBarProcessing : ''}`} />
+      <div
+        className={`${styles.colorBar} ${isProcessing ? styles.colorBarProcessing : ''}`}
+      />
       <div className={styles.content}>
         <div className={styles.info}>
           {isProcessing ? (
