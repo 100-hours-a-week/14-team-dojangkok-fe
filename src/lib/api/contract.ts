@@ -86,7 +86,7 @@ export async function uploadToS3(
 async function extractFileMetadata(file: File): Promise<FileMetadata | null> {
   if (file.type.startsWith('image/')) {
     // 이미지 파일: width, height 추출
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
         resolve({
