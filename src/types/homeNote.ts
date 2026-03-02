@@ -38,8 +38,8 @@ export interface HomeNoteItem {
   home_note_id: number;
   title: string;
   file_count: number;
-  created_at: string;
-  updated_at: string;
+  created_at: string | number[];
+  updated_at: string | number[];
   preview_images?: PreviewImage[];
 }
 

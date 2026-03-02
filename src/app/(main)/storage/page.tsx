@@ -17,18 +17,8 @@ import {
   deleteEasyContract,
 } from '@/lib/api/contract';
 import { EasyContractListItem } from '@/types/contract';
+import { formatDate } from '@/utils/formatDate';
 import styles from './Storage.module.css';
-
-/**
- * ISO 날짜를 YYYY.MM.DD 형식으로 변환
- */
-function formatDate(isoDate: string): string {
-  const date = new Date(isoDate);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
 
 /**
  * API 응답을 AnalysisResult 형식으로 변환
@@ -36,8 +26,9 @@ function formatDate(isoDate: string): string {
 function mapToAnalysisResult(item: EasyContractListItem): AnalysisResult {
   return {
     id: String(item.easy_contract_id),
-    address: item.title,
+    address: item.title ?? '',
     date: formatDate(item.created_at),
+    status: item.status,
   };
 }
 
@@ -64,8 +55,9 @@ export default function StoragePage() {
         setIsLoading(true);
         setError(null);
         const response = await getEasyContractList();
-        const mappedResults =
-          response.data.easyContractListItemList.map(mapToAnalysisResult);
+        const mappedResults = response.data.easyContractListItemList
+          .filter((item) => item.status !== 'FAILED')
+          .map(mapToAnalysisResult);
         setResults(mappedResults);
       } catch (err) {
         console.error('계약서 목록 조회 실패:', err);

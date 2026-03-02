@@ -75,10 +75,10 @@ export interface EasyContractResponse {
 
 export interface EasyContractListItem {
   easy_contract_id: number;
-  title: string;
+  title: string | null;
   status: EasyContractStatus;
-  created_at: string;
-  updated_at: string;
+  created_at: string | number[];
+  updated_at: string | number[];
 }
 
 export interface EasyContractListData {
