@@ -15,9 +15,11 @@ import {
   getEasyContractList,
   updateEasyContractTitle,
   deleteEasyContract,
+  cancelEasyContract,
 } from '@/lib/api/contract';
 import { EasyContractListItem } from '@/types/contract';
 import { formatDate } from '@/utils/formatDate';
+import { useAnalysis } from '@/contexts/AnalysisContext';
 import styles from './Storage.module.css';
 
 /**
@@ -34,6 +36,7 @@ function mapToAnalysisResult(item: EasyContractListItem): AnalysisResult {
 
 export default function StoragePage() {
   const router = useRouter();
+  const { startAnalysis } = useAnalysis();
   const [results, setResults] = useState<AnalysisResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +44,8 @@ export default function StoragePage() {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [actionSheetPosition, setActionSheetPosition] = useState<{
     top: number;
     right: number;
@@ -71,6 +76,12 @@ export default function StoragePage() {
   }, []);
 
   const handleResultClick = (id: string) => {
+    const result = results.find((r) => r.id === id);
+    if (result?.status === 'PROCESSING') {
+      startAnalysis(Number(id));
+      router.push('/loading-analysis');
+      return;
+    }
     router.push(`/analysis-result?id=${id}`);
   };
 
@@ -99,13 +110,15 @@ export default function StoragePage() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleCancelClick = (id: string) => {
+    setSelectedResultId(id);
+    setIsCancelModalOpen(true);
+  };
+
   const handleEditSubmit = async (newAddress: string) => {
     if (selectedResultId) {
       try {
-        // API 호출하여 제목 수정
         await updateEasyContractTitle(Number(selectedResultId), newAddress);
-
-        // 로컬 상태 업데이트
         setResults(
           results.map((r) =>
             r.id === selectedResultId ? { ...r, address: newAddress } : r
@@ -115,7 +128,6 @@ export default function StoragePage() {
         setSelectedResultId(null);
       } catch (err) {
         console.error('제목 수정 실패:', err);
-        // 에러 처리 (필요시 사용자에게 알림)
         alert('제목 수정에 실패했습니다.');
       }
     }
@@ -124,18 +136,30 @@ export default function StoragePage() {
   const handleDeleteConfirm = async () => {
     if (selectedResultId) {
       try {
-        // API 호출하여 계약서 삭제
         await deleteEasyContract(Number(selectedResultId));
-
-        // 로컬 상태 업데이트
         setResults(results.filter((r) => r.id !== selectedResultId));
         setIsDeleteModalOpen(false);
         setSelectedResultId(null);
       } catch (err) {
         console.error('계약서 삭제 실패:', err);
-        // 에러 처리 (필요시 사용자에게 알림)
         alert('계약서 삭제에 실패했습니다.');
       }
+    }
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!selectedResultId || isCancelling) return;
+    setIsCancelling(true);
+    try {
+      await cancelEasyContract(Number(selectedResultId));
+      setResults(results.filter((r) => r.id !== selectedResultId));
+      setIsCancelModalOpen(false);
+      setSelectedResultId(null);
+    } catch (err) {
+      console.error('분석 중단 실패:', err);
+      alert('분석 중단에 실패했습니다.');
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -178,6 +202,7 @@ export default function StoragePage() {
                   result={result}
                   onClick={handleResultClick}
                   onOptionClick={handleOptionClick}
+                  onCancelClick={handleCancelClick}
                 />
               ))}
             </div>
@@ -221,6 +246,18 @@ export default function StoragePage() {
         variant="destructive"
       >
         이 분석 결과를 삭제하시겠습니까?
+      </Modal>
+
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={handleCancelConfirm}
+        title="분석을 중단할까요?"
+        confirmText={isCancelling ? '중단 중...' : '중단하기'}
+        cancelText="계속 분석하기"
+        variant="destructive"
+      >
+        중단하면 분석이 취소되며{'\n'}처음부터 다시 시작해야 해요.
       </Modal>
     </>
   );

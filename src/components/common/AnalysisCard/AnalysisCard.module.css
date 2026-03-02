@@ -83,3 +83,58 @@
   font-size: 20px;
   color: var(--gray-600);
 }
+
+/* Processing */
+.cardProcessing {
+  cursor: pointer;
+}
+
+.colorBarProcessing {
+  background: var(--primary);
+  opacity: 0.4;
+}
+
+.processingRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.processingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.processingLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.cancelButton {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  background: white;
+  color: var(--gray-600, #4b5563);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cancelButton:hover {
+  background: var(--gray-50, #f9fafb);
+  border-color: var(--gray-400, #9ca3af);
+}
