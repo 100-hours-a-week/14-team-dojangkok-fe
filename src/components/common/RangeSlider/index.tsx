@@ -43,7 +43,9 @@ export default function RangeSlider({
   }, [minVal, maxVal, getPercent]);
 
   return (
-    <div className={`${styles.wrapper} ${disabled ? styles.wrapperDisabled : ''}`}>
+    <div
+      className={`${styles.wrapper} ${disabled ? styles.wrapperDisabled : ''}`}
+    >
       <div className={styles.container}>
         <input
           type="range"
