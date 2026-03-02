@@ -96,7 +96,8 @@ async function extractFileMetadata(file: File): Promise<FileMetadata | null> {
         URL.revokeObjectURL(img.src);
       };
       img.onerror = () => {
-        reject(new Error('이미지 메타데이터 추출 실패'));
+        URL.revokeObjectURL(img.src);
+        resolve(null);
       };
       img.src = URL.createObjectURL(file);
     });
