@@ -9,12 +9,12 @@ permissions:
 # 워크플로우를 실행할 이벤트 결정 및 매핑
 on:
   push:
-    branches: [dev]
+    branches: [fis]
     paths-ignore:
       - '**.md'
       - 'docs/**'
   pull_request:
-    branches: [dev]
+    branches: [fis]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -52,7 +52,7 @@ jobs:
 
   build-and-push-image: # 빌드 및 Docker Image Push를 수행하는 단계
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fis'
     runs-on: ubuntu-24.04-arm # arm64 runner를 사용
     strategy:
       matrix:
@@ -76,7 +76,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       # 5. S3에서 .env 파일 다운로드
       - name: Download .env from S3
-        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/dev/.env ./.env
+        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/fis/.env ./.env
       # 6. env 파일을 읽어서 GitHub 환경 변수로 등록 (build-args로 넘기기 위함)
       - name: Load .env to GitHub Env
         run: cat .env >> $GITHUB_ENV
@@ -100,15 +100,15 @@ jobs:
           # 7-1. 배포 자동화에 사용하는 버전 (신규 push에 덮어써짐)
           # 7-2. 이력을 관리하기 위한 목적 (롤백용)
           tags: |
-            ${{ steps.login-ecr.outputs.registry }}/dev-dojangkok-fe:latest
-            ${{ steps.login-ecr.outputs.registry }}/dev-dojangkok-fe:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/fis-fe:latest
+            ${{ steps.login-ecr.outputs.registry }}/fis-fe:${{ github.sha }}
           # 빌드 성능 향상을 위한 캐시 설정
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy: # 배포를 수행하는 단계
     needs: build-and-push-image
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fis'
     runs-on: ubuntu-latest
     steps:
       # 1. 소스코드를 체크아웃
@@ -122,7 +122,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       # 3. S3에서 .env 파일 다운로드
       - name: Download .env from S3
-        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/dev/.env ./.env
+        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/fis/.env ./.env
       # 4. Code Deploy에 전달할 artifact 구성
       - name: Make Zip File for CodeDeploy
         run: |
@@ -133,15 +133,15 @@ jobs:
           zip -r deploy.zip docker-compose.yml appspec.yml deploy.sh .env
       # 5. 구성한 artifact S3에 업로드
       - name: Upload Artifact to S3
-        run: aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/dev/deploy.zip
+        run: aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET_NAME }}/frontend/fis/deploy.zip
       # 6. CodeDeploy 트리거 (GitHub 대신 S3를 보라고 명시)
       - name: Trigger CodeDeploy
         run: |
           DEPLOYMENT_ID=$(aws deploy create-deployment \
-            --application-name dev-dojangkok-v2-fe \
-            --deployment-group-name dev-dojangkok-v2-fe-dg \
+            --application-name fis-fe \
+            --deployment-group-name fis-fe-dg \
             --deployment-config-name CodeDeployDefault.AllAtOnce \
-            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},key=frontend/v2/dev/deploy.zip,bundleType=zip \
+            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},key=frontend/fis/deploy.zip,bundleType=zip \
             --query "deploymentId" \
             --output text)
 
