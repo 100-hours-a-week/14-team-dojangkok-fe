@@ -355,7 +355,7 @@ export async function deleteEasyContract(
 export async function cancelEasyContract(
   easyContractId: number
 ): Promise<void> {
-  await apiClient<void>(`/v1/easy-contract/${easyContractId}/cancellation`, {
+  await apiClient<void>(`/v1/easy-contracts/${easyContractId}/cancellation`, {
     method: 'POST',
     requiresAuth: true,
   });
