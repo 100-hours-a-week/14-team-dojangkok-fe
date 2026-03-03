@@ -29,6 +29,8 @@ export default function PropertyCard({
       return `월세 ${property.deposit}/${property.monthlyRent}`;
     } else if (property.priceType === '전세') {
       return `전세 ${property.deposit.toLocaleString()}`;
+    } else if (property.priceType === '반전세') {
+      return `반전세 ${property.deposit}/${property.monthlyRent}`;
     } else {
       return `매매 ${property.deposit.toLocaleString()}`;
     }

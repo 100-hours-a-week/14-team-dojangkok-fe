@@ -39,7 +39,7 @@ export function convertToProperty(dto: PropertyPostListItemDto): Property {
   } = dto;
 
   // RentType을 한글로 변환
-  const priceType = RENT_TYPE_LABELS[rent_type] as '월세' | '전세' | '매매';
+  const priceType = RENT_TYPE_LABELS[rent_type] as '월세' | '전세' | '반전세' | '매매';
 
   // PropertyType을 한글로 변환
   const propertyTypeLabel = PROPERTY_TYPE_LABELS[property_type] as
