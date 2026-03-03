@@ -91,8 +91,10 @@ export interface PropertyPostSearchRequestDto {
   keyword?: string;
   property_type?: PropertyType[];
   rent_type?: RentType[];
-  price_main_min?: number;
-  price_main_max?: number;
+  deposit_min?: number;
+  deposit_max?: number;
+  sale_price_min?: number;
+  sale_price_max?: number;
   price_monthly_min?: number;
   price_monthly_max?: number;
   is_verified?: boolean;
@@ -174,7 +176,7 @@ export interface Property {
   title: string;
   address: string;
   detailedAddress: string;
-  priceType: '월세' | '전세' | '매매';
+  priceType: '월세' | '전세' | '반전세' | '매매';
   deposit: number;
   monthlyRent?: number;
   propertyType: '원룸' | '투룸' | '쓰리룸' | '오피스텔' | '아파트';

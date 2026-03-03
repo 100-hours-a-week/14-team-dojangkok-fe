@@ -47,11 +47,8 @@ export default function PropertyPage() {
       const propertyTypesParam = searchParams.get('propertyTypes');
       const leaseTypesParam = searchParams.get('leaseTypes');
       const hasPrice =
-        searchParams.has('monthlyDeposit') ||
-        searchParams.has('monthlyRent') ||
-        searchParams.has('jeonsaeDeposit') ||
-        searchParams.has('semiJeonsaeDeposit') ||
-        searchParams.has('semiJeonsaeRent') ||
+        searchParams.has('deposit') ||
+        searchParams.has('rent') ||
         searchParams.has('purchasePrice');
 
       const reviewedOnly = searchParams.get('reviewedOnly') === 'true';
@@ -90,35 +87,16 @@ export default function PropertyPage() {
           .filter(Boolean);
       }
 
-      const monthlyDeposit = searchParams.get('monthlyDeposit');
-      const monthlyRent = searchParams.get('monthlyRent');
-      if (monthlyDeposit) {
-        const [min, max] = monthlyDeposit.split('-').map(Number);
-        request.price_main_min = min;
-        request.price_main_max = max;
-      }
-      if (monthlyRent) {
-        const [min, max] = monthlyRent.split('-').map(Number);
-        request.price_monthly_min = min;
-        request.price_monthly_max = max;
+      const deposit = searchParams.get('deposit');
+      if (deposit) {
+        const [min, max] = deposit.split('-').map(Number);
+        request.deposit_min = min;
+        request.deposit_max = max;
       }
 
-      const jeonsaeDeposit = searchParams.get('jeonsaeDeposit');
-      if (jeonsaeDeposit) {
-        const [min, max] = jeonsaeDeposit.split('-').map(Number);
-        request.price_main_min = min;
-        request.price_main_max = max;
-      }
-
-      const semiJeonsaeDeposit = searchParams.get('semiJeonsaeDeposit');
-      const semiJeonsaeRent = searchParams.get('semiJeonsaeRent');
-      if (semiJeonsaeDeposit) {
-        const [min, max] = semiJeonsaeDeposit.split('-').map(Number);
-        request.price_main_min = min;
-        request.price_main_max = max;
-      }
-      if (semiJeonsaeRent) {
-        const [min, max] = semiJeonsaeRent.split('-').map(Number);
+      const rent = searchParams.get('rent');
+      if (rent) {
+        const [min, max] = rent.split('-').map(Number);
         request.price_monthly_min = min;
         request.price_monthly_max = max;
       }
@@ -126,8 +104,8 @@ export default function PropertyPage() {
       const purchasePrice = searchParams.get('purchasePrice');
       if (purchasePrice) {
         const [min, max] = purchasePrice.split('-').map(Number);
-        request.price_main_min = min;
-        request.price_main_max = max;
+        request.sale_price_min = min;
+        request.sale_price_max = max;
       }
 
       return request;
@@ -199,11 +177,8 @@ export default function PropertyPage() {
     const propertyTypes = searchParams.get('propertyTypes');
     const leaseTypes = searchParams.get('leaseTypes');
     const hasPrice =
-      searchParams.has('monthlyDeposit') ||
-      searchParams.has('monthlyRent') ||
-      searchParams.has('jeonsaeDeposit') ||
-      searchParams.has('semiJeonsaeDeposit') ||
-      searchParams.has('semiJeonsaeRent') ||
+      searchParams.has('deposit') ||
+      searchParams.has('rent') ||
       searchParams.has('purchasePrice');
 
     setKeyword(searchParams.get('keyword') || '');

@@ -22,6 +22,11 @@ const PROPERTY_TYPES = [
 ];
 const LEASE_TYPES = ['월세', '전세', '반전세', '매매'];
 
+// 보증금이 적용되는 임대 형태
+const DEPOSIT_TYPES = ['월세', '전세', '반전세'];
+// 월세가 적용되는 임대 형태
+const RENT_TYPES = ['월세', '반전세'];
+
 const formatDeposit = (val: number) => {
   if (val === 20000) return '2억 이상';
   if (val === 0) return '0원';
@@ -76,41 +81,24 @@ export default function PropertyFilterPage() {
     getInitialLeaseTypes()
   );
 
-  // 각 임대 형태별 가격 범위
-  const [monthlyDepositRange, setMonthlyDepositRange] = useState<
-    [number, number]
-  >(parseRangeParam(searchParams.get('monthlyDeposit'), [0, 20000]));
-  const [monthlyRentRange, setMonthlyRentRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('monthlyRent'), [0, 200])
+  // 통합 가격 범위 슬라이더
+  const [depositRange, setDepositRange] = useState<[number, number]>(
+    parseRangeParam(searchParams.get('deposit'), [0, 20000])
   );
-  const [jeonsaeDepositRange, setJeonsaeDepositRange] = useState<
-    [number, number]
-  >(parseRangeParam(searchParams.get('jeonsaeDeposit'), [0, 20000]));
-  const [semiJeonsaeDepositRange, setSemiJeonsaeDepositRange] = useState<
-    [number, number]
-  >(parseRangeParam(searchParams.get('semiJeonsaeDeposit'), [0, 20000]));
-  const [semiJeonsaeRentRange, setSemiJeonsaeRentRange] = useState<
-    [number, number]
-  >(parseRangeParam(searchParams.get('semiJeonsaeRent'), [0, 200]));
-  const [purchasePriceRange, setPurchasePriceRange] = useState<
-    [number, number]
-  >(parseRangeParam(searchParams.get('purchasePrice'), [0, 100000]));
+  const [rentRange, setRentRange] = useState<[number, number]>(
+    parseRangeParam(searchParams.get('rent'), [0, 200])
+  );
+  const [purchasePriceRange, setPurchasePriceRange] = useState<[number, number]>(
+    parseRangeParam(searchParams.get('purchasePrice'), [0, 100000])
+  );
 
-  // 각 임대 형태 섹션에 대한 ref
-  const monthlyRef = useRef<HTMLDivElement>(null);
-  const jeonsaeRef = useRef<HTMLDivElement>(null);
-  const semiJeonsaeRef = useRef<HTMLDivElement>(null);
-  const purchaseRef = useRef<HTMLDivElement>(null);
+  const priceRef = useRef<HTMLDivElement>(null);
 
   const [count, setCount] = useState<number | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(false);
   const isResettingRef = useRef(false);
-
-  // 이전 leaseTypes 추적
   const prevLeaseTypesRef = useRef<string[]>([]);
-
-  // 초기 마운트 여부 추적
   const isInitialMountRef = useRef(true);
 
   const buildCountRequest = useCallback((): PropertyPostSearchRequestDto => {
@@ -131,43 +119,23 @@ export default function PropertyFilterPage() {
         .filter(Boolean);
     }
 
-    if (leaseTypes.includes('월세')) {
-      if (monthlyDepositRange[0] !== 0 || monthlyDepositRange[1] !== 20000) {
-        request.price_main_min = monthlyDepositRange[0];
-        request.price_main_max = monthlyDepositRange[1];
-      }
-      if (monthlyRentRange[0] !== 0 || monthlyRentRange[1] !== 200) {
-        request.price_monthly_min = monthlyRentRange[0];
-        request.price_monthly_max = monthlyRentRange[1];
-      }
-    }
+    const hasDepositType = leaseTypes.some((t) => DEPOSIT_TYPES.includes(t));
+    const hasRentType = leaseTypes.some((t) => RENT_TYPES.includes(t));
 
-    if (leaseTypes.includes('전세')) {
-      if (jeonsaeDepositRange[0] !== 0 || jeonsaeDepositRange[1] !== 20000) {
-        request.price_main_min = jeonsaeDepositRange[0];
-        request.price_main_max = jeonsaeDepositRange[1];
-      }
+    if (hasDepositType && (depositRange[0] !== 0 || depositRange[1] !== 20000)) {
+      request.deposit_min = depositRange[0];
+      request.deposit_max = depositRange[1];
     }
-
-    if (leaseTypes.includes('반전세')) {
-      if (
-        semiJeonsaeDepositRange[0] !== 0 ||
-        semiJeonsaeDepositRange[1] !== 20000
-      ) {
-        request.price_main_min = semiJeonsaeDepositRange[0];
-        request.price_main_max = semiJeonsaeDepositRange[1];
-      }
-      if (semiJeonsaeRentRange[0] !== 0 || semiJeonsaeRentRange[1] !== 200) {
-        request.price_monthly_min = semiJeonsaeRentRange[0];
-        request.price_monthly_max = semiJeonsaeRentRange[1];
-      }
+    if (hasRentType && (rentRange[0] !== 0 || rentRange[1] !== 200)) {
+      request.price_monthly_min = rentRange[0];
+      request.price_monthly_max = rentRange[1];
     }
-
-    if (leaseTypes.includes('매매')) {
-      if (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000) {
-        request.price_main_min = purchasePriceRange[0];
-        request.price_main_max = purchasePriceRange[1];
-      }
+    if (
+      leaseTypes.includes('매매') &&
+      (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000)
+    ) {
+      request.sale_price_min = purchasePriceRange[0];
+      request.sale_price_max = purchasePriceRange[1];
     }
 
     if (reviewedOnly) {
@@ -179,11 +147,8 @@ export default function PropertyFilterPage() {
     searchParams,
     propertyTypes,
     leaseTypes,
-    monthlyDepositRange,
-    monthlyRentRange,
-    jeonsaeDepositRange,
-    semiJeonsaeDepositRange,
-    semiJeonsaeRentRange,
+    depositRange,
+    rentRange,
     purchasePriceRange,
     reviewedOnly,
   ]);
@@ -228,9 +193,8 @@ export default function PropertyFilterPage() {
     };
   }, [buildCountRequest, searchParams, propertyTypes, leaseTypes]);
 
-  // 임대 형태 변경 시 스크롤
+  // 임대 형태 추가 시 가격 섹션으로 스크롤
   useEffect(() => {
-    // 초기 로딩 시에는 스크롤하지 않음
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
       prevLeaseTypesRef.current = leaseTypes;
@@ -242,34 +206,13 @@ export default function PropertyFilterPage() {
       (type) => !prevLeaseTypes.includes(type)
     );
 
-    if (newLeaseTypes.length > 0) {
-      // 새로 추가된 임대 형태 중 마지막 항목으로 스크롤
-      const newType = newLeaseTypes[newLeaseTypes.length - 1];
-      let targetRef: React.RefObject<HTMLDivElement | null> | null = null;
-
-      switch (newType) {
-        case '월세':
-          targetRef = monthlyRef;
-          break;
-        case '전세':
-          targetRef = jeonsaeRef;
-          break;
-        case '반전세':
-          targetRef = semiJeonsaeRef;
-          break;
-        case '매매':
-          targetRef = purchaseRef;
-          break;
-      }
-
-      if (targetRef?.current) {
-        setTimeout(() => {
-          targetRef.current?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
-        }, 100);
-      }
+    if (newLeaseTypes.length > 0 && priceRef.current) {
+      setTimeout(() => {
+        priceRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 100);
     }
 
     prevLeaseTypesRef.current = leaseTypes;
@@ -298,16 +241,12 @@ export default function PropertyFilterPage() {
     setReviewedOnly(false);
     setPropertyTypes([]);
     setLeaseTypes([]);
-    setMonthlyDepositRange([0, 20000]);
-    setMonthlyRentRange([0, 200]);
-    setJeonsaeDepositRange([0, 20000]);
-    setSemiJeonsaeDepositRange([0, 20000]);
-    setSemiJeonsaeRentRange([0, 200]);
+    setDepositRange([0, 20000]);
+    setRentRange([0, 200]);
     setPurchasePriceRange([0, 100000]);
   };
 
   const handleApply = () => {
-    // 쿼리 파라미터 생성
     const params = new URLSearchParams();
 
     if (reviewedOnly) {
@@ -322,67 +261,32 @@ export default function PropertyFilterPage() {
       params.set('leaseTypes', leaseTypes.join(','));
     }
 
-    // 가격 필터 추가 (기본값이 아닌 경우만)
-    if (leaseTypes.includes('월세')) {
-      if (monthlyDepositRange[0] !== 0 || monthlyDepositRange[1] !== 20000) {
-        params.set(
-          'monthlyDeposit',
-          `${monthlyDepositRange[0]}-${monthlyDepositRange[1]}`
-        );
-      }
-      if (monthlyRentRange[0] !== 0 || monthlyRentRange[1] !== 200) {
-        params.set(
-          'monthlyRent',
-          `${monthlyRentRange[0]}-${monthlyRentRange[1]}`
-        );
-      }
+    const hasDepositType = leaseTypes.some((t) => DEPOSIT_TYPES.includes(t));
+    const hasRentType = leaseTypes.some((t) => RENT_TYPES.includes(t));
+
+    if (hasDepositType && (depositRange[0] !== 0 || depositRange[1] !== 20000)) {
+      params.set('deposit', `${depositRange[0]}-${depositRange[1]}`);
+    }
+    if (hasRentType && (rentRange[0] !== 0 || rentRange[1] !== 200)) {
+      params.set('rent', `${rentRange[0]}-${rentRange[1]}`);
+    }
+    if (
+      leaseTypes.includes('매매') &&
+      (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000)
+    ) {
+      params.set('purchasePrice', `${purchasePriceRange[0]}-${purchasePriceRange[1]}`);
     }
 
-    if (leaseTypes.includes('전세')) {
-      if (jeonsaeDepositRange[0] !== 0 || jeonsaeDepositRange[1] !== 20000) {
-        params.set(
-          'jeonsaeDeposit',
-          `${jeonsaeDepositRange[0]}-${jeonsaeDepositRange[1]}`
-        );
-      }
-    }
-
-    if (leaseTypes.includes('반전세')) {
-      if (
-        semiJeonsaeDepositRange[0] !== 0 ||
-        semiJeonsaeDepositRange[1] !== 20000
-      ) {
-        params.set(
-          'semiJeonsaeDeposit',
-          `${semiJeonsaeDepositRange[0]}-${semiJeonsaeDepositRange[1]}`
-        );
-      }
-      if (semiJeonsaeRentRange[0] !== 0 || semiJeonsaeRentRange[1] !== 200) {
-        params.set(
-          'semiJeonsaeRent',
-          `${semiJeonsaeRentRange[0]}-${semiJeonsaeRentRange[1]}`
-        );
-      }
-    }
-
-    if (leaseTypes.includes('매매')) {
-      if (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000) {
-        params.set(
-          'purchasePrice',
-          `${purchasePriceRange[0]}-${purchasePriceRange[1]}`
-        );
-      }
-    }
-
-    // 검색 키워드 보존
     const keyword = searchParams.get('keyword');
     if (keyword) {
       params.set('keyword', keyword);
     }
 
-    // router.replace를 사용하여 필터 페이지를 히스토리에서 제거
     router.replace(`/property?${params.toString()}`);
   };
+
+  const hasDepositType = leaseTypes.some((t) => DEPOSIT_TYPES.includes(t));
+  const hasRentType = leaseTypes.some((t) => RENT_TYPES.includes(t));
 
   return (
     <div className={styles.page}>
@@ -459,38 +363,24 @@ export default function PropertyFilterPage() {
                 disabled
               />
             </div>
-            <div className={styles.priceHeader} style={{ marginTop: '24px' }}>
-              <h3 className={styles.subTitle}>월세</h3>
-              <span className={styles.priceValue}>전체</span>
-            </div>
-            <div className={styles.sliderWrapper}>
-              <RangeSlider
-                min={0}
-                max={200}
-                step={5}
-                value={[0, 200]}
-                onChange={() => {}}
-                disabled
-              />
-            </div>
             <p className={styles.disabledHint}>
               <span className="material-symbols-outlined">info</span>
               임대 형태를 선택하면 활성화됩니다
             </p>
           </section>
         ) : (
-          <>
-            {leaseTypes.includes('월세') && (
-              <section ref={monthlyRef} className={styles.section}>
-                <h2 className={styles.sectionTitle}>월세</h2>
+          <section ref={priceRef} className={styles.section}>
+            <h2 className={styles.sectionTitle}>가격</h2>
 
+            {/* 보증금: 전세/월세/반전세 */}
+            {hasDepositType && (
+              <>
                 <div className={styles.priceHeader}>
                   <h3 className={styles.subTitle}>보증금</h3>
                   <span className={styles.priceValue}>
-                    {monthlyDepositRange[0] === 0 &&
-                    monthlyDepositRange[1] === 20000
+                    {depositRange[0] === 0 && depositRange[1] === 20000
                       ? '전체'
-                      : `${formatDeposit(monthlyDepositRange[0])} ~ ${formatDeposit(monthlyDepositRange[1])}`}
+                      : `${formatDeposit(depositRange[0])} ~ ${formatDeposit(depositRange[1])}`}
                   </span>
                 </div>
                 <div className={styles.sliderWrapper}>
@@ -498,20 +388,25 @@ export default function PropertyFilterPage() {
                     min={0}
                     max={20000}
                     step={100}
-                    value={monthlyDepositRange}
-                    onChange={setMonthlyDepositRange}
+                    value={depositRange}
+                    onChange={setDepositRange}
                   />
                 </div>
+              </>
+            )}
 
+            {/* 월세: 월세/반전세 */}
+            {hasRentType && (
+              <>
                 <div
                   className={styles.priceHeader}
-                  style={{ marginTop: '24px' }}
+                  style={{ marginTop: hasDepositType ? '24px' : '0' }}
                 >
                   <h3 className={styles.subTitle}>월세</h3>
                   <span className={styles.priceValue}>
-                    {monthlyRentRange[0] === 0 && monthlyRentRange[1] === 200
+                    {rentRange[0] === 0 && rentRange[1] === 200
                       ? '전체'
-                      : `${formatRent(monthlyRentRange[0])} ~ ${formatRent(monthlyRentRange[1])}`}
+                      : `${formatRent(rentRange[0])} ~ ${formatRent(rentRange[1])}`}
                   </span>
                 </div>
                 <div className={styles.sliderWrapper}>
@@ -519,90 +414,22 @@ export default function PropertyFilterPage() {
                     min={0}
                     max={200}
                     step={5}
-                    value={monthlyRentRange}
-                    onChange={setMonthlyRentRange}
+                    value={rentRange}
+                    onChange={setRentRange}
                   />
                 </div>
-              </section>
+              </>
             )}
 
-            {leaseTypes.includes('전세') && (
-              <section ref={jeonsaeRef} className={styles.section}>
-                <h2 className={styles.sectionTitle}>전세</h2>
-
-                <div className={styles.priceHeader}>
-                  <h3 className={styles.subTitle}>보증금</h3>
-                  <span className={styles.priceValue}>
-                    {jeonsaeDepositRange[0] === 0 &&
-                    jeonsaeDepositRange[1] === 20000
-                      ? '전체'
-                      : `${formatDeposit(jeonsaeDepositRange[0])} ~ ${formatDeposit(jeonsaeDepositRange[1])}`}
-                  </span>
-                </div>
-                <div className={styles.sliderWrapper}>
-                  <RangeSlider
-                    min={0}
-                    max={20000}
-                    step={100}
-                    value={jeonsaeDepositRange}
-                    onChange={setJeonsaeDepositRange}
-                  />
-                </div>
-              </section>
-            )}
-
-            {leaseTypes.includes('반전세') && (
-              <section ref={semiJeonsaeRef} className={styles.section}>
-                <h2 className={styles.sectionTitle}>반전세</h2>
-
-                <div className={styles.priceHeader}>
-                  <h3 className={styles.subTitle}>보증금</h3>
-                  <span className={styles.priceValue}>
-                    {semiJeonsaeDepositRange[0] === 0 &&
-                    semiJeonsaeDepositRange[1] === 20000
-                      ? '전체'
-                      : `${formatDeposit(semiJeonsaeDepositRange[0])} ~ ${formatDeposit(semiJeonsaeDepositRange[1])}`}
-                  </span>
-                </div>
-                <div className={styles.sliderWrapper}>
-                  <RangeSlider
-                    min={0}
-                    max={20000}
-                    step={100}
-                    value={semiJeonsaeDepositRange}
-                    onChange={setSemiJeonsaeDepositRange}
-                  />
-                </div>
-
-                <div
-                  className={styles.priceHeader}
-                  style={{ marginTop: '24px' }}
-                >
-                  <h3 className={styles.subTitle}>월세</h3>
-                  <span className={styles.priceValue}>
-                    {semiJeonsaeRentRange[0] === 0 &&
-                    semiJeonsaeRentRange[1] === 200
-                      ? '전체'
-                      : `${formatRent(semiJeonsaeRentRange[0])} ~ ${formatRent(semiJeonsaeRentRange[1])}`}
-                  </span>
-                </div>
-                <div className={styles.sliderWrapper}>
-                  <RangeSlider
-                    min={0}
-                    max={200}
-                    step={5}
-                    value={semiJeonsaeRentRange}
-                    onChange={setSemiJeonsaeRentRange}
-                  />
-                </div>
-              </section>
-            )}
-
+            {/* 매매가: 매매 */}
             {leaseTypes.includes('매매') && (
-              <section ref={purchaseRef} className={styles.section}>
-                <h2 className={styles.sectionTitle}>매매</h2>
-
-                <div className={styles.priceHeader}>
+              <>
+                <div
+                  className={styles.priceHeader}
+                  style={{
+                    marginTop: hasDepositType || hasRentType ? '24px' : '0',
+                  }}
+                >
                   <h3 className={styles.subTitle}>매매가</h3>
                   <span className={styles.priceValue}>
                     {purchasePriceRange[0] === 0 &&
@@ -620,9 +447,9 @@ export default function PropertyFilterPage() {
                     onChange={setPurchasePriceRange}
                   />
                 </div>
-              </section>
+              </>
             )}
-          </>
+          </section>
         )}
       </main>
 
