@@ -1,5 +1,5 @@
 # 정의할 워크 플로우의 이름
-name: Dojangkok Client CI/CD
+name: Dojangkok V2 Client CI/CD Production
 
 # OIDC 인증을 위한 권한 설정
 permissions:
@@ -51,9 +51,11 @@ jobs:
       # 5. 프로젝트의 테스트를 실행
       - name: Run tests
         run: npm run test:run || true
-  build: # 빌드를 수행하는 단계
+
+  build-and-push-image: # 빌드 및 Docker Image Push를 수행하는 단계
     needs: test
-    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm # arm64 runner를 사용
     strategy:
       matrix:
         node-version: [22.x]
@@ -61,101 +63,98 @@ jobs:
       # 1. 소스코드를 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v6
-      # 2. Node.js 환경 설정
-      - name: Set up Node.js runtime
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-      # 3. 프로젝트의 의존성 패키지들을 설치
-      - name: Install Dependencies
-        run: npm ci --ignore-scripts
-      # 4. AWS 자격증명 설정 (OIDC)
+      # 2. Docker Buildx 설정
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      # 3. AWS 자격증명 설정 (OIDC)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-      # 5. 환경변수 파일 다운로드
+      # 4. AWS ECR 로그인
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      # 5. S3에서 .env 파일 다운로드
       - name: Download .env from S3
-        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/.env ./.env
-      # 6. Next.js 앱 빌드
-      - name: Build Next.js App
-        run: npm run build
-      # 7. 빌드 결과 압축
-      - name: Compress Build Artifact
-        run: tar -czf build.tar.gz .next public package.json package-lock.json next.config.ts ecosystem.config.js
-      # 8. 빌드 결과 Artifact 업로드
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v6
+        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/prod/.env ./.env
+      # 6. env 파일을 읽어서 GitHub 환경 변수로 등록 (build-args로 넘기기 위함)
+      - name: Load .env to GitHub Env
+        run: cat .env >> $GITHUB_ENV
+      # 7. infra/prod 디렉토리의 Docker 관련 파일을 프로젝트 root로 복사 (.dockerignore 적용을 위해)
+      - name: Copy Docker files
+        run: |
+          cp infra/prod/Dockerfile ./
+          cp infra/prod/.dockerignore ./
+      # 8. 이미지 빌드 및 ECR로 Push
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
         with:
-          name: build-artifact
-          path: build.tar.gz
-          retention-days: 7
+          context: .
+          file: Dockerfile
+          push: true
+          provenance: false # 불필요한 메타데이터 파일 생성을 막음
+          # 주요 설정값 주입
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+          # 7-1. 배포 자동화에 사용하는 버전 (신규 push에 덮어써짐)
+          # 7-2. 이력을 관리하기 위한 목적 (롤백용)
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/dojangkok-fe:latest
+            ${{ steps.login-ecr.outputs.registry }}/dojangkok-fe:${{ github.sha }}
+          # 빌드 성능 향상을 위한 캐시 설정
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   deploy: # 배포를 수행하는 단계
-    needs: build
-    if: github.ref == 'refs/heads/main'
+    needs: build-and-push-image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      # 0. Github Action Runner IP 획득
-      - name: Get GitHub Actions Runner IP
-        id: ip
-        run: echo "ipv4=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_OUTPUT
-      # 1. AWS 자격증명 설정 (OIDC)
+      # 1. 소스코드를 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      # 2. AWS 자격증명 설정 (OIDC)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
-      # 2. Github Action Runner IP 를 보안그룹에 임시허용
-      - name: Add GitHub IP to Security Group
+      # 3. S3에서 .env 파일 다운로드
+      - name: Download .env from S3
+        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/prod/.env ./.env
+      # 4. Code Deploy에 전달할 artifact 구성
+      - name: Make Zip File for CodeDeploy
         run: |
-          aws ec2 authorize-security-group-ingress \
-            --group-id ${{ secrets.AWS_SG_ID }} \
-            --protocol tcp --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32 \
-            --tag-specifications 'ResourceType=security-group-rule,Tags=[{Key=Name,Value=GithubActions}]' || true
-      # 3. 빌드 아티팩트(압축파일) 다운로드
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: build-artifact
-          path: dist
-      # 4. SSH 키 생성
-      - name: Create PEM key
+          cp infra/prod/docker-compose.yml ./
+          cp infra/prod/deploy.sh ./
+          cp infra/prod/appspec.yml ./
+          chmod +x deploy.sh
+          zip -r deploy.zip docker-compose.yml appspec.yml deploy.sh .env
+      # 5. 구성한 artifact S3에 업로드
+      - name: Upload Artifact to S3
+        run: aws s3 cp deploy.zip s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v2/prod/deploy.zip
+      # 6. CodeDeploy 트리거 (GitHub 대신 S3를 보라고 명시)
+      - name: Trigger CodeDeploy
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./key.pem
-          chmod 600 ./key.pem
-      # 5. 서버 배포 수행
-      - name: Deploy to Target Server
-        env:
-          TARGET_IP: ${{ secrets.TARGET_IP }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          REMOTE_DIR: '/home/${{ secrets.SSH_USER }}/client'
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+            --application-name prod-dojangkok-v2-fe \
+            --deployment-group-name prod-dojangkok-v2-fe-dg \
+            --deployment-config-name CodeDeployDefault.AllAtOnce \
+            --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},key=frontend/v2/prod/deploy.zip,bundleType=zip \
+            --query "deploymentId" \
+            --output text)
+
+          echo "배포가 시작되었습니다. Deployment ID: $DEPLOYMENT_ID"
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+      # 7. Code Deploy 배포 완료 대기
+      - name: Wait for Deployment Success
         run: |
-          ssh -i ./key.pem -o StrictHostKeyChecking=no $SSH_USER@$TARGET_IP "mkdir -p $REMOTE_DIR"
-          echo "빌드 파일 전송 중..."
-          scp -i ./key.pem -o StrictHostKeyChecking=no dist/build.tar.gz $SSH_USER@$TARGET_IP:$REMOTE_DIR/
-          echo "배포 스크립트 실행 중..."
-          ssh -i ./key.pem -o StrictHostKeyChecking=no $SSH_USER@$TARGET_IP << EOF
-            set -e
-            cd $REMOTE_DIR
-            echo "기존 빌드 파일 정리 중..."
-            rm -rf .next public package.json package-lock.json next.config.ts ecosystem.config.js
-            echo "압축 해제 중..."
-            tar -xzf build.tar.gz
-            rm build.tar.gz
-            echo "환경변수 다운로드 중..."
-            aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/.env ./.env
-            echo "의존성 설치 중 (Production)..."
-            npm ci --production --ignore-scripts
-            echo "서비스 재시작 중..."
-            pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
-            pm2 save
-            echo "배포 성공"
-          EOF
-          rm -f ./key.pem
-      # 6. 배포 후 Health Check
+          echo "CodeDeploy 배포 진행 중..."
+          aws deploy wait deployment-successful --deployment-id ${{ env.DEPLOYMENT_ID }}
+      # 8. 배포 후 Health Check
       - name: Health Check
         env:
           SERVICE_URL: ${{ secrets.SERVICE_URL }}
@@ -174,11 +173,3 @@ jobs:
           done
           echo "Health Check 실패: 서비스가 응답하지 않습니다."
           exit 1
-      # 7. Github Action Runner IP 임시허용 해제
-      - name: Revoke GitHub IP from Security Group
-        if: always()
-        run: |
-          aws ec2 revoke-security-group-ingress \
-            --group-id ${{ secrets.AWS_SG_ID }} \
-            --protocol tcp --port 22 \
-            --cidr ${{ steps.ip.outputs.ipv4 }}/32 || true
