@@ -88,9 +88,9 @@ export default function PropertyFilterPage() {
   const [rentRange, setRentRange] = useState<[number, number]>(
     parseRangeParam(searchParams.get('rent'), [0, 200])
   );
-  const [purchasePriceRange, setPurchasePriceRange] = useState<[number, number]>(
-    parseRangeParam(searchParams.get('purchasePrice'), [0, 100000])
-  );
+  const [purchasePriceRange, setPurchasePriceRange] = useState<
+    [number, number]
+  >(parseRangeParam(searchParams.get('purchasePrice'), [0, 100000]));
 
   const priceRef = useRef<HTMLDivElement>(null);
 
@@ -122,7 +122,10 @@ export default function PropertyFilterPage() {
     const hasDepositType = leaseTypes.some((t) => DEPOSIT_TYPES.includes(t));
     const hasRentType = leaseTypes.some((t) => RENT_TYPES.includes(t));
 
-    if (hasDepositType && (depositRange[0] !== 0 || depositRange[1] !== 20000)) {
+    if (
+      hasDepositType &&
+      (depositRange[0] !== 0 || depositRange[1] !== 20000)
+    ) {
       request.deposit_min = depositRange[0];
       request.deposit_max = depositRange[1];
     }
@@ -264,7 +267,10 @@ export default function PropertyFilterPage() {
     const hasDepositType = leaseTypes.some((t) => DEPOSIT_TYPES.includes(t));
     const hasRentType = leaseTypes.some((t) => RENT_TYPES.includes(t));
 
-    if (hasDepositType && (depositRange[0] !== 0 || depositRange[1] !== 20000)) {
+    if (
+      hasDepositType &&
+      (depositRange[0] !== 0 || depositRange[1] !== 20000)
+    ) {
       params.set('deposit', `${depositRange[0]}-${depositRange[1]}`);
     }
     if (hasRentType && (rentRange[0] !== 0 || rentRange[1] !== 200)) {
@@ -274,7 +280,10 @@ export default function PropertyFilterPage() {
       leaseTypes.includes('매매') &&
       (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000)
     ) {
-      params.set('purchasePrice', `${purchasePriceRange[0]}-${purchasePriceRange[1]}`);
+      params.set(
+        'purchasePrice',
+        `${purchasePriceRange[0]}-${purchasePriceRange[1]}`
+      );
     }
 
     const keyword = searchParams.get('keyword');
