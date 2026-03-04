@@ -16,6 +16,7 @@ import {
   deleteHomeNote,
 } from '@/lib/api/homeNote';
 import { HomeNoteItem } from '@/types/homeNote';
+import { formatDate } from '@/utils/formatDate';
 import styles from './HomeNotes.module.css';
 
 // HomeNoteCard는 react-pdf를 사용하므로 SSR 방지를 위해 dynamic import 사용
@@ -30,11 +31,7 @@ function convertToHomeNote(item: HomeNoteItem): HomeNote {
   return {
     id: item.home_note_id.toString(),
     title: item.title,
-    date: new Date(item.created_at).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }),
+    date: formatDate(item.created_at),
     images: (item.preview_images || []).map((previewImage) => ({
       id: previewImage.file_asset_id.toString(),
       url: previewImage.presigned_url,
@@ -177,7 +174,9 @@ export default function HomeNotesPage() {
           </div>
         )}
       </main>
-      {!isEditMode && <FloatingAddButton onClick={handleAddClick} />}
+      {!isEditMode && (
+        <FloatingAddButton onClick={handleAddClick} withBottomNav />
+      )}
       <TextFieldModal
         isOpen={isCreateModalOpen}
         onClose={handleCloseCreateModal}

@@ -11,6 +11,9 @@ import {
   logout as logoutApi,
   deleteAccount as deleteAccountApi,
 } from '@/lib/api/auth';
+import { useToast } from '@/contexts/ToastContext';
+import { useAnalysis } from '@/contexts/AnalysisContext';
+import { useSseConnection, SseEvent } from '@/hooks/useSseConnection';
 
 interface AuthContextType extends AuthState {
   login: (code: string) => Promise<void>;
@@ -28,6 +31,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   });
   const router = useRouter();
+  const { info, success, error } = useToast();
+  const { analysisState, completeAnalysis, failAnalysis } = useAnalysis();
+
+  const handleSseEvent = (event: SseEvent) => {
+    if (event.name === 'connect') return;
+
+    if (event.name === 'easy-contract-result') {
+      try {
+        const data = JSON.parse(event.data);
+        if (
+          analysisState.easyContractId &&
+          data.easy_contract_id === analysisState.easyContractId
+        ) {
+          if (data.success) {
+            completeAnalysis(data.easy_contract_id);
+            success('분석이 완료됐어요!');
+          } else {
+            failAnalysis(
+              data.easy_contract_id,
+              data.error_message || '분석에 실패했습니다.'
+            );
+            error('분석이 실패했어요');
+          }
+        }
+      } catch {
+        // 파싱 실패 시 무시
+      }
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(event.data);
+      const message = parsed?.message ?? parsed?.content;
+      if (message) info(String(message));
+    } catch {
+      if (event.data) info(event.data);
+    }
+  };
+
+  useSseConnection(authState.isAuthenticated, handleSseEvent);
 
   useEffect(() => {
     const initAuth = async () => {

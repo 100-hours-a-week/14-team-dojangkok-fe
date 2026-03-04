@@ -116,3 +116,42 @@
   background-color: #9ca3af;
   cursor: not-allowed;
 }
+
+.footerColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.secondaryConfirmButton {
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  background-color: #e5e7eb;
+  color: #4b5563;
+  transition: background-color 0.2s;
+}
+
+.secondaryConfirmButton:hover {
+  background-color: #d1d5db;
+}
+
+.cancelButtonText {
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  background-color: transparent;
+  color: #9ca3af;
+  transition: color 0.2s;
+}
+
+.cancelButtonText:hover {
+  color: #6b7280;
+}

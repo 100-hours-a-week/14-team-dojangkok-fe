@@ -1,0 +1,300 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: white;
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: white;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--gray-100, #f3f4f6);
+}
+
+.searchContainer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.backButton {
+  position: absolute;
+  left: 12px;
+  z-index: 20;
+  color: var(--gray-600, #4b5563);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.backButton:hover {
+  color: var(--gray-900, #111827);
+}
+
+.backButton .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.searchInput {
+  display: block;
+  width: 100%;
+  padding: 14px 56px 14px 48px;
+  background: var(--gray-100, #f3f4f6);
+  border: none;
+  border-radius: 9999px;
+  font-size: 14px;
+  color: var(--gray-900, #111827);
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.searchInput::placeholder {
+  color: var(--gray-400, #9ca3af);
+}
+
+.searchInput:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 0 2px var(--primary, #10b981);
+}
+
+.clearButton {
+  position: absolute;
+  right: 52px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gray-300, #d1d5db);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.clearButton:hover {
+  background: var(--gray-400, #9ca3af);
+}
+
+.clearButton .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.searchButton {
+  position: absolute;
+  right: 8px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary, #10b981);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s;
+}
+
+.searchButton:hover {
+  background: #059669;
+}
+
+.searchButton .material-symbols-outlined {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  background: white;
+}
+
+/* Recent Section */
+.recentSection {
+  padding: 24px 16px;
+}
+
+.recentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.recentTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-900, #111827);
+}
+
+.clearAllButton {
+  font-size: 12px;
+  color: var(--gray-400, #9ca3af);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.clearAllButton:hover {
+  color: var(--gray-600, #4b5563);
+}
+
+/* Recent List */
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.recentItemButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 12px 8px;
+  margin: 0 -8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s;
+  text-align: left;
+}
+
+.recentItemButton:hover {
+  background: var(--gray-50, #f9fafb);
+}
+
+.iconWrapper {
+  flex-shrink: 0;
+  margin-right: 12px;
+  padding: 8px;
+  background: var(--gray-100, #f3f4f6);
+  border-radius: 50%;
+  color: var(--gray-400, #9ca3af);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.recentItemButton:hover .iconWrapper {
+  color: var(--primary, #10b981);
+}
+
+.iconWrapper .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.recentContent {
+  flex: 1;
+}
+
+.recentQuery {
+  font-size: 14px;
+  color: var(--gray-900, #111827);
+  margin-bottom: 2px;
+}
+
+.highlight {
+  color: var(--primary, #10b981);
+  font-weight: 600;
+}
+
+.recentDate {
+  font-size: 12px;
+  color: var(--gray-500, #6b7280);
+}
+
+.deleteButton {
+  flex-shrink: 0;
+  padding: 8px;
+  color: var(--gray-300, #d1d5db);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.deleteButton:hover {
+  color: var(--gray-500, #6b7280);
+}
+
+.deleteButton .material-symbols-outlined {
+  font-size: 16px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .page,
+  .main {
+    background: var(--gray-950, #030712);
+  }
+
+  .header {
+    background: var(--gray-950, #030712);
+    border-bottom-color: var(--gray-800, #1f2937);
+  }
+
+  .backButton {
+    color: var(--gray-300, #d1d5db);
+  }
+
+  .backButton:hover {
+    color: white;
+  }
+
+  .searchInput {
+    background: var(--gray-800, #1f2937);
+    color: white;
+  }
+
+  .searchInput:focus {
+    background: var(--gray-900, #111827);
+  }
+
+  .recentTitle {
+    color: white;
+  }
+
+  .clearAllButton:hover {
+    color: var(--gray-200, #e5e7eb);
+  }
+
+  .recentItemButton:hover {
+    background: rgba(31, 41, 55, 0.5);
+  }
+
+  .iconWrapper {
+    background: var(--gray-800, #1f2937);
+  }
+
+  .recentQuery {
+    color: white;
+  }
+
+  .deleteButton:hover {
+    color: var(--gray-200, #e5e7eb);
+  }
+}

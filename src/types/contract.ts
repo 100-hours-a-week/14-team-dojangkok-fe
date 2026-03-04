@@ -40,8 +40,15 @@ export interface HomeNotePresignedUrlResponse {
 
 // 쉬운 계약서 관련 타입
 
-export interface EasyContractRequest {
+export type DocType = 'CONTRACT' | 'REGISTRY';
+
+export interface EasyContractFileGroup {
+  doc_type: DocType;
   file_asset_ids: number[];
+}
+
+export interface EasyContractRequest {
+  files: EasyContractFileGroup[];
 }
 
 export type EasyContractStatus =
@@ -68,10 +75,10 @@ export interface EasyContractResponse {
 
 export interface EasyContractListItem {
   easy_contract_id: number;
-  title: string;
+  title: string | null;
   status: EasyContractStatus;
-  created_at: string;
-  updated_at: string;
+  created_at: string | number[];
+  updated_at: string | number[];
 }
 
 export interface EasyContractListData {
@@ -115,8 +122,7 @@ export interface FileMetadata {
 
 export interface FileUploadCompleteItem {
   file_asset_id: number;
-  size: number;
-  metadata: FileMetadata;
+  metadata?: FileMetadata;
 }
 
 export interface FileUploadCompleteRequest {

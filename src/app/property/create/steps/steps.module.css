@@ -1,0 +1,354 @@
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.stepTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gray-900, #111827);
+  line-height: 1.3;
+}
+
+.stepDescription {
+  font-size: 15px;
+  color: var(--gray-600, #4b5563);
+  margin-top: -24px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-700, #374151);
+}
+
+.optional {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--gray-500, #6b7280);
+  margin-left: 4px;
+}
+
+.required {
+  color: var(--red-500, #ef4444);
+  margin-left: 2px;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--red-600, #dc2626);
+  margin-top: 4px;
+  min-height: 18px;
+  line-height: 18px;
+}
+
+.inputError,
+.textareaError,
+.selectError {
+  border-color: var(--red-500, #ef4444);
+}
+
+.inputError:focus,
+.textareaError:focus,
+.selectError:focus {
+  border-color: var(--red-500, #ef4444);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* 옵션 카드 그리드 */
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.optionCard {
+  padding: 32px 16px;
+  border: 2px solid var(--gray-200, #e5e7eb);
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.optionCard:hover {
+  border-color: var(--primary, #10b981);
+}
+
+.optionCardActive {
+  border-color: var(--primary, #10b981);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.optionLabel {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800, #1f2937);
+}
+
+.optionCardActive .optionLabel {
+  color: var(--primary, #10b981);
+}
+
+/* 칩 그룹 */
+.chipGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding: 10px 20px;
+  border-radius: 9999px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  background: white;
+  color: var(--gray-700, #374151);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  border-color: var(--primary, #10b981);
+  color: var(--primary, #10b981);
+}
+
+.chipActive {
+  border-color: var(--primary, #10b981);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--primary, #10b981);
+  font-weight: 700;
+}
+
+/* 입력 필드 */
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--gray-900, #111827);
+  transition: all 0.2s;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.input::placeholder {
+  color: var(--gray-400, #9ca3af);
+}
+
+/* number input 스핀 버튼 제거 */
+.input[type='number']::-webkit-outer-spin-button,
+.input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--gray-900, #111827);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%236b7280' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 24px;
+  padding-right: 44px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--gray-100, #f3f4f6);
+}
+
+.select option {
+  padding: 8px;
+}
+
+.inputGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inputUnit {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-600, #4b5563);
+  white-space: nowrap;
+}
+
+.areaInputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.floorInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inputWithPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.floorPreview {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary, #10b981);
+  padding: 8px 16px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
+}
+
+.textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--gray-300, #d1d5db);
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--gray-900, #111827);
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: all 0.2s;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--primary, #10b981);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.textarea::placeholder {
+  color: var(--gray-400, #9ca3af);
+}
+
+/* 이미지 미리보기 */
+.imagePreviewGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.imagePreview {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--gray-100, #f3f4f6);
+}
+
+.imagePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imageRemoveButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.imageRemoveButton:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.imageRemoveButton .material-symbols-outlined {
+  font-size: 16px;
+  color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .optionCard {
+    background: var(--gray-800, #1f2937);
+    border-color: var(--gray-700, #374151);
+  }
+
+  .chip {
+    background: var(--gray-800, #1f2937);
+    border-color: var(--gray-700, #374151);
+    color: var(--gray-200, #e5e7eb);
+  }
+
+  .input,
+  .textarea,
+  .select {
+    background: var(--gray-800, #1f2937);
+    border-color: var(--gray-700, #374151);
+    color: var(--gray-100, #f3f4f6);
+  }
+
+  .charCounter {
+    color: var(--gray-400, #9ca3af);
+  }
+}
+
+/* 글자수 카운터 */
+.labelWithCounter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.charCounter {
+  font-size: 13px;
+  color: var(--gray-500, #6b7280);
+  font-weight: 500;
+}
+
+.charCounterError {
+  color: var(--red-500, #ef4444);
+}

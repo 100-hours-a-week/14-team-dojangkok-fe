@@ -17,3 +17,8 @@ export { default as SegmentedControl } from './SegmentedControl';
 export { default as Checklist } from './Checklist';
 export { default as ActionSheet } from './ActionSheet';
 export { default as AnalysisCard } from './AnalysisCard';
+export { default as StampBadge } from './StampBadge';
+export { default as SearchBar } from './SearchBar';
+export { default as FilterChip } from './FilterChip';
+export { default as PropertyCard } from './PropertyCard';
+export { default as RangeSlider } from './RangeSlider';

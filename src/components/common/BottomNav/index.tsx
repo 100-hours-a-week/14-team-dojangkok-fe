@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLayout } from '@/contexts/LayoutContext';
 import styles from './BottomNav.module.css';
@@ -25,12 +26,12 @@ const NAV_ITEMS: NavItem[] = [
     iconFilled: 'edit_note',
     label: '집노트',
   },
-  // {
-  //   path: '/property',
-  //   icon: 'apartment',
-  //   iconFilled: 'apartment',
-  //   label: '매물',
-  // },
+  {
+    path: '/property',
+    icon: 'apartment',
+    iconFilled: 'apartment',
+    label: '매물',
+  },
   {
     path: '/mypage',
     icon: 'person',
@@ -43,6 +44,13 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { navigationGuard, setPendingPath } = useLayout();
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--toast-bottom-nav', '88px');
+    return () => {
+      document.documentElement.style.removeProperty('--toast-bottom-nav');
+    };
+  }, []);
 
   const handleNavClick = (targetPath: string) => {
     if (pathname === targetPath) return;

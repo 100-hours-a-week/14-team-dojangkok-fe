@@ -9,6 +9,7 @@ import {
   FileUploadCompleteRequest,
   FileUploadCompleteResponse,
   FileMetadata,
+  EasyContractFileGroup,
 } from '@/types/contract';
 import {
   validateEasyContractFiles,
@@ -82,10 +83,10 @@ export async function uploadToS3(
  * @param file - 파일 객체
  * @returns 파일 메타데이터 (이미지: width/height, PDF: pages)
  */
-async function extractFileMetadata(file: File): Promise<FileMetadata> {
+async function extractFileMetadata(file: File): Promise<FileMetadata | null> {
   if (file.type.startsWith('image/')) {
     // 이미지 파일: width, height 추출
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
         resolve({
@@ -95,18 +96,13 @@ async function extractFileMetadata(file: File): Promise<FileMetadata> {
         URL.revokeObjectURL(img.src);
       };
       img.onerror = () => {
-        reject(new Error('이미지 메타데이터 추출 실패'));
+        URL.revokeObjectURL(img.src);
+        resolve(null);
       };
       img.src = URL.createObjectURL(file);
     });
-  } else if (file.type === 'application/pdf') {
-    // PDF 파일: pages 정보 (브라우저에서 페이지 수를 추출할 수 없으므로 기본값 사용)
-    // 실제 페이지 수는 백엔드에서 처리하거나 PDF.js 라이브러리 필요
-    return {
-      pages: 1, // 기본값, 필요시 PDF.js로 실제 페이지 수 추출
-    };
   }
-  return {};
+  return null;
 }
 
 /**
@@ -240,11 +236,13 @@ export async function uploadFiles(files: File[]): Promise<number[]> {
 
     // 4. 파일 업로드 완료 알림
     const completeRequest: FileUploadCompleteRequest = {
-      file_items: presignedResponse.data.file_items.map((fileItem, index) => ({
-        file_asset_id: fileItem.file_asset_id,
-        size: files[index].size,
-        metadata: metadataResults[index],
-      })),
+      file_items: presignedResponse.data.file_items.map((fileItem, index) => {
+        const metadata = metadataResults[index];
+        return {
+          file_asset_id: fileItem.file_asset_id,
+          ...(metadata ? { metadata } : {}),
+        };
+      }),
     };
 
     await completeFileUpload(completeRequest);
@@ -263,11 +261,18 @@ export async function uploadFiles(files: File[]): Promise<number[]> {
  * @returns 생성된 쉬운 계약서 정보
  */
 export async function createEasyContract(
-  fileAssetIds: number[]
+  contractFileIds: number[],
+  registryFileIds: number[]
 ): Promise<EasyContractResponse> {
+  const files: EasyContractFileGroup[] = [
+    { doc_type: 'CONTRACT', file_asset_ids: contractFileIds },
+  ];
+  if (registryFileIds.length > 0) {
+    files.push({ doc_type: 'REGISTRY', file_asset_ids: registryFileIds });
+  }
   return apiClient<EasyContractResponse>('/v1/easy-contracts', {
     method: 'POST',
-    body: JSON.stringify({ file_asset_ids: fileAssetIds }),
+    body: JSON.stringify({ files }),
     requiresAuth: true,
   });
 }
@@ -344,6 +349,30 @@ export async function deleteEasyContract(
 }
 
 /**
+ * 쉬운 계약서 생성 중단
+ * @param easyContractId - 중단할 쉬운 계약서 ID
+ */
+export async function cancelEasyContract(
+  easyContractId: number
+): Promise<void> {
+  await apiClient<void>(`/v1/easy-contracts/${easyContractId}/cancellation`, {
+    method: 'POST',
+    requiresAuth: true,
+  });
+}
+
+/**
+ * 업로드된 파일 삭제
+ * @param fileAssetId - 삭제할 파일 ID
+ */
+export async function deleteUploadedFile(fileAssetId: number): Promise<void> {
+  await apiClient<void>(`/v1/easy-contracts/files/${fileAssetId}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  });
+}
+
+/**
  * 집노트 파일 업로드 전체 플로우
  * @param homeNoteId - 집 노트 ID
  * @param files - 업로드할 파일 배열
@@ -401,11 +430,13 @@ export async function uploadHomeNoteFiles(
 
     // 4. 파일 업로드 완료 알림 (집 노트 전용 API 사용)
     const completeRequest: FileUploadCompleteRequest = {
-      file_items: successItems.map((fileItem, index) => ({
-        file_asset_id: fileItem.file_asset_id,
-        size: files[index].size,
-        metadata: metadataResults[index],
-      })),
+      file_items: successItems.map((fileItem, index) => {
+        const metadata = metadataResults[index];
+        return {
+          file_asset_id: fileItem.file_asset_id,
+          ...(metadata ? { metadata } : {}),
+        };
+      }),
     };
 
     await completeFileUploadForHomeNote(completeRequest);

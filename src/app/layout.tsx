@@ -11,6 +11,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   colorScheme: 'light',
 };
 
@@ -39,13 +43,13 @@ export default function RootLayout({
       </head>
       <body>
         <ToastProvider>
-          <AuthProvider>
-            <AnalysisProvider>
+          <AnalysisProvider>
+            <AuthProvider>
               <div className={styles.wrapper}>
                 <div className={styles.container}>{children}</div>
               </div>
-            </AnalysisProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </AnalysisProvider>
         </ToastProvider>
       </body>
     </html>

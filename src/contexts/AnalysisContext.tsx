@@ -23,48 +23,81 @@ interface AnalysisContextType {
   clearAnalysis: () => void;
 }
 
+const STORAGE_KEY = 'analysisState';
+
+const initialState: AnalysisState = {
+  easyContractId: null,
+  status: null,
+  error: null,
+};
+
+function loadFromStorage(): AnalysisState {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return initialState;
+}
+
+function saveToStorage(state: AnalysisState) {
+  try {
+    if (state.status === null) {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } else {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+  } catch {}
+}
+
 const AnalysisContext = createContext<AnalysisContextType | undefined>(
   undefined
 );
 
 export function AnalysisProvider({ children }: { children: ReactNode }) {
-  const [analysisState, setAnalysisState] = useState<AnalysisState>({
-    easyContractId: null,
-    status: null,
-    error: null,
-  });
+  const [analysisState, setAnalysisState] =
+    useState<AnalysisState>(loadFromStorage);
 
-  const startAnalysis = useCallback((easyContractId: number) => {
-    setAnalysisState({
-      easyContractId,
-      status: 'PROCESSING',
-      error: null,
-    });
+  const updateState = useCallback((state: AnalysisState) => {
+    saveToStorage(state);
+    setAnalysisState(state);
   }, []);
 
-  const completeAnalysis = useCallback((easyContractId: number) => {
-    setAnalysisState({
-      easyContractId,
-      status: 'COMPLETED',
-      error: null,
-    });
-  }, []);
+  const startAnalysis = useCallback(
+    (easyContractId: number) => {
+      updateState({
+        easyContractId,
+        status: 'PROCESSING',
+        error: null,
+      });
+    },
+    [updateState]
+  );
 
-  const failAnalysis = useCallback((easyContractId: number, error: string) => {
-    setAnalysisState({
-      easyContractId,
-      status: 'FAILED',
-      error,
-    });
-  }, []);
+  const completeAnalysis = useCallback(
+    (easyContractId: number) => {
+      updateState({
+        easyContractId,
+        status: 'COMPLETED',
+        error: null,
+      });
+    },
+    [updateState]
+  );
+
+  const failAnalysis = useCallback(
+    (easyContractId: number, error: string) => {
+      updateState({
+        easyContractId,
+        status: 'FAILED',
+        error,
+      });
+    },
+    [updateState]
+  );
 
   const clearAnalysis = useCallback(() => {
-    setAnalysisState({
-      easyContractId: null,
-      status: null,
-      error: null,
-    });
-  }, []);
+    updateState(initialState);
+  }, [updateState]);
 
   return (
     <AnalysisContext.Provider
