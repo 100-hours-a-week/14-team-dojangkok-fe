@@ -90,22 +90,22 @@ export default function PropertyPage() {
       const deposit = searchParams.get('deposit');
       if (deposit) {
         const [min, max] = deposit.split('-').map(Number);
-        request.deposit_min = min;
-        request.deposit_max = max;
+        if (min !== 0) request.deposit_min = min;
+        if (max !== 20000) request.deposit_max = max;
       }
 
       const rent = searchParams.get('rent');
       if (rent) {
         const [min, max] = rent.split('-').map(Number);
-        request.price_monthly_min = min;
-        request.price_monthly_max = max;
+        if (min !== 0) request.price_monthly_min = min;
+        if (max !== 200) request.price_monthly_max = max;
       }
 
       const purchasePrice = searchParams.get('purchasePrice');
       if (purchasePrice) {
         const [min, max] = purchasePrice.split('-').map(Number);
-        request.sale_price_min = min;
-        request.sale_price_max = max;
+        if (min !== 0) request.sale_price_min = min;
+        if (max !== 100000) request.sale_price_max = max;
       }
 
       return request;

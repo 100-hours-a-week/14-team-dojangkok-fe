@@ -126,19 +126,21 @@ export default function PropertyFilterPage() {
       hasDepositType &&
       (depositRange[0] !== 0 || depositRange[1] !== 20000)
     ) {
-      request.deposit_min = depositRange[0];
-      request.deposit_max = depositRange[1];
+      if (depositRange[0] !== 0) request.deposit_min = depositRange[0];
+      if (depositRange[1] !== 20000) request.deposit_max = depositRange[1];
     }
     if (hasRentType && (rentRange[0] !== 0 || rentRange[1] !== 200)) {
-      request.price_monthly_min = rentRange[0];
-      request.price_monthly_max = rentRange[1];
+      if (rentRange[0] !== 0) request.price_monthly_min = rentRange[0];
+      if (rentRange[1] !== 200) request.price_monthly_max = rentRange[1];
     }
     if (
       leaseTypes.includes('매매') &&
       (purchasePriceRange[0] !== 0 || purchasePriceRange[1] !== 100000)
     ) {
-      request.sale_price_min = purchasePriceRange[0];
-      request.sale_price_max = purchasePriceRange[1];
+      if (purchasePriceRange[0] !== 0)
+        request.sale_price_min = purchasePriceRange[0];
+      if (purchasePriceRange[1] !== 100000)
+        request.sale_price_max = purchasePriceRange[1];
     }
 
     if (reviewedOnly) {
