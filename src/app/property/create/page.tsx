@@ -225,8 +225,8 @@ export default function PropertyCreatePage() {
           newErrors.description = '상세 설명을 입력해주세요';
         }
         const imageFiles = uploadedImages.map((img) => img.file);
-        if (imageFiles.length > 10) {
-          newErrors.images = '최대 10장까지 업로드 가능합니다';
+        if (imageFiles.length > 20) {
+          newErrors.images = '최대 20장까지 업로드 가능합니다';
         }
         break;
     }

@@ -161,7 +161,7 @@ export default function Step4ImagesAndDescription({
           accept="image/jpeg,image/jpg,image/png,image/webp"
           multiple
           mainText="사진 추가"
-          subText="JPG, PNG, WEBP 지원 (최대 10장, 5MB 이하)"
+          subText="JPG, PNG, WEBP 지원 (최대 20장, 5MB 이하)"
         />
         <p className={styles.error}>{errors.images || '\u00A0'}</p>
 
