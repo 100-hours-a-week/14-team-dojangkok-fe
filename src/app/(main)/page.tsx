@@ -33,6 +33,8 @@ export default function HomePage() {
   const toast = useToast();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+  const [isCompletedWarningModalOpen, setIsCompletedWarningModalOpen] =
+    useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { setNavigationGuard } = useLayout();
   const { analysisState, clearAnalysis } = useAnalysis();
@@ -112,28 +114,30 @@ export default function HomePage() {
     }
   };
 
-  const handleAnalyzeClick = () => {
-    // 이미 분석이 진행 중이거나 완료 대기 중이면 경고 모달
-    if (
-      analysisState.status === 'PROCESSING' ||
-      analysisState.status === 'COMPLETED'
-    ) {
-      setIsWarningModalOpen(true);
-      return;
-    }
-
-    // 업로드된 파일 ID 확인
+  const proceedToRegistry = () => {
     const fileAssetIds = images
       .map((img) => img.fileAssetId)
       .filter((id): id is number => id !== undefined);
-
-    // 계약서 파일 ID를 sessionStorage에 저장 후 등기부등본 페이지로 이동
     sessionStorage.setItem(
       'contractFileAssetIds',
       JSON.stringify(fileAssetIds)
     );
     setNavigationGuard(null);
     router.push('/registry-document');
+  };
+
+  const handleAnalyzeClick = () => {
+    if (analysisState.status === 'PROCESSING') {
+      setIsWarningModalOpen(true);
+      return;
+    }
+
+    if (analysisState.status === 'COMPLETED') {
+      setIsCompletedWarningModalOpen(true);
+      return;
+    }
+
+    proceedToRegistry();
   };
 
   return (
@@ -437,20 +441,10 @@ export default function HomePage() {
         onClose={() => setIsWarningModalOpen(false)}
         onConfirm={() => {
           setIsWarningModalOpen(false);
-          if (analysisState.status === 'PROCESSING') {
-            router.push('/loading-analysis');
-          } else if (
-            analysisState.status === 'COMPLETED' &&
-            analysisState.easyContractId
-          ) {
-            router.push(`/analysis-result?id=${analysisState.easyContractId}`);
-            clearAnalysis();
-          }
+          router.push('/loading-analysis');
         }}
         title="이미 분석이 진행 중입니다"
-        confirmText={
-          analysisState.status === 'COMPLETED' ? '결과 확인하기' : '확인하기'
-        }
+        confirmText="확인하기"
         cancelText="취소"
       >
         <p
@@ -461,9 +455,39 @@ export default function HomePage() {
             textAlign: 'center',
           }}
         >
-          {analysisState.status === 'PROCESSING'
-            ? '현재 계약서 분석이 진행 중입니다.\n로딩 페이지에서 진행 상태를 확인하세요.'
-            : '분석이 완료되었습니다.\n결과 페이지로 이동하시겠어요?'}
+          현재 계약서 분석이 진행 중입니다.{'\n'}로딩 페이지에서 진행 상태를
+          확인하세요.
+        </p>
+      </Modal>
+
+      {/* 분석 완료 경고 모달 */}
+      <Modal
+        isOpen={isCompletedWarningModalOpen}
+        onClose={() => setIsCompletedWarningModalOpen(false)}
+        onConfirm={() => {
+          setIsCompletedWarningModalOpen(false);
+          router.push(`/analysis-result?id=${analysisState.easyContractId}`);
+          clearAnalysis();
+        }}
+        onSecondaryConfirm={() => {
+          setIsCompletedWarningModalOpen(false);
+          clearAnalysis();
+          proceedToRegistry();
+        }}
+        title="이미 분석된 계약서가 있어요"
+        confirmText="결과 확인하기"
+        secondaryConfirmText="새로 분석하기"
+        cancelText="취소"
+      >
+        <p
+          style={{
+            color: '#666',
+            fontSize: 14,
+            lineHeight: 1.6,
+            textAlign: 'center',
+          }}
+        >
+          결과를 확인하거나 새로운 계약서를 분석할 수 있어요.
         </p>
       </Modal>
     </>

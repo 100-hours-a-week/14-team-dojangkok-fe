@@ -12,6 +12,8 @@ interface ModalProps {
   confirmDisabled?: boolean;
   variant?: 'default' | 'destructive';
   children: React.ReactNode;
+  secondaryConfirmText?: string;
+  onSecondaryConfirm?: () => void;
 }
 
 export default function Modal({
@@ -24,6 +26,8 @@ export default function Modal({
   confirmDisabled = false,
   variant = 'default',
   children,
+  secondaryConfirmText,
+  onSecondaryConfirm,
 }: ModalProps) {
   if (!isOpen) return null;
 
@@ -41,18 +45,39 @@ export default function Modal({
           </div>
         )}
         <div className={styles.content}>{children}</div>
-        <div className={styles.footer}>
-          <button className={styles.cancelButton} onClick={onClose}>
-            {cancelText}
-          </button>
-          <button
-            className={confirmButtonClass}
-            onClick={onConfirm}
-            disabled={confirmDisabled}
-          >
-            {confirmText}
-          </button>
-        </div>
+        {secondaryConfirmText ? (
+          <div className={styles.footerColumn}>
+            <button
+              className={confirmButtonClass}
+              onClick={onConfirm}
+              disabled={confirmDisabled}
+            >
+              {confirmText}
+            </button>
+            <button
+              className={styles.secondaryConfirmButton}
+              onClick={onSecondaryConfirm}
+            >
+              {secondaryConfirmText}
+            </button>
+            <button className={styles.cancelButtonText} onClick={onClose}>
+              {cancelText}
+            </button>
+          </div>
+        ) : (
+          <div className={styles.footer}>
+            <button className={styles.cancelButton} onClick={onClose}>
+              {cancelText}
+            </button>
+            <button
+              className={confirmButtonClass}
+              onClick={onConfirm}
+              disabled={confirmDisabled}
+            >
+              {confirmText}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
