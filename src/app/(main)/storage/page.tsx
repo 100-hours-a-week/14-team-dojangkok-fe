@@ -73,7 +73,6 @@ export default function StoragePage() {
   // 초기 목록 조회
   useEffect(() => {
     fetchContracts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // SSE 분석 결과 수신 시 조용히 목록 갱신
@@ -85,7 +84,6 @@ export default function StoragePage() {
     ) {
       fetchContracts(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisState.status, analysisState.easyContractId]);
 
   const handleResultClick = (id: string) => {
