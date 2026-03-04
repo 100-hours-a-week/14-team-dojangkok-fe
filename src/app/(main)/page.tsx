@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
@@ -38,6 +38,21 @@ export default function HomePage() {
   const [isUploading, setIsUploading] = useState(false);
   const { setNavigationGuard } = useLayout();
   const { analysisState, clearAnalysis } = useAnalysis();
+  const analysisStateRef = useRef(analysisState);
+
+  useEffect(() => {
+    analysisStateRef.current = analysisState;
+  }, [analysisState]);
+
+  // 페이지 이탈 시 완료/실패 상태 초기화
+  useEffect(() => {
+    return () => {
+      const status = analysisStateRef.current.status;
+      if (status === 'COMPLETED' || status === 'FAILED') {
+        clearAnalysis();
+      }
+    };
+  }, [clearAnalysis]);
 
   useEffect(() => {
     if (images.length > 0) {
@@ -92,6 +107,11 @@ export default function HomePage() {
 
       setImages((prev) => [...prev, ...newImages]);
       toast.success(`${filesToAdd.length}개 업로드 완료`);
+
+      const status = analysisStateRef.current.status;
+      if (status === 'COMPLETED' || status === 'FAILED') {
+        clearAnalysis();
+      }
     } catch (err) {
       console.error('이미지 업로드 실패:', err);
       if (err instanceof ApiError) {
