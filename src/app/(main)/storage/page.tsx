@@ -36,7 +36,7 @@ function mapToAnalysisResult(item: EasyContractListItem): AnalysisResult {
 
 export default function StoragePage() {
   const router = useRouter();
-  const { startAnalysis } = useAnalysis();
+  const { startAnalysis, analysisState } = useAnalysis();
   const [results, setResults] = useState<AnalysisResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +74,23 @@ export default function StoragePage() {
 
     loadContracts();
   }, []);
+
+  // SSE 분석 결과 수신 시 로딩 없이 리스트 업데이트
+  useEffect(() => {
+    if (!analysisState.easyContractId) return;
+
+    const contractId = String(analysisState.easyContractId);
+
+    if (analysisState.status === 'COMPLETED') {
+      setResults((prev) =>
+        prev.map((r) =>
+          r.id === contractId ? { ...r, status: 'COMPLETED' } : r
+        )
+      );
+    } else if (analysisState.status === 'FAILED') {
+      setResults((prev) => prev.filter((r) => r.id !== contractId));
+    }
+  }, [analysisState.status, analysisState.easyContractId]);
 
   const handleResultClick = (id: string) => {
     const result = results.find((r) => r.id === id);
