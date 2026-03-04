@@ -417,7 +417,9 @@ export default function PropertyDetailPage() {
                 {isFavorite ? 'favorite' : 'favorite_border'}
               </span>
             </button>
-            <button className={styles.contactButton}>문의하기</button>
+            <button className={styles.contactButton} disabled>
+              1:1 채팅 준비중
+            </button>
           </>
         )}
       </footer>

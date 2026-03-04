@@ -254,12 +254,16 @@
   color: var(--gray-800, #1f2937);
   margin-bottom: 8px;
   line-height: 1.4;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .address {
   font-size: 14px;
   color: var(--gray-600, #4b5563);
   line-height: 1.5;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 /* 매물 정보 그리드 */
@@ -358,6 +362,13 @@
 
 .contactButton:hover {
   background: #059669;
+}
+
+.contactButton:disabled {
+  background: var(--gray-200, #e5e7eb);
+  color: var(--gray-500, #6b7280);
+  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .contactButton:active {

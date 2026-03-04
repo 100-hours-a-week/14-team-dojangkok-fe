@@ -81,12 +81,14 @@ export default function Step3Details({
       {/* 주소 */}
       <div className={styles.section}>
         <label className={styles.label}>
-          주소<span className={styles.required}>*</span>
+          주소<span className={styles.required}>*</span>{' '}
+          <span className={styles.optional}>(최대 100자)</span>
         </label>
         <input
           type="text"
           className={`${styles.input} ${errors.address ? styles.inputError : ''}`}
           placeholder="예: 서울 강남구 역삼동"
+          maxLength={100}
           value={formData.address ?? ''}
           onChange={(e) => updateFormData({ address: e.target.value })}
         />
