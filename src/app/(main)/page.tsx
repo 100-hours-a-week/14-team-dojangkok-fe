@@ -427,10 +427,10 @@ export default function HomePage() {
         @keyframes bounce {
           0%,
           100% {
-            transform: translateY(0);
+            transform: translateX(-50%) translateY(0);
           }
           50% {
-            transform: translateY(-10px);
+            transform: translateX(-50%) translateY(-10px);
           }
         }
       `}</style>
