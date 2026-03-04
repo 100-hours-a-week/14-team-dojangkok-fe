@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   });
   const router = useRouter();
-  const { info } = useToast();
+  const { info, success, error } = useToast();
   const { analysisState, completeAnalysis, failAnalysis } = useAnalysis();
 
   const handleSseEvent = (event: SseEvent) => {
@@ -46,11 +46,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ) {
           if (data.success) {
             completeAnalysis(data.easy_contract_id);
+            success('분석이 완료됐어요!');
           } else {
             failAnalysis(
               data.easy_contract_id,
               data.error_message || '분석에 실패했습니다.'
             );
+            error('분석이 실패했어요');
           }
         }
       } catch {

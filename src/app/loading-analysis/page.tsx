@@ -23,12 +23,7 @@ export default function AnalyzingPage() {
       router.replace(`/analysis-result?id=${analysisState.easyContractId}`);
       clearAnalysis(); // 상태 초기화
     } else if (analysisState.status === 'FAILED') {
-      // 실패 시 사용자에게 Toast 알림 표시
-      const errorMessage =
-        analysisState.error || '쉬운 계약서 생성에 실패했어요.';
-      toast.error(errorMessage);
       clearAnalysis();
-      // 홈으로 리다이렉트
       router.replace('/');
     }
   }, [analysisState, router, clearAnalysis, toast]);

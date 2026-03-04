@@ -339,6 +339,40 @@ export default function HomePage() {
         </button>
       )}
 
+      {/* 분석 실패 플로팅 버튼 */}
+      {analysisState.status === 'FAILED' && (
+        <button
+          onClick={() => clearAnalysis()}
+          style={{
+            position: 'fixed',
+            bottom: '200px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#EF4444',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '24px',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            zIndex: 1000,
+          }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: '20px' }}
+          >
+            error
+          </span>
+          분석 실패
+        </button>
+      )}
+
       {/* 분석 완료 플로팅 버튼 */}
       {analysisState.status === 'COMPLETED' && analysisState.easyContractId && (
         <button
