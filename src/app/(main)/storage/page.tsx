@@ -53,43 +53,39 @@ export default function StoragePage() {
 
   const selectedResult = results.find((r) => r.id === selectedResultId);
 
-  // 쉬운 계약서 목록 조회
-  useEffect(() => {
-    const loadContracts = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await getEasyContractList();
-        const mappedResults = response.data.easyContractListItemList
-          .filter((item) => item.status !== 'FAILED')
-          .map(mapToAnalysisResult);
-        setResults(mappedResults);
-      } catch (err) {
-        console.error('계약서 목록 조회 실패:', err);
-        setError('계약서 목록을 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchContracts = async (silent = false) => {
+    try {
+      if (!silent) setIsLoading(true);
+      setError(null);
+      const response = await getEasyContractList();
+      const mappedResults = response.data.easyContractListItemList
+        .filter((item) => item.status !== 'FAILED')
+        .map(mapToAnalysisResult);
+      setResults(mappedResults);
+    } catch (err) {
+      console.error('계약서 목록 조회 실패:', err);
+      if (!silent) setError('계약서 목록을 불러오는데 실패했습니다.');
+    } finally {
+      if (!silent) setIsLoading(false);
+    }
+  };
 
-    loadContracts();
+  // 초기 목록 조회
+  useEffect(() => {
+    fetchContracts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // SSE 분석 결과 수신 시 로딩 없이 리스트 업데이트
+  // SSE 분석 결과 수신 시 조용히 목록 갱신
   useEffect(() => {
-    if (!analysisState.easyContractId) return;
-
-    const contractId = String(analysisState.easyContractId);
-
-    if (analysisState.status === 'COMPLETED') {
-      setResults((prev) =>
-        prev.map((r) =>
-          r.id === contractId ? { ...r, status: 'COMPLETED' } : r
-        )
-      );
-    } else if (analysisState.status === 'FAILED') {
-      setResults((prev) => prev.filter((r) => r.id !== contractId));
+    if (
+      analysisState.easyContractId &&
+      (analysisState.status === 'COMPLETED' ||
+        analysisState.status === 'FAILED')
+    ) {
+      fetchContracts(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisState.status, analysisState.easyContractId]);
 
   const handleResultClick = (id: string) => {
