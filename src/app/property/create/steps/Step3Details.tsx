@@ -96,7 +96,8 @@ export default function Step3Details({
       {/* 상세 주소 */}
       <div className={styles.section}>
         <label className={styles.label}>
-          상세 주소 <span className={styles.optional}>(선택, 최대 100자)</span>
+          상세 주소<span className={styles.required}>*</span>{' '}
+          <span className={styles.optional}>(최대 100자)</span>
         </label>
         <input
           type="text"
@@ -141,7 +142,9 @@ export default function Step3Details({
 
       {/* 층수 */}
       <div className={styles.section}>
-        <label className={styles.label}>층수</label>
+        <label className={styles.label}>
+          층수<span className={styles.required}>*</span>
+        </label>
         <div className={styles.floorInputs}>
           <div className={styles.chipGroup}>
             <button

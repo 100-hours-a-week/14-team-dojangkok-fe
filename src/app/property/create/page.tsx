@@ -163,19 +163,19 @@ export default function PropertyCreatePage() {
         if (!data.priceType) {
           newErrors.priceType = '거래 유형을 선택해주세요';
         }
-        if (!data.deposit || data.deposit === '') {
+        if (data.deposit === '' || data.deposit === undefined) {
           newErrors.deposit = '보증금을 입력해주세요';
-        } else if (isNaN(Number(data.deposit)) || Number(data.deposit) <= 0) {
-          newErrors.deposit = '올바른 숫자를 입력해주세요';
+        } else if (isNaN(Number(data.deposit)) || Number(data.deposit) < 0) {
+          newErrors.deposit = '0 이상의 숫자를 입력해주세요';
         }
         if (data.priceType === '월세' || data.priceType === '반전세') {
-          if (!data.monthlyRent || data.monthlyRent === '') {
+          if (data.monthlyRent === '' || data.monthlyRent === undefined) {
             newErrors.monthlyRent = '월세를 입력해주세요';
           } else if (
             isNaN(Number(data.monthlyRent)) ||
-            Number(data.monthlyRent) <= 0
+            Number(data.monthlyRent) < 0
           ) {
-            newErrors.monthlyRent = '올바른 숫자를 입력해주세요';
+            newErrors.monthlyRent = '0 이상의 숫자를 입력해주세요';
           }
         }
         if (data.maintenanceFee && data.maintenanceFee !== '') {
@@ -183,7 +183,7 @@ export default function PropertyCreatePage() {
             isNaN(Number(data.maintenanceFee)) ||
             Number(data.maintenanceFee) < 0
           ) {
-            newErrors.maintenanceFee = '올바른 숫자를 입력해주세요';
+            newErrors.maintenanceFee = '0 이상의 숫자를 입력해주세요';
           }
         }
         break;
@@ -191,16 +191,28 @@ export default function PropertyCreatePage() {
         if (!data.address || data.address.trim() === '') {
           newErrors.address = '주소를 입력해주세요';
         }
-        if (data.detailedAddress && data.detailedAddress.length > 100) {
+        if (!data.detailedAddress || data.detailedAddress.trim() === '') {
+          newErrors.detailedAddress = '상세 주소를 입력해주세요';
+        } else if (data.detailedAddress.length > 100) {
           newErrors.detailedAddress = '상세 주소는 100자 이하로 입력해주세요';
         }
         if (!data.area || data.area === '') {
           newErrors.area = '면적을 입력해주세요';
         } else if (isNaN(Number(data.area)) || Number(data.area) <= 0) {
           newErrors.area = '면적은 0보다 큰 값으로 입력해주세요';
+        } else {
+          const areaDecimal = String(data.area).match(/\.(\d+)/);
+          if (areaDecimal && areaDecimal[1].length > 2) {
+            newErrors.area = '면적은 소수점 2자리까지 입력 가능합니다';
+          }
         }
         if (data.floor === 0) {
           newErrors.floor = '층수를 입력해주세요';
+        } else {
+          const floorDecimal = String(Math.abs(data.floor)).match(/\.(\d+)/);
+          if (floorDecimal && floorDecimal[1].length > 1) {
+            newErrors.floor = '층수는 소수점 1자리까지 입력 가능합니다';
+          }
         }
         break;
       case 4:
@@ -209,8 +221,8 @@ export default function PropertyCreatePage() {
         } else if (data.title.length > 50) {
           newErrors.title = '제목은 50자 이하로 입력해주세요';
         }
-        if (data.description && data.description.trim() === '') {
-          newErrors.description = '설명을 입력하시거나 비워두세요';
+        if (!data.description || data.description.trim() === '') {
+          newErrors.description = '상세 설명을 입력해주세요';
         }
         const imageFiles = uploadedImages.map((img) => img.file);
         if (imageFiles.length > 10) {
@@ -291,7 +303,7 @@ export default function PropertyCreatePage() {
     return {
       title: formData.title,
       address_main: formData.address,
-      address_detail: formData.detailedAddress.trim() || undefined,
+      address_detail: formData.detailedAddress.trim(),
       price_main: Number(formData.deposit),
       price_monthly:
         formData.priceType === '월세' || formData.priceType === '반전세'
@@ -324,7 +336,7 @@ export default function PropertyCreatePage() {
           title: formData.title,
           easy_contract_id: formData.homeNoteId,
           address_main: formData.address,
-          address_detail: formData.detailedAddress.trim() || undefined,
+          address_detail: formData.detailedAddress.trim(),
           price_main: Number(formData.deposit),
           price_monthly:
             formData.priceType === '월세' || formData.priceType === '반전세'

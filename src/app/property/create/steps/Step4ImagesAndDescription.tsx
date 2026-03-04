@@ -115,14 +115,17 @@ export default function Step4ImagesAndDescription({
 
       {/* 설명 */}
       <div className={styles.section}>
-        <label className={styles.label}>상세 설명</label>
+        <label className={styles.label}>
+          상세 설명<span className={styles.required}>*</span>
+        </label>
         <textarea
-          className={styles.textarea}
+          className={`${styles.textarea} ${errors.description ? styles.inputError : ''}`}
           placeholder="매물에 대한 상세 설명을 입력하세요"
           rows={6}
           value={formData.description ?? ''}
           onChange={(e) => updateFormData({ description: e.target.value })}
         />
+        <p className={styles.error}>{errors.description || '\u00A0'}</p>
       </div>
 
       {/* 계약서 연결 */}
