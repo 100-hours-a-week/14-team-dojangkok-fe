@@ -17,6 +17,7 @@ import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import type { PropertyPostDetailDto } from '@/types/property';
 import { PROPERTY_TYPE_LABELS, RENT_TYPE_LABELS } from '@/types/property';
 import styles from './detail.module.css';
+import { formatKRW } from '@/utils/formatPrice';
 
 function getCorrectProfileImageUrl(url: string | null): string | null {
   if (!url) {
@@ -42,14 +43,14 @@ function getCorrectProfileImageUrl(url: string | null): string | null {
 }
 
 function formatPrice(dto: PropertyPostDetailDto): string {
-  const main = dto.price_main.toLocaleString();
+  const main = formatKRW(dto.price_main);
   switch (dto.rent_type) {
     case 'MONTHLY':
-      return `월세 ${main}/${dto.price_monthly?.toLocaleString() ?? 0}`;
+      return `월세 ${main}/${dto.price_monthly?.toLocaleString() ?? 0}만`;
     case 'JEONSE':
       return `전세 ${main}`;
     case 'JEONSE_MONTHLY':
-      return `반전세 ${main}/${dto.price_monthly?.toLocaleString() ?? 0}`;
+      return `반전세 ${main}/${dto.price_monthly?.toLocaleString() ?? 0}만`;
     case 'SALE':
       return `매매 ${main}`;
   }

@@ -3,6 +3,7 @@
 import StampBadge from '../StampBadge';
 import styles from './PropertyCard.module.css';
 import { Property } from '@/types/property';
+import { formatPropertyPrice } from '@/utils/formatPrice';
 
 interface PropertyCardProps {
   property: Property;
@@ -24,17 +25,12 @@ export default function PropertyCard({
   showDetails = true,
   footer,
 }: PropertyCardProps) {
-  const formatPrice = () => {
-    if (property.priceType === '월세') {
-      return `월세 ${property.deposit}/${property.monthlyRent}`;
-    } else if (property.priceType === '전세') {
-      return `전세 ${property.deposit.toLocaleString()}`;
-    } else if (property.priceType === '반전세') {
-      return `반전세 ${property.deposit}/${property.monthlyRent}`;
-    } else {
-      return `매매 ${property.deposit.toLocaleString()}`;
-    }
-  };
+  const formatPrice = () =>
+    formatPropertyPrice(
+      property.priceType,
+      property.deposit,
+      property.monthlyRent
+    );
 
   const getTimeAgo = (dateString: string) => {
     if (!dateString) return '';
