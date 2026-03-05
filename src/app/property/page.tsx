@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Header,
@@ -10,7 +10,6 @@ import {
   PropertyCard,
   StampBadge,
 } from '@/components/common';
-import { Property } from '@/types/property';
 import type {
   PropertyPostSearchRequestDto,
   PropertyType,
@@ -20,25 +19,22 @@ import { PROPERTY_TYPE_MAP, RENT_TYPE_MAP } from '@/types/property';
 import { getAllPropertyPosts, searchPropertyPosts } from '@/lib/api/property';
 import { convertToPropertyList } from '@/utils/propertyAdapter';
 import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import styles from './property.module.css';
 
 export default function PropertyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [keyword, setKeyword] = useState('');
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasNext, setHasNext] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef(false);
 
-  // 필터 활성 상태
-  const [hasPropertyTypeFilter, setHasPropertyTypeFilter] = useState(false);
-  const [hasLeaseTypeFilter, setHasLeaseTypeFilter] = useState(false);
-  const [hasPriceFilter, setHasPriceFilter] = useState(false);
+  // 필터 활성 상태 - searchParams에서 직접 파생
+  const keyword = searchParams.get('keyword') || '';
+  const hasPropertyTypeFilter = !!searchParams.get('propertyTypes');
+  const hasLeaseTypeFilter = !!searchParams.get('leaseTypes');
+  const hasPriceFilter =
+    searchParams.has('deposit') ||
+    searchParams.has('rent') ||
+    searchParams.has('purchasePrice');
 
   // URL 파라미터를 API 요청 형식으로 변환
   const buildSearchRequest =
@@ -111,89 +107,42 @@ export default function PropertyPage() {
       return request;
     }, [searchParams]);
 
-  const fetchProperties = useCallback(
+  const fetchFn = useCallback(
     async (cursor?: string) => {
-      if (loadingRef.current && cursor) return;
-      loadingRef.current = true;
-      setLoading(true);
-      setError(null);
+      if (!cursor) setTotalCount(null);
+      const searchRequest = buildSearchRequest();
 
-      try {
-        const searchRequest = buildSearchRequest();
-
-        if (searchRequest) {
-          const response = await searchPropertyPosts(searchRequest, cursor);
-          const convertedProperties = convertToPropertyList(
-            response.data.items
-          );
-          setProperties((prev) =>
-            cursor ? [...prev, ...convertedProperties] : convertedProperties
-          );
-          if (!cursor) setTotalCount(response.data.total_count);
-          setNextCursor(response.data.next_cursor);
-          setHasNext(response.data.hasNext);
-        } else {
-          const response = await getAllPropertyPosts(cursor);
-          const convertedProperties = convertToPropertyList(
-            response.data.property_post_items
-          );
-          setProperties((prev) =>
-            cursor ? [...prev, ...convertedProperties] : convertedProperties
-          );
-          if (!cursor) setTotalCount(response.data.total_count);
-          setNextCursor(response.data.next_cursor);
-          setHasNext(response.data.hasNext);
-        }
-      } catch {
-        setError('매물을 불러오는데 실패했습니다.');
-      } finally {
-        setLoading(false);
-        loadingRef.current = false;
+      if (searchRequest) {
+        const response = await searchPropertyPosts(searchRequest, cursor);
+        if (!cursor) setTotalCount(response.data.total_count);
+        return {
+          items: convertToPropertyList(response.data.items),
+          hasNext: response.data.hasNext,
+          nextCursor: response.data.next_cursor,
+        };
       }
+
+      const response = await getAllPropertyPosts(cursor);
+      if (!cursor) setTotalCount(response.data.total_count);
+      return {
+        items: convertToPropertyList(response.data.property_post_items),
+        hasNext: response.data.hasNext,
+        nextCursor: response.data.next_cursor,
+      };
     },
     [buildSearchRequest]
   );
 
-  // 무한 스크롤
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNext && !loadingRef.current) {
-          fetchProperties(nextCursor ?? undefined);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasNext, nextCursor, fetchProperties]);
-
-  // URL 쿼리 파라미터 변경 시 목록 새로고침
-  useEffect(() => {
-    const propertyTypes = searchParams.get('propertyTypes');
-    const leaseTypes = searchParams.get('leaseTypes');
-    const hasPrice =
-      searchParams.has('deposit') ||
-      searchParams.has('rent') ||
-      searchParams.has('purchasePrice');
-
-    setKeyword(searchParams.get('keyword') || '');
-    setHasPropertyTypeFilter(!!propertyTypes);
-    setHasLeaseTypeFilter(!!leaseTypes);
-    setHasPriceFilter(hasPrice);
-
-    setProperties([]);
-    setTotalCount(null);
-    setNextCursor(null);
-    setHasNext(false);
-
-    fetchProperties();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  const {
+    items: properties,
+    isLoading: loading,
+    isFetchingMore,
+    error,
+    hasNext,
+    sentinelRef,
+    setItems: setProperties,
+    refetch,
+  } = useInfiniteScroll(fetchFn, { resetKey: searchParams });
 
   const handlePropertyClick = (id: string) => {
     router.push(`/property/${id}`);
@@ -326,14 +275,14 @@ export default function PropertyPage() {
       </div>
 
       <main className={styles.main}>
-        {loading && properties.length === 0 ? (
+        {loading ? (
           <div className={styles.loadingState}>
             <p>매물을 불러오는 중...</p>
           </div>
         ) : error ? (
           <div className={styles.errorState}>
-            <p>{error}</p>
-            <button onClick={() => fetchProperties()}>다시 시도</button>
+            <p>매물을 불러오는데 실패했습니다.</p>
+            <button onClick={refetch}>다시 시도</button>
           </div>
         ) : filteredProperties.length > 0 ? (
           <>
@@ -348,7 +297,7 @@ export default function PropertyPage() {
                 onFavoriteClick={handleFavoriteClick}
               />
             ))}
-            {loading && (
+            {isFetchingMore && (
               <div className={styles.loadingMore}>불러오는 중...</div>
             )}
             {hasNext && <div ref={sentinelRef} style={{ height: 1 }} />}
