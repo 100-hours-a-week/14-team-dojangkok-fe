@@ -415,34 +415,6 @@
   background: #000;
 }
 
-@media (prefers-color-scheme: dark) {
-  .page {
-    background: var(--gray-900, #111827);
-  }
-
-  .section {
-    background: var(--gray-800, #1f2937);
-  }
-
-  .imageGallery {
-    background: var(--gray-800, #1f2937);
-  }
-
-  .footer {
-    background: var(--gray-800, #1f2937);
-    border-top-color: var(--gray-700, #374151);
-  }
-
-  .favoriteButton {
-    background: var(--gray-900, #111827);
-    border-color: var(--gray-700, #374151);
-  }
-
-  .favoriteButton:hover {
-    background: var(--gray-700, #374151);
-  }
-}
-
 .loadingState {
   display: flex;
   align-items: center;

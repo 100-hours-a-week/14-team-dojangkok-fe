@@ -311,31 +311,6 @@
   color: white;
 }
 
-@media (prefers-color-scheme: dark) {
-  .optionCard {
-    background: var(--gray-800, #1f2937);
-    border-color: var(--gray-700, #374151);
-  }
-
-  .chip {
-    background: var(--gray-800, #1f2937);
-    border-color: var(--gray-700, #374151);
-    color: var(--gray-200, #e5e7eb);
-  }
-
-  .input,
-  .textarea,
-  .select {
-    background: var(--gray-800, #1f2937);
-    border-color: var(--gray-700, #374151);
-    color: var(--gray-100, #f3f4f6);
-  }
-
-  .charCounter {
-    color: var(--gray-400, #9ca3af);
-  }
-}
-
 /* 글자수 카운터 */
 .labelWithCounter {
   display: flex;
