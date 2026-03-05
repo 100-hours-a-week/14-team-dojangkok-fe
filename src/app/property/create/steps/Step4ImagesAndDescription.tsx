@@ -20,6 +20,7 @@ interface Step4Props {
   onImageUpload: (files: FileList) => void;
   onImageRemove: (fileAssetId: number, url: string) => void;
   isEditMode?: boolean;
+  hasLinkedContract?: boolean;
 }
 
 export default function Step4ImagesAndDescription({
@@ -30,6 +31,7 @@ export default function Step4ImagesAndDescription({
   onImageUpload,
   onImageRemove,
   isEditMode = false,
+  hasLinkedContract = false,
 }: Step4Props) {
   const [contracts, setContracts] = useState<EasyContractListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -129,7 +131,7 @@ export default function Step4ImagesAndDescription({
       </div>
 
       {/* 계약서 연결 */}
-      {!isEditMode && (
+      {(!isEditMode || !hasLinkedContract) && (
         <div className={styles.section}>
           <label className={styles.label}>
             계약서 연결 <span className={styles.optional}>(선택)</span>

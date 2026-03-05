@@ -81,6 +81,7 @@ export default function PropertyCreatePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasLinkedContract, setHasLinkedContract] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
   const [formData, setFormData] = useState<PropertyFormData>({
@@ -124,6 +125,7 @@ export default function PropertyCreatePage() {
           homeNoteId: undefined,
           images: [],
         });
+        setHasLinkedContract(p.is_verified);
         const existingImages: UploadedImage[] = p.images
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((img) => ({
@@ -469,6 +471,7 @@ export default function PropertyCreatePage() {
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
             isEditMode={isEditMode}
+            hasLinkedContract={hasLinkedContract}
           />
         )}
       </main>
