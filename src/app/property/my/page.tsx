@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Header,
@@ -22,20 +22,29 @@ import {
 } from '@/lib/api/property';
 import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import { convertToPropertyList } from '@/utils/propertyAdapter';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import styles from './my.module.css';
 
 type TabType = 'scraped' | 'ongoing' | 'completed' | 'hidden';
+
+const VALID_TABS: TabType[] = ['scraped', 'ongoing', 'completed', 'hidden'];
+
+function getTabFromParams(tab: string | null): TabType {
+  return tab && (VALID_TABS as string[]).includes(tab)
+    ? (tab as TabType)
+    : 'scraped';
+}
 
 export default function MyPropertyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { success, error: showError } = useToast();
-  const [activeTab, setActiveTab] = useState<TabType>('scraped');
-  const [properties, setProperties] = useState<Property[]>([]);
+
+  // URL에서 초기 탭 값 읽어서 초기화 (double-fetch 방지)
+  const [activeTab, setActiveTab] = useState<TabType>(() =>
+    getTabFromParams(searchParams.get('tab'))
+  );
   const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasNext, setHasNext] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<number | null>(null);
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
@@ -43,8 +52,52 @@ export default function MyPropertyPage() {
     null
   );
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, right: 0 });
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const loadingRef = useRef(false);
+
+  const fetchFn = useCallback(
+    async (cursor?: string) => {
+      let response;
+      switch (activeTab) {
+        case 'scraped':
+          response = await getBookmarkedPropertyPosts(cursor);
+          break;
+        case 'ongoing':
+          response = await getTradingPropertyPosts(cursor);
+          break;
+        case 'completed':
+          response = await getCompletedPropertyPosts(cursor);
+          break;
+        case 'hidden':
+          response = await getHiddenPropertyPosts(cursor);
+          break;
+      }
+      if (!cursor) setTotalCount(response.data.total_count);
+      return {
+        items: convertToPropertyList(response.data.property_post_items),
+        hasNext: response.data.hasNext,
+        nextCursor: response.data.next_cursor,
+      };
+    },
+    [activeTab]
+  );
+
+  const {
+    items: properties,
+    isLoading: loading,
+    isFetchingMore,
+    hasNext,
+    sentinelRef,
+    setItems: setProperties,
+  } = useInfiniteScroll(fetchFn, { resetKey: activeTab });
+
+  // URL 탭 파라미터 변경 시 activeTab 동기화
+  useEffect(() => {
+    setActiveTab(getTabFromParams(searchParams.get('tab')));
+  }, [searchParams]);
+
+  // 탭 변경 시 totalCount 초기화
+  useEffect(() => {
+    setTotalCount(0);
+  }, [activeTab]);
 
   const { toggleBookmark } = usePropertyBookmark({
     onOptimisticUpdate: (id, nextState) => {
@@ -62,76 +115,6 @@ export default function MyPropertyPage() {
       );
     },
   });
-
-  const fetchProperties = useCallback(
-    async (tab: TabType, cursor?: string) => {
-      if (loadingRef.current && cursor) return;
-      loadingRef.current = true;
-      setLoading(true);
-      try {
-        let response;
-        switch (tab) {
-          case 'scraped':
-            response = await getBookmarkedPropertyPosts(cursor);
-            break;
-          case 'ongoing':
-            response = await getTradingPropertyPosts(cursor);
-            break;
-          case 'completed':
-            response = await getCompletedPropertyPosts(cursor);
-            break;
-          case 'hidden':
-            response = await getHiddenPropertyPosts(cursor);
-            break;
-        }
-        const items = convertToPropertyList(response.data.property_post_items);
-        setProperties((prev) => (cursor ? [...prev, ...items] : items));
-        if (!cursor) {
-          setTotalCount(response.data.total_count);
-        }
-        setNextCursor(response.data.next_cursor);
-        setHasNext(response.data.hasNext);
-      } catch {
-        showError('매물을 불러오는데 실패했습니다.');
-      } finally {
-        setLoading(false);
-        loadingRef.current = false;
-      }
-    },
-    [showError]
-  );
-
-  useEffect(() => {
-    const tabFromUrl = searchParams.get('tab') as TabType;
-    const tab =
-      tabFromUrl &&
-      ['scraped', 'ongoing', 'completed', 'hidden'].includes(tabFromUrl)
-        ? tabFromUrl
-        : 'scraped';
-    setActiveTab(tab);
-    setProperties([]);
-    setTotalCount(0);
-    setNextCursor(null);
-    setHasNext(false);
-    fetchProperties(tab);
-  }, [searchParams, fetchProperties]);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNext && !loadingRef.current) {
-          fetchProperties(activeTab, nextCursor ?? undefined);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [activeTab, hasNext, nextCursor, fetchProperties]);
 
   const handleBackClick = () => {
     router.back();
@@ -261,7 +244,7 @@ export default function MyPropertyPage() {
       </div>
 
       <main className={styles.main}>
-        {loading && properties.length === 0 ? (
+        {loading ? (
           <div className={styles.loadingState}>
             <p>매물을 불러오는 중...</p>
           </div>
@@ -362,6 +345,11 @@ export default function MyPropertyPage() {
                 );
               })}
             </div>
+            {isFetchingMore && (
+              <div className={styles.loadingState}>
+                <p>불러오는 중...</p>
+              </div>
+            )}
             {hasNext && <div ref={sentinelRef} style={{ height: 1 }} />}
           </>
         ) : (

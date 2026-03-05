@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import {
   Header,
   AnalysisCard,
@@ -37,9 +38,6 @@ function mapToAnalysisResult(item: EasyContractListItem): AnalysisResult {
 export default function StoragePage() {
   const router = useRouter();
   const { startAnalysis, analysisState } = useAnalysis();
-  const [results, setResults] = useState<AnalysisResult[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -51,39 +49,38 @@ export default function StoragePage() {
     right: number;
   } | null>(null);
 
+  const {
+    items: results,
+    isLoading,
+    isFetchingMore,
+    error,
+    hasNext,
+    sentinelRef,
+    setItems: setResults,
+    refetch,
+  } = useInfiniteScroll(async (cursor) => {
+    const response = await getEasyContractList(cursor);
+    return {
+      items: response.data.easyContractListItemList
+        .filter((item) => item.status !== 'FAILED')
+        .map(mapToAnalysisResult),
+      hasNext: response.data.has_next,
+      nextCursor: response.data.next_cursor,
+    };
+  });
+
   const selectedResult = results.find((r) => r.id === selectedResultId);
 
-  const fetchContracts = async (silent = false) => {
-    try {
-      if (!silent) setIsLoading(true);
-      setError(null);
-      const response = await getEasyContractList();
-      const mappedResults = response.data.easyContractListItemList
-        .filter((item) => item.status !== 'FAILED')
-        .map(mapToAnalysisResult);
-      setResults(mappedResults);
-    } catch (err) {
-      console.error('계약서 목록 조회 실패:', err);
-      if (!silent) setError('계약서 목록을 불러오는데 실패했습니다.');
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  };
-
-  // 초기 목록 조회
-  useEffect(() => {
-    fetchContracts();
-  }, []);
-
-  // SSE 분석 결과 수신 시 조용히 목록 갱신
+  // SSE 분석 결과 수신 시 목록 갱신
   useEffect(() => {
     if (
       analysisState.easyContractId &&
       (analysisState.status === 'COMPLETED' ||
         analysisState.status === 'FAILED')
     ) {
-      fetchContracts(true);
+      refetch();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisState.status, analysisState.easyContractId]);
 
   const handleResultClick = (id: string) => {
@@ -217,6 +214,12 @@ export default function StoragePage() {
                 />
               ))}
             </div>
+            {hasNext && <div ref={sentinelRef} style={{ height: 1 }} />}
+            {isFetchingMore && (
+              <div className={styles.emptyState}>
+                <p className={styles.emptyText}>로딩 중...</p>
+              </div>
+            )}
           </>
         ) : (
           <div className={styles.emptyState}>

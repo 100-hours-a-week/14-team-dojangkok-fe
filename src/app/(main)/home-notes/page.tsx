@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
@@ -17,6 +17,7 @@ import {
 } from '@/lib/api/homeNote';
 import { HomeNoteItem } from '@/types/homeNote';
 import { formatDate } from '@/utils/formatDate';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import styles from './HomeNotes.module.css';
 
 // HomeNoteCard는 react-pdf를 사용하므로 SSR 방지를 위해 dynamic import 사용
@@ -42,36 +43,27 @@ function convertToHomeNote(item: HomeNoteItem): HomeNote {
 
 export default function HomeNotesPage() {
   const router = useRouter();
-  const [notes, setNotes] = useState<HomeNote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [, setHasNext] = useState(false);
-  const [, setNextCursor] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadHomeNotes();
-  }, []);
-
-  const loadHomeNotes = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await getHomeNotes();
-      const convertedNotes = response.data.items.map(convertToHomeNote);
-      setNotes(convertedNotes);
-      setHasNext(response.data.hasNext);
-      setNextCursor(response.data.next_cursor);
-    } catch (err) {
-      console.error('집 노트 목록 조회 실패:', err);
-      setError('집 노트 목록을 불러오는데 실패했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    items: notes,
+    isLoading,
+    isFetchingMore,
+    error,
+    hasNext,
+    sentinelRef,
+    setItems: setNotes,
+  } = useInfiniteScroll(async (cursor) => {
+    const res = await getHomeNotes(cursor);
+    return {
+      items: res.data.items.map(convertToHomeNote),
+      hasNext: res.data.hasNext,
+      nextCursor: res.data.next_cursor,
+    };
+  });
 
   const handleNoteClick = (id: string) => {
     const note = notes.find((n) => n.id === id);
@@ -95,12 +87,8 @@ export default function HomeNotesPage() {
   const handleConfirmDelete = async () => {
     if (noteToDelete) {
       try {
-        // API 호출하여 집 노트 삭제
         await deleteHomeNote(Number(noteToDelete));
-
-        // 로컬 상태에서 삭제
         setNotes((prev) => prev.filter((note) => note.id !== noteToDelete));
-
         setIsDeleteModalOpen(false);
         setNoteToDelete(null);
         setIsEditMode(false);
@@ -118,13 +106,9 @@ export default function HomeNotesPage() {
 
   const handleCreateNote = async (title: string) => {
     try {
-      // API 호출하여 집 노트 생성
       const response = await createHomeNote(title);
       const newId = response.data.home_note_id;
-
       setIsCreateModalOpen(false);
-
-      // 생성된 집 노트 상세 페이지로 이동
       router.push(`/home-notes/${newId}?title=${encodeURIComponent(title)}`);
     } catch (err) {
       console.error('집 노트 생성 실패:', err);
@@ -161,17 +145,27 @@ export default function HomeNotesPage() {
             <br />+ 버튼을 눌러 새 집노트를 만들어보세요.
           </div>
         ) : (
-          <div className={styles.grid}>
-            {notes.map((note, index) => (
-              <HomeNoteCard
-                key={`${note.id}-${index}`}
-                note={note}
-                onClick={handleNoteClick}
-                isEditMode={isEditMode}
-                onDelete={handleDeleteNote}
-              />
-            ))}
-          </div>
+          <>
+            <div className={styles.grid}>
+              {notes.map((note, index) => (
+                <HomeNoteCard
+                  key={`${note.id}-${index}`}
+                  note={note}
+                  onClick={handleNoteClick}
+                  isEditMode={isEditMode}
+                  onDelete={handleDeleteNote}
+                />
+              ))}
+            </div>
+            {hasNext && <div ref={sentinelRef} style={{ height: 1 }} />}
+            {isFetchingMore && (
+              <div
+                style={{ textAlign: 'center', padding: '1rem', color: '#888' }}
+              >
+                로딩 중...
+              </div>
+            )}
+          </>
         )}
       </main>
       {!isEditMode && (
