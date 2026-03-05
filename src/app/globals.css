@@ -29,16 +29,6 @@
   --border: var(--gray-100);
 }
 
-/* 다크모드 미디어 쿼리 제거하여 화이트 모드 고정 */
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #101922;
-    --foreground: var(--gray-100);
-    --surface: #1a2632;
-    --border: var(--gray-700);
-  }
-} */
-
 html,
 body {
   width: 100%;

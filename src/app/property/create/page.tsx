@@ -15,7 +15,7 @@ import {
   createPropertyPost,
   updatePropertyPost,
   getPropertyPost,
-  getPresignedUrl,
+  getPresignedUrls,
   uploadToS3,
   completePropertyFileUpload,
   attachFilesToPost,
@@ -37,7 +37,6 @@ function resolveContentType(file: File): string {
     jpg: 'image/jpeg',
     jpeg: 'image/jpeg',
     png: 'image/png',
-    webp: 'image/webp',
   };
   return map[ext ?? ''] ?? 'image/jpeg';
 }
@@ -77,10 +76,11 @@ export default function PropertyCreatePage() {
     : null;
   const isEditMode = editId !== null;
 
-  const { success, error: showError } = useToast();
+  const { success, error: showError, info, dismiss } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasLinkedContract, setHasLinkedContract] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<number[]>([]);
   const [formData, setFormData] = useState<PropertyFormData>({
@@ -101,6 +101,13 @@ export default function PropertyCreatePage() {
   });
 
   const totalSteps = 4;
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--toast-bottom-fixed', '100px');
+    return () => {
+      document.documentElement.style.removeProperty('--toast-bottom-fixed');
+    };
+  }, []);
 
   useEffect(() => {
     if (!isEditMode || !editId) return;
@@ -124,6 +131,7 @@ export default function PropertyCreatePage() {
           homeNoteId: undefined,
           images: [],
         });
+        setHasLinkedContract(p.is_verified);
         const existingImages: UploadedImage[] = p.images
           .sort((a, b) => a.sort_order - b.sort_order)
           .map((img) => ({
@@ -167,6 +175,8 @@ export default function PropertyCreatePage() {
           newErrors.deposit = '보증금을 입력해주세요';
         } else if (isNaN(Number(data.deposit)) || Number(data.deposit) < 0) {
           newErrors.deposit = '0 이상의 숫자를 입력해주세요';
+        } else if (Number(data.deposit) > 10_000_000) {
+          newErrors.deposit = '최대 1,000억 원까지 입력 가능합니다';
         }
         if (data.priceType === '월세' || data.priceType === '반전세') {
           if (data.monthlyRent === '' || data.monthlyRent === undefined) {
@@ -176,6 +186,8 @@ export default function PropertyCreatePage() {
             Number(data.monthlyRent) < 0
           ) {
             newErrors.monthlyRent = '0 이상의 숫자를 입력해주세요';
+          } else if (Number(data.monthlyRent) > 10_000) {
+            newErrors.monthlyRent = '최대 1억 원까지 입력 가능합니다';
           }
         }
         if (data.maintenanceFee && data.maintenanceFee !== '') {
@@ -184,6 +196,8 @@ export default function PropertyCreatePage() {
             Number(data.maintenanceFee) < 0
           ) {
             newErrors.maintenanceFee = '0 이상의 숫자를 입력해주세요';
+          } else if (Number(data.maintenanceFee) > 1_000) {
+            newErrors.maintenanceFee = '최대 1,000만 원까지 입력 가능합니다';
           }
         }
         break;
@@ -208,6 +222,8 @@ export default function PropertyCreatePage() {
         }
         if (data.floor === 0) {
           newErrors.floor = '층수를 입력해주세요';
+        } else if (Math.abs(data.floor) > 200) {
+          newErrors.floor = '최대 200층까지 입력 가능합니다';
         } else {
           const floorDecimal = String(Math.abs(data.floor)).match(/\.(\d+)/);
           if (floorDecimal && floorDecimal[1].length > 1) {
@@ -249,34 +265,84 @@ export default function PropertyCreatePage() {
   };
 
   const handleImageUpload = async (files: FileList) => {
+    const MAX_IMAGES = 20;
     const imageFiles = Array.from(files);
-    // ... 파일 유효성 검사
-    const newImages = [...uploadedImages];
-    for (const file of imageFiles) {
-      try {
-        const contentType = resolveContentType(file);
-        const presignedResponse = await getPresignedUrl(0, {
-          // propertyId 0으로 임시 전송
-          file_name: file.name,
-          size_bytes: file.size,
-          content_type: contentType,
-        });
-        const successItem = presignedResponse.data.success_file_items[0];
-        if (!successItem) throw new Error('Presigned URL 발급 실패');
 
-        await uploadToS3(successItem.presigned_url, file, contentType);
-        await completePropertyFileUpload(successItem.file_asset_id);
-
-        newImages.push({
-          file,
-          fileAssetId: successItem.file_asset_id,
-          url: URL.createObjectURL(file),
-        });
-      } catch {
-        showError(`${file.name} 업로드에 실패했습니다.`);
-      }
+    const remaining = MAX_IMAGES - uploadedImages.length;
+    if (remaining <= 0) {
+      showError('이미지는 최대 20장까지 업로드할 수 있습니다.');
+      return;
     }
-    setUploadedImages(newImages);
+    const filesToUpload = imageFiles.slice(0, remaining);
+    if (filesToUpload.length < imageFiles.length) {
+      showError(
+        `최대 20장까지 업로드 가능합니다. ${filesToUpload.length}장만 업로드합니다.`
+      );
+    }
+
+    const fileInfos = filesToUpload.map((file) => ({
+      file_name: file.name,
+      size_bytes: file.size,
+      content_type: resolveContentType(file),
+    }));
+
+    const loadingId = info(
+      `이미지 ${filesToUpload.length}장 업로드 중...`,
+      60000
+    );
+
+    try {
+      let presignedResponse;
+      try {
+        presignedResponse = await getPresignedUrls(fileInfos);
+      } catch {
+        showError('이미지 업로드 준비에 실패했습니다.');
+        return;
+      }
+
+      const successItems = presignedResponse.data.success_file_items;
+
+      // S3 병렬 업로드
+      const uploadResults = await Promise.allSettled(
+        successItems.map((item, i) =>
+          uploadToS3(
+            item.presigned_url,
+            imageFiles[i],
+            fileInfos[i].content_type
+          )
+        )
+      );
+
+      // 성공한 항목만 수집
+      const completedIds: number[] = [];
+      const newImages: UploadedImage[] = [];
+
+      uploadResults.forEach((result, i) => {
+        if (result.status === 'fulfilled') {
+          completedIds.push(successItems[i].file_asset_id);
+          newImages.push({
+            file: filesToUpload[i],
+            fileAssetId: successItems[i].file_asset_id,
+            url: URL.createObjectURL(filesToUpload[i]),
+          });
+        } else {
+          showError(`${filesToUpload[i].name} 업로드에 실패했습니다.`);
+        }
+      });
+
+      if (completedIds.length > 0) {
+        try {
+          await completePropertyFileUpload(completedIds);
+        } catch {
+          showError('업로드 완료 처리에 실패했습니다.');
+          return;
+        }
+        setUploadedImages((prev) => [...prev, ...newImages]);
+        success(`이미지 ${completedIds.length}장이 업로드되었습니다.`);
+      }
+    } finally {
+      dismiss(loadingId);
+    }
   };
 
   const handleImageRemove = async (fileAssetId: number, url: string) => {
@@ -469,6 +535,7 @@ export default function PropertyCreatePage() {
             onImageUpload={handleImageUpload}
             onImageRemove={handleImageRemove}
             isEditMode={isEditMode}
+            hasLinkedContract={hasLinkedContract}
           />
         )}
       </main>

@@ -20,6 +20,7 @@ interface Step4Props {
   onImageUpload: (files: FileList) => void;
   onImageRemove: (fileAssetId: number, url: string) => void;
   isEditMode?: boolean;
+  hasLinkedContract?: boolean;
 }
 
 export default function Step4ImagesAndDescription({
@@ -30,6 +31,7 @@ export default function Step4ImagesAndDescription({
   onImageUpload,
   onImageRemove,
   isEditMode = false,
+  hasLinkedContract = false,
 }: Step4Props) {
   const [contracts, setContracts] = useState<EasyContractListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -129,7 +131,7 @@ export default function Step4ImagesAndDescription({
       </div>
 
       {/* 계약서 연결 */}
-      {!isEditMode && (
+      {(!isEditMode || !hasLinkedContract) && (
         <div className={styles.section}>
           <label className={styles.label}>
             계약서 연결 <span className={styles.optional}>(선택)</span>
@@ -158,10 +160,10 @@ export default function Step4ImagesAndDescription({
         <label className={styles.label}>매물 사진</label>
         <ImageUploader
           onUpload={onImageUpload}
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/jpeg,image/jpg,image/png"
           multiple
           mainText="사진 추가"
-          subText="JPG, PNG, WEBP 지원 (최대 20장, 5MB 이하)"
+          subText="JPG, PNG 지원 (최대 20장, 10MB 이하)"
         />
         <p className={styles.error}>{errors.images || '\u00A0'}</p>
 

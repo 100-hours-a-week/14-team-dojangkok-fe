@@ -48,6 +48,11 @@ export default function Step3Details({
       setFloorError('올바른 숫자를 입력해주세요');
       return;
     }
+    const decimalMatch = floorNumber.match(/\.(\d+)/);
+    if (decimalMatch && decimalMatch[1].length > 1) {
+      setFloorError('층수는 소수점 1자리까지 입력 가능합니다');
+      return;
+    }
     setFloorError('');
 
     const validNumber = num > 0 ? num : 1;
@@ -57,22 +62,31 @@ export default function Step3Details({
   }, [floorType, floorNumber]);
 
   const handleFloorNumberChange = (value: string) => {
+    const num = Number(value);
+    if (!isNaN(num) && num > 200) {
+      setFloorNumber('200');
+      return;
+    }
     setFloorNumber(value);
   };
 
+  const toNumeric = (value: string) =>
+    value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+
   const handlePyeongChange = (value: string) => {
-    setPyeongInput(value);
-    const pyeong = Number(value);
+    const filtered = toNumeric(value);
+    setPyeongInput(filtered);
+    const pyeong = Number(filtered);
     if (!isNaN(pyeong) && pyeong > 0) {
       const m2 = Math.round(pyeong * PYEONG_TO_M2 * 100) / 100;
       updateFormData({ area: String(m2) });
     } else {
-      updateFormData({ area: value });
+      updateFormData({ area: filtered });
     }
   };
 
   const handleM2Change = (value: string) => {
-    updateFormData({ area: value });
+    updateFormData({ area: toNumeric(value) });
   };
   return (
     <div className={styles.step}>
@@ -189,6 +203,15 @@ export default function Step3Details({
             )}
           </div>
         </div>
+        <p
+          className={
+            Number(floorNumber) >= 200
+              ? styles.priceMaxReached
+              : styles.priceMax
+          }
+        >
+          {Number(floorNumber) >= 200 ? '최대 200층입니다.' : '최대 200층'}
+        </p>
         <p className={styles.error}>{floorError || '\u00A0'}</p>
       </div>
     </div>

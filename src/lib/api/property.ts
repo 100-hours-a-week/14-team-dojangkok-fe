@@ -313,27 +313,19 @@ export async function createPropertyPost(
 }
 
 /**
- * 이미지별 Presigned URL 발급
- * @param propertyPostId 매물 게시글 ID
- * @param fileInfo 파일 정보
+ * 이미지 Presigned URL 일괄 발급
+ * @param files 파일 정보 배열
  */
-export async function getPresignedUrl(
-  propertyPostId: number,
-  fileInfo: {
-    file_name: string;
-    size_bytes: number;
-    content_type: string;
-  }
+export async function getPresignedUrls(
+  files: Array<{ file_name: string; size_bytes: number; content_type: string }>
 ) {
   const body: PresignedUrlRequestDto = {
-    file_items: [
-      {
-        file_type: 'IMAGE',
-        content_type: fileInfo.content_type,
-        file_name: fileInfo.file_name,
-        size_bytes: fileInfo.size_bytes,
-      },
-    ],
+    file_items: files.map((f) => ({
+      file_type: 'IMAGE' as const,
+      content_type: f.content_type,
+      file_name: f.file_name,
+      size_bytes: f.size_bytes,
+    })),
   };
 
   return apiClient<{ data: PresignedUrlResponseDto }>(
@@ -373,13 +365,14 @@ export async function uploadToS3(
 }
 
 /**
- * 업로드 완료 통보 (S3 업로드 직후 호출)
+ * 업로드 완료 통보 일괄 처리 (S3 업로드 직후 호출)
+ * @param fileAssetIds 파일 에셋 ID 배열
  */
-export async function completePropertyFileUpload(fileAssetId: number) {
+export async function completePropertyFileUpload(fileAssetIds: number[]) {
   return apiClient<{ data: null }>(`${BASE_URL}/files/complete`, {
     method: 'POST',
     body: JSON.stringify({
-      file_items: [{ file_asset_id: fileAssetId }],
+      file_items: fileAssetIds.map((id) => ({ file_asset_id: id })),
     }),
     requiresAuth: true,
   });

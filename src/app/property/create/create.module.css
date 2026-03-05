@@ -61,22 +61,3 @@
   color: var(--gray-600, #4b5563);
   text-align: center;
 }
-
-@media (prefers-color-scheme: dark) {
-  .page {
-    background: var(--gray-900, #111827);
-  }
-
-  .footer {
-    background: var(--gray-800, #1f2937);
-    border-top-color: var(--gray-700, #374151);
-  }
-
-  .uploadProgressBar {
-    background: var(--gray-700, #374151);
-  }
-
-  .uploadProgressText {
-    color: var(--gray-400, #9ca3af);
-  }
-}

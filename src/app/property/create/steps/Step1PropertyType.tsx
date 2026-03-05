@@ -8,12 +8,12 @@ interface Step1Props {
 }
 
 const PROPERTY_TYPES = [
-  '원룸',
-  '투룸 이상',
-  '오피스텔',
-  '아파트',
-  '상가',
-  '주택',
+  { label: '원룸', icon: 'single_bed' },
+  { label: '투룸 이상', icon: 'bedroom_parent' },
+  { label: '오피스텔', icon: 'corporate_fare' },
+  { label: '아파트', icon: 'apartment' },
+  { label: '상가', icon: 'storefront' },
+  { label: '주택', icon: 'house' },
 ];
 
 export default function Step1PropertyType({
@@ -35,13 +35,18 @@ export default function Step1PropertyType({
       <div className={styles.optionGrid}>
         {PROPERTY_TYPES.map((type) => (
           <button
-            key={type}
+            key={type.label}
             className={`${styles.optionCard} ${
-              formData.propertyType === type ? styles.optionCardActive : ''
+              formData.propertyType === type.label
+                ? styles.optionCardActive
+                : ''
             }`}
-            onClick={() => updateFormData({ propertyType: type })}
+            onClick={() => updateFormData({ propertyType: type.label })}
           >
-            <span className={styles.optionLabel}>{type}</span>
+            <span className={`material-symbols-outlined ${styles.optionIcon}`}>
+              {type.icon}
+            </span>
+            <span className={styles.optionLabel}>{type.label}</span>
           </button>
         ))}
       </div>

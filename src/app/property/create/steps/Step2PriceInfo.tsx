@@ -1,5 +1,35 @@
 import { PropertyFormData, ValidationErrors } from '../page';
+import { formatKRW } from '@/utils/formatPrice';
 import styles from './steps.module.css';
+
+const MAX_DEPOSIT = 10_000_000;
+const MAX_MONTHLY_RENT = 10_000;
+const MAX_MAINTENANCE_FEE = 1_000;
+
+type HintState = 'empty' | 'value' | 'max';
+
+function getHint(
+  value: string | number,
+  max: number,
+  maxLabel: string
+): { text: string; state: HintState } {
+  const num = Number(value);
+  if (!num || isNaN(num) || num <= 0) return { text: maxLabel, state: 'empty' };
+  if (num >= max) return { text: `${maxLabel}입니다.`, state: 'max' };
+  return { text: `${formatKRW(num)} 원`, state: 'value' };
+}
+
+function hintClass(state: HintState, s: Record<string, string>): string {
+  if (state === 'max') return s.priceMaxReached;
+  if (state === 'value') return s.priceHint;
+  return s.priceMax;
+}
+
+function clamp(value: string, max: number): number | string {
+  const num = Number(value);
+  if (!isNaN(num) && num > max) return max;
+  return value;
+}
 
 interface Step2Props {
   formData: PropertyFormData;
@@ -57,13 +87,20 @@ export default function Step2PriceInfo({
           <input
             type="number"
             min="0"
+            max={MAX_DEPOSIT}
             className={`${styles.input} ${errors.deposit ? styles.inputError : ''}`}
             placeholder="0"
             value={formData.deposit ?? ''}
-            onChange={(e) => updateFormData({ deposit: e.target.value })}
+            onChange={(e) =>
+              updateFormData({ deposit: clamp(e.target.value, MAX_DEPOSIT) })
+            }
           />
           <span className={styles.inputUnit}>만원</span>
         </div>
+        {(() => {
+          const h = getHint(formData.deposit, MAX_DEPOSIT, '최대 1,000억 원');
+          return <p className={hintClass(h.state, styles)}>{h.text}</p>;
+        })()}
         <p className={styles.error}>{errors.deposit || '\u00A0'}</p>
       </div>
 
@@ -77,13 +114,26 @@ export default function Step2PriceInfo({
             <input
               type="number"
               min="0"
+              max={MAX_MONTHLY_RENT}
               className={`${styles.input} ${errors.monthlyRent ? styles.inputError : ''}`}
               placeholder="0"
               value={formData.monthlyRent ?? ''}
-              onChange={(e) => updateFormData({ monthlyRent: e.target.value })}
+              onChange={(e) =>
+                updateFormData({
+                  monthlyRent: clamp(e.target.value, MAX_MONTHLY_RENT),
+                })
+              }
             />
             <span className={styles.inputUnit}>만원</span>
           </div>
+          {(() => {
+            const h = getHint(
+              formData.monthlyRent,
+              MAX_MONTHLY_RENT,
+              '최대 1억 원'
+            );
+            return <p className={hintClass(h.state, styles)}>{h.text}</p>;
+          })()}
           <p className={styles.error}>{errors.monthlyRent || '\u00A0'}</p>
         </div>
       )}
@@ -97,13 +147,26 @@ export default function Step2PriceInfo({
           <input
             type="number"
             min="0"
+            max={MAX_MAINTENANCE_FEE}
             className={`${styles.input} ${errors.maintenanceFee ? styles.inputError : ''}`}
             placeholder="0"
             value={formData.maintenanceFee ?? ''}
-            onChange={(e) => updateFormData({ maintenanceFee: e.target.value })}
+            onChange={(e) =>
+              updateFormData({
+                maintenanceFee: clamp(e.target.value, MAX_MAINTENANCE_FEE),
+              })
+            }
           />
           <span className={styles.inputUnit}>만원</span>
         </div>
+        {(() => {
+          const h = getHint(
+            formData.maintenanceFee,
+            MAX_MAINTENANCE_FEE,
+            '최대 1,000만 원'
+          );
+          return <p className={hintClass(h.state, styles)}>{h.text}</p>;
+        })()}
         <p className={styles.error}>{errors.maintenanceFee || '\u00A0'}</p>
       </div>
     </div>

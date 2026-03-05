@@ -21,10 +21,11 @@ interface ToastContextType {
     message: string,
     type?: 'info' | 'success' | 'error',
     duration?: number
-  ) => void;
-  success: (message: string, duration?: number) => void;
-  error: (message: string, duration?: number) => void;
-  info: (message: string, duration?: number) => void;
+  ) => string;
+  success: (message: string, duration?: number) => string;
+  error: (message: string, duration?: number) => string;
+  info: (message: string, duration?: number) => string;
+  dismiss: (id: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -40,28 +41,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     ) => {
       const id = `${Date.now()}-${Math.random()}`;
       setToasts((prev) => [...prev, { id, message, type, duration }]);
+      return id;
     },
     []
   );
 
   const success = useCallback(
-    (message: string, duration: number = 3000) => {
-      toast(message, 'success', duration);
-    },
+    (message: string, duration: number = 3000) =>
+      toast(message, 'success', duration),
     [toast]
   );
 
   const error = useCallback(
-    (message: string, duration: number = 3000) => {
-      toast(message, 'error', duration);
-    },
+    (message: string, duration: number = 3000) =>
+      toast(message, 'error', duration),
     [toast]
   );
 
   const info = useCallback(
-    (message: string, duration: number = 3000) => {
-      toast(message, 'info', duration);
-    },
+    (message: string, duration: number = 3000) =>
+      toast(message, 'info', duration),
     [toast]
   );
 
@@ -69,8 +68,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
+  const dismiss = useCallback((id: string) => removeToast(id), [removeToast]);
+
   return (
-    <ToastContext.Provider value={{ toast, success, error, info }}>
+    <ToastContext.Provider value={{ toast, success, error, info, dismiss }}>
       {children}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </ToastContext.Provider>
