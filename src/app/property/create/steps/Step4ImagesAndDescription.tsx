@@ -160,10 +160,10 @@ export default function Step4ImagesAndDescription({
         <label className={styles.label}>매물 사진</label>
         <ImageUploader
           onUpload={onImageUpload}
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/jpeg,image/jpg,image/png"
           multiple
           mainText="사진 추가"
-          subText="JPG, PNG, WEBP 지원 (최대 20장, 5MB 이하)"
+          subText="JPG, PNG 지원 (최대 20장, 10MB 이하)"
         />
         <p className={styles.error}>{errors.images || '\u00A0'}</p>
 
