@@ -188,8 +188,7 @@ export default function MyPropertyPage() {
         hidden: '매물이 숨김 처리되었습니다.',
       },
       hidden: {
-        ongoing: '매물이 진행중으로 복귀되었습니다.',
-        completed: '매물이 완료 처리되었습니다.',
+        ongoing: '매물이 게시되었습니다.',
       },
     };
     try {
@@ -204,9 +203,6 @@ export default function MyPropertyPage() {
           await updatePropertyVisibility(postId, true);
       } else if (activeTab === 'hidden') {
         await updatePropertyVisibility(postId, false);
-        if (newStatus === 'ongoing') await updateDealStatus(postId, 'TRADING');
-        if (newStatus === 'completed')
-          await updateDealStatus(postId, 'COMPLETED');
       }
       success(
         toastMessages[activeTab]?.[newStatus] ?? '상태가 변경되었습니다.'
@@ -307,15 +303,7 @@ export default function MyPropertyPage() {
                             handleStatusChange(property.id, 'ongoing')
                           }
                         >
-                          진행중
-                        </button>
-                        <button
-                          className={styles.statusButton}
-                          onClick={() =>
-                            handleStatusChange(property.id, 'completed')
-                          }
-                        >
-                          완료
+                          게시
                         </button>
                       </div>
                     );
