@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { Suspense, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Header,
@@ -10,6 +10,7 @@ import {
   PropertyCard,
   StampBadge,
 } from '@/components/common';
+import BottomNav from '@/components/common/BottomNav';
 import type {
   PropertyPostSearchRequestDto,
   PropertyType,
@@ -22,7 +23,7 @@ import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import styles from './property.module.css';
 
-export default function PropertyPage() {
+function PropertyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -174,10 +175,6 @@ export default function PropertyPage() {
     router.push('/property/create');
   };
 
-  const handleBackClick = () => {
-    router.back();
-  };
-
   const handleMyClick = () => {
     router.push('/property/my');
   };
@@ -203,8 +200,6 @@ export default function PropertyPage() {
     <div className={styles.page}>
       <Header
         title="매물"
-        showBackButton
-        onBackClick={handleBackClick}
         rightText="MY"
         onRightClick={handleMyClick}
       />
@@ -309,7 +304,16 @@ export default function PropertyPage() {
         )}
       </main>
 
-      <FloatingAddButton onClick={handleAddClick} />
+      <FloatingAddButton onClick={handleAddClick} withBottomNav />
+      <BottomNav />
     </div>
+  );
+}
+
+export default function PropertyPage() {
+  return (
+    <Suspense>
+      <PropertyPageContent />
+    </Suspense>
   );
 }
