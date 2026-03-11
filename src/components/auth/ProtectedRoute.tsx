@@ -15,7 +15,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     if (isLoading) return;
 
-    // 미인증 상태면 로그인 페이지로
     if (!isAuthenticated) {
       router.replace('/signin');
       return;
@@ -31,12 +30,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [isAuthenticated, isLoading, user, router]);
 
-  // 로딩 중이거나 미인증 상태면 아무것도 렌더링하지 않음
   if (isLoading || !isAuthenticated) {
     return null;
   }
 
-  // COMPLETE가 아니면 렌더링하지 않음
+  // COMPLETE가 아니면 렌더링하지 않음 (useEffect에서 리다이렉트 처리)
   if (user && user.onboardingStatus !== 'COMPLETE') {
     return null;
   }
