@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useLayout } from '@/contexts/LayoutContext';
+import { useNavigationGuard } from '@/contexts/NavigationGuardContext';
+import { useAuth } from '@/contexts/AuthContext';
+import Modal from '@/components/common/Modal';
 import styles from './BottomNav.module.css';
+
+const PROTECTED_PATHS = ['/', '/storage', '/home-notes', '/mypage'];
 
 interface NavItem {
   path: string;
@@ -43,7 +47,9 @@ const NAV_ITEMS: NavItem[] = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { navigationGuard, setPendingPath } = useLayout();
+  const { navigationGuard, setPendingPath } = useNavigationGuard();
+  const { isAuthenticated } = useAuth();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--toast-bottom-nav', '88px');
@@ -55,6 +61,11 @@ export default function BottomNav() {
   const handleNavClick = (targetPath: string) => {
     if (pathname === targetPath) return;
 
+    if (!isAuthenticated && PROTECTED_PATHS.includes(targetPath)) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (navigationGuard) {
       setPendingPath(targetPath);
       return;
@@ -63,7 +74,18 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className={styles.nav}>
+    <>
+      <Modal
+        isOpen={showLoginModal}
+        title="로그인이 필요해요"
+        confirmText="로그인하러 가기"
+        cancelText="취소"
+        onConfirm={() => router.push('/signin')}
+        onClose={() => setShowLoginModal(false)}
+      >
+        로그인 페이지로 이동할까요?
+      </Modal>
+      <nav className={styles.nav}>
       <div
         className={styles.navContainer}
         style={{ gridTemplateColumns: `repeat(${NAV_ITEMS.length}, 1fr)` }}
@@ -91,5 +113,6 @@ export default function BottomNav() {
         })}
       </div>
     </nav>
+    </>
   );
 }
