@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLayout } from '@/contexts/LayoutContext';
+import { useNavigationGuard } from '@/contexts/NavigationGuardContext';
 import { useAnalysis } from '@/contexts/AnalysisContext';
 import { useToast } from '@/contexts/ToastContext';
 import { uploadFiles, deleteUploadedFile } from '@/lib/api/contract';
@@ -36,7 +36,7 @@ export default function HomePage() {
   const [isCompletedWarningModalOpen, setIsCompletedWarningModalOpen] =
     useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const { setNavigationGuard } = useLayout();
+  const { setNavigationGuard } = useNavigationGuard();
   const { analysisState, clearAnalysis } = useAnalysis();
   const analysisStateRef = useRef(analysisState);
 
@@ -320,7 +320,7 @@ export default function HomePage() {
           </div>
         )}
       </main>
-      <BottomFixedArea>
+      <BottomFixedArea withBottomNav>
         <MainButton
           onClick={handleAnalyzeClick}
           disabled={images.length === 0 || isUploading}

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AnalysisProvider } from '@/contexts/AnalysisContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { NavigationGuardProvider } from '@/contexts/NavigationGuardContext';
 import './globals.css';
 import styles from './layout.module.css';
 
@@ -43,13 +44,15 @@ export default function RootLayout({
       </head>
       <body>
         <ToastProvider>
-          <AnalysisProvider>
-            <AuthProvider>
-              <div className={styles.wrapper}>
-                <div className={styles.container}>{children}</div>
-              </div>
-            </AuthProvider>
-          </AnalysisProvider>
+          <NavigationGuardProvider>
+            <AnalysisProvider>
+              <AuthProvider>
+                <div className={styles.wrapper}>
+                  <div className={styles.container}>{children}</div>
+                </div>
+              </AuthProvider>
+            </AnalysisProvider>
+          </NavigationGuardProvider>
         </ToastProvider>
       </body>
     </html>
