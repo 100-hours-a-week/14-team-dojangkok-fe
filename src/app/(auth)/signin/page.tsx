@@ -88,14 +88,16 @@ export default function LoginPage() {
           )}
         </button>
 
-        {/* <div className={styles.links}>
-          <a href="#">매물 둘러보기</a>
-        </div> */}
-
         <div className={styles.terms}>
           계속 진행함으로써 도장콕의 <a href="/terms">서비스 이용약관</a> 및{' '}
           <a href="/privacy">개인정보 처리방침</a>에 동의하게 됩니다.
         </div>
+
+        <div className={styles.divider}>또는</div>
+
+        <a href="/property" className={styles.browseButton}>
+          매물만 먼저 둘러볼게요
+        </a>
       </div>
     </div>
   );

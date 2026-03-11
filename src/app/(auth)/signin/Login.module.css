@@ -124,37 +124,59 @@
   color: rgba(0, 0, 0, 0.85);
 }
 
-.links {
+.divider {
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
+  gap: 12px;
+  color: var(--gray-500);
   font-size: 12px;
   font-weight: 500;
-  color: var(--gray-400);
 }
 
-.links a {
-  text-decoration: underline;
-  text-decoration-color: var(--gray-300);
-  text-underline-offset: 4px;
-  transition: color 0.2s;
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gray-300);
 }
 
-.links a:hover {
+.browseButton {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 1.5px solid var(--primary);
+  border-radius: 12px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--primary);
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.browseButton:hover {
+  background: var(--primary);
+  color: #fff;
 }
 
 .terms {
-  margin-top: 16px;
   font-size: 10px;
-  color: var(--gray-300);
+  color: var(--gray-500);
   text-align: center;
   line-height: 1.4;
 }
 
 .terms a {
   text-decoration: underline;
+  color: var(--primary);
+  transition: color 0.2s;
+}
+
+.terms a:hover {
+  color: var(--primary);
 }
 
 @keyframes fadeInUp {
