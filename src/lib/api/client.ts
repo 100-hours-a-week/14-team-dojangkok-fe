@@ -140,7 +140,8 @@ export async function apiClient<T>(
     let response = await makeRequest(accessToken);
 
     // 401 에러 시 토큰 갱신 시도
-    if (response.status === 401 && requiresAuth && !skipTokenRefresh) {
+    // accessToken이 없으면(= 처음부터 미로그인) refresh 시도 없이 바로 에러
+    if (response.status === 401 && requiresAuth && !skipTokenRefresh && accessToken) {
       // 에러 데이터 먼저 파싱 (치명적 에러 체크용)
       const errorData = await response.json().catch(() => ({}));
 
