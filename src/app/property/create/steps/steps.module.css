@@ -155,6 +155,18 @@
   font-weight: 700;
 }
 
+.addressButton {
+  text-align: left;
+  cursor: pointer;
+  background: #fff;
+  color: var(--gray-900, #111827);
+}
+
+.addressButton:not([value]):empty,
+.addressButton[value=''] {
+  color: var(--gray-400, #9ca3af);
+}
+
 /* 입력 필드 */
 .input {
   width: 100%;

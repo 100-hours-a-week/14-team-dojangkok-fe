@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { DaumPostcodeEmbed } from 'react-daum-postcode';
 import { PropertyFormData, ValidationErrors } from '../page';
 import styles from './steps.module.css';
 
@@ -18,6 +19,8 @@ export default function Step3Details({
   const M2_TO_PYEONG = 0.3025;
 
   // 지상/지하 선택 (층수의 절댓값 사용)
+  const [isAddressOpen, setIsAddressOpen] = useState(false);
+
   const [floorType, setFloorType] = useState<'ground' | 'basement'>(
     formData.floor < 0 ? 'basement' : 'ground'
   );
@@ -95,19 +98,75 @@ export default function Step3Details({
       {/* 주소 */}
       <div className={styles.section}>
         <label className={styles.label}>
-          주소<span className={styles.required}>*</span>{' '}
-          <span className={styles.optional}>(최대 100자)</span>
+          주소<span className={styles.required}>*</span>
         </label>
-        <input
-          type="text"
-          className={`${styles.input} ${errors.address ? styles.inputError : ''}`}
-          placeholder="예: 서울 강남구 역삼동"
-          maxLength={100}
-          value={formData.address ?? ''}
-          onChange={(e) => updateFormData({ address: e.target.value })}
-        />
+        <button
+          type="button"
+          className={`${styles.input} ${styles.addressButton} ${errors.address ? styles.inputError : ''}`}
+          onClick={() => setIsAddressOpen(true)}
+        >
+          {formData.address || '주소 검색'}
+        </button>
         <p className={styles.error}>{errors.address || '\u00A0'}</p>
       </div>
+
+      {/* 주소 검색 바텀 시트 */}
+      {isAddressOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+          }}
+          onClick={() => setIsAddressOpen(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              width: '100%',
+              maxWidth: 430,
+              borderRadius: '16px 16px 0 0',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderBottom: '1px solid #f3f4f6',
+              }}
+            >
+              <span style={{ fontWeight: 700, fontSize: 16 }}>주소 검색</span>
+              <button
+                onClick={() => setIsAddressOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 20,
+                  color: '#6b7280',
+                }}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <DaumPostcodeEmbed
+              onComplete={(data) => {
+                updateFormData({ address: data.roadAddress });
+                setIsAddressOpen(false);
+              }}
+              style={{ width: '100%', height: 700 }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* 상세 주소 */}
       <div className={styles.section}>
