@@ -233,12 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 로그아웃 API 실패해도 로컬 토큰은 제거
     } finally {
       tokenStorage.remove();
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-      router.push('/signin');
+      window.location.replace('/signin');
     }
   };
 
@@ -246,12 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await deleteAccountApi();
       tokenStorage.remove();
-      setAuthState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-      router.push('/signin');
+      window.location.replace('/signin');
     } catch (error) {
       throw error;
     }
