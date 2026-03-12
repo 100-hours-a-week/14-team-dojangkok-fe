@@ -1,0 +1,82 @@
+.container {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #ffffff;
+  border-top: 1px solid var(--gray-100);
+}
+
+.textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--gray-200);
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  outline: none;
+  background-color: var(--gray-50);
+  color: var(--gray-900);
+  overflow-y: auto;
+  min-height: 38px;
+  max-height: 120px;
+}
+
+.textarea:focus {
+  border-color: var(--primary);
+  background-color: #ffffff;
+}
+
+.textarea::placeholder {
+  color: var(--gray-400);
+}
+
+.textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sendButton {
+  background-color: var(--primary);
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #ffffff;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.sendButton:disabled {
+  background-color: var(--gray-200);
+  cursor: not-allowed;
+  color: var(--gray-400);
+}
+
+.attachButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+}
+
+.attachButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.hiddenInput {
+  display: none;
+}
