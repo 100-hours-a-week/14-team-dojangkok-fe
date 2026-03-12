@@ -225,6 +225,8 @@ export default function MyPropertyPage() {
         title="내 매물 관리"
         showBackButton
         onBackClick={handleBackClick}
+        rightIcon="chat"
+        onRightClick={() => router.push('/chat/property/rooms')}
       />
       <div className={styles.tabSection}>
         <SegmentedControl

@@ -47,6 +47,8 @@ export default function AnalysisResultPage() {
     router.push('/storage');
   };
 
+  const contractId = searchParams.get('id');
+
   return (
     <>
       <Header
@@ -94,6 +96,16 @@ export default function AnalysisResultPage() {
           </div>
         )}
       </main>
+
+      {contractId && (
+        <button
+          className={styles.aiChatButton}
+          onClick={() => router.push(`/chat/ai/${contractId}`)}
+          aria-label="AI 챗봇"
+        >
+          <span className="material-symbols-outlined">smart_toy</span>
+        </button>
+      )}
     </>
   );
 }

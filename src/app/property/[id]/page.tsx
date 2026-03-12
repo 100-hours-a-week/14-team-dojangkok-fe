@@ -88,30 +88,37 @@ export default function PropertyDetailPage() {
     : [];
 
   useEffect(() => {
-    // ... (fetch implementation 생략 가능하도록 정확한 위치 지정)
-    const fetch = async () => {
+    let cancelled = false;
+
+    const fetchData = async () => {
       setLoading(true);
       try {
         const response = await getPropertyPost(propertyId);
+        if (cancelled) return;
         setProperty(response.data);
         setIsFavorite(response.data.is_bookmarked);
       } catch (err: unknown) {
+        if (cancelled) return;
         const apiErr = err as { status?: number; statusCode?: number };
         const status = apiErr?.status ?? apiErr?.statusCode;
         if (status === 410) {
           showError('삭제된 게시글입니다.');
-          router.replace('/property');
         } else if (status === 404) {
           showError('존재하지 않는 매물입니다.');
-          router.replace('/property');
         } else {
           showError('매물 정보를 불러오는데 실패했습니다.');
         }
+        router.back();
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    fetch();
+
+    fetchData();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId]);
 
@@ -417,8 +424,11 @@ export default function PropertyDetailPage() {
                 {isFavorite ? 'favorite' : 'favorite_border'}
               </span>
             </button>
-            <button className={styles.contactButton} disabled>
-              1:1 채팅 준비중
+            <button
+              className={styles.contactButton}
+              onClick={() => router.push('/chat/property/rooms')}
+            >
+              1:1 채팅하기
             </button>
           </>
         )}
