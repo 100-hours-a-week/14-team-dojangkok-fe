@@ -26,7 +26,7 @@ export async function getAllPropertyPosts(cursor?: string) {
   const url = `${BASE_URL}${params.toString() ? `?${params.toString()}` : ''}`;
 
   return apiClient<{ data: PropertyPostListResponseDto }>(url, {
-    requiresAuth: true,
+    requiresAuth: false,
   });
 }
 
@@ -105,7 +105,7 @@ export async function searchPropertyPosts(
   return apiClient<{ data: PropertyPostSearchResponseDto }>(url, {
     method: 'POST',
     body: JSON.stringify(searchRequest),
-    requiresAuth: true,
+    requiresAuth: false,
   });
 }
 
@@ -135,7 +135,7 @@ export async function getSearchCount(
 export async function getPropertyPost(propertyPostId: number) {
   return apiClient<{ data: PropertyPostDetailDto }>(
     `${BASE_URL}/${propertyPostId}`,
-    { requiresAuth: true }
+    { requiresAuth: false }
   );
 }
 

@@ -118,7 +118,7 @@ export async function apiClient<T>(
       });
     }
 
-    if (requiresAuth && accessToken) {
+    if (accessToken) {
       defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
     }
 
@@ -134,14 +134,16 @@ export async function apiClient<T>(
   };
 
   try {
-    let accessToken = requiresAuth
-      ? (tokenStorage.getAccessToken() ?? undefined)
-      : undefined;
+    // requiresAuth가 아니더라도 토큰이 존재하면 함께 전송 (optional auth)
+    const hasStoredToken = !!tokenStorage.getRaw();
+    let accessToken =
+      requiresAuth || hasStoredToken
+        ? (tokenStorage.getAccessToken() ?? undefined)
+        : undefined;
     let response = await makeRequest(accessToken);
 
-    // 401 에러 시 토큰 갱신 시도
-    // accessToken이 없으면(= 처음부터 미로그인) refresh 시도 없이 바로 에러
-    if (response.status === 401 && requiresAuth && !skipTokenRefresh && accessToken) {
+    // 401 에러 시 토큰 갱신 시도 (refresh token은 HttpOnly 쿠키라 존재 여부 확인 불가)
+    if (response.status === 401 && (requiresAuth || hasStoredToken) && !skipTokenRefresh) {
       // 에러 데이터 먼저 파싱 (치명적 에러 체크용)
       const errorData = await response.json().catch(() => ({}));
 
