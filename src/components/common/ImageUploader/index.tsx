@@ -29,6 +29,7 @@ export default function ImageUploader({
     if (files && files.length > 0) {
       onUpload(files);
     }
+    e.target.value = '';
   };
 
   return (
