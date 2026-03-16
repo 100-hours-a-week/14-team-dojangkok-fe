@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { StampBadge, Modal } from '@/components/common';
@@ -63,13 +63,15 @@ function to평(m2: number): string {
 export default function PropertyDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const { user } = useAuth();
+  const pathname = usePathname();
+  const { user, isAuthenticated } = useAuth();
   const { error: showError, success } = useToast();
 
   const [property, setProperty] = useState<PropertyPostDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
@@ -88,36 +90,47 @@ export default function PropertyDetailPage() {
     : [];
 
   useEffect(() => {
-    // ... (fetch implementation 생략 가능하도록 정확한 위치 지정)
-    const fetch = async () => {
+    let cancelled = false;
+
+    const fetchData = async () => {
       setLoading(true);
       try {
         const response = await getPropertyPost(propertyId);
+        if (cancelled) return;
         setProperty(response.data);
         setIsFavorite(response.data.is_bookmarked);
       } catch (err: unknown) {
+        if (cancelled) return;
         const apiErr = err as { status?: number; statusCode?: number };
         const status = apiErr?.status ?? apiErr?.statusCode;
         if (status === 410) {
           showError('삭제된 게시글입니다.');
-          router.replace('/property');
         } else if (status === 404) {
           showError('존재하지 않는 매물입니다.');
-          router.replace('/property');
         } else {
           showError('매물 정보를 불러오는데 실패했습니다.');
         }
+        router.back();
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    fetch();
+
+    fetchData();
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId]);
 
   const handleBackClick = () => router.back();
 
   const handleFavoriteClick = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     await toggleBookmark(propertyId, isFavorite);
   };
 
@@ -417,8 +430,17 @@ export default function PropertyDetailPage() {
                 {isFavorite ? 'favorite' : 'favorite_border'}
               </span>
             </button>
-            <button className={styles.contactButton} disabled>
-              1:1 채팅 준비중
+            <button
+              className={styles.contactButton}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  setShowLoginModal(true);
+                  return;
+                }
+                router.push('/chat/property/rooms');
+              }}
+            >
+              1:1 채팅하기
             </button>
           </>
         )}
@@ -439,6 +461,20 @@ export default function PropertyDetailPage() {
           )
         }
       />
+
+      <Modal
+        isOpen={showLoginModal}
+        title="로그인이 필요해요"
+        confirmText="로그인하러 가기"
+        cancelText="취소"
+        onConfirm={() => {
+          sessionStorage.setItem('redirect_after_login', pathname);
+          router.push('/signin');
+        }}
+        onClose={() => setShowLoginModal(false)}
+      >
+        로그인 페이지로 이동할까요?
+      </Modal>
 
       <Modal
         isOpen={isDeleteModalOpen}
