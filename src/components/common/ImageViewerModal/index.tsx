@@ -9,11 +9,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // PDF.js worker 설정
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-interface ImageItem {
-  id: string;
-  url: string;
-  file?: File;
-}
+import { ImageItem } from '@/types/image';
 
 interface ImageViewerModalProps {
   isOpen: boolean;

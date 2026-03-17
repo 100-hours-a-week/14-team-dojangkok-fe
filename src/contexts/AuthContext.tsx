@@ -217,9 +217,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         case 'LIFESTYLE':
           router.replace('/lifestyle-tags');
           break;
-        case 'COMPLETE':
-          router.replace('/');
+        case 'COMPLETE': {
+          const redirectPath = sessionStorage.getItem('redirect_after_login');
+          sessionStorage.removeItem('redirect_after_login');
+          router.replace(redirectPath || '/');
           break;
+        }
       }
     } catch (error) {
       throw error;

@@ -37,10 +37,7 @@ const SEGMENT_OPTIONS = [
   { value: 'checklist', label: '체크리스트' },
 ];
 
-interface ImageItem {
-  id: string;
-  url: string;
-}
+import { ImageItem } from '@/types/image';
 
 export default function HomeNoteDetailPage({
   params,

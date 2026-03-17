@@ -32,7 +32,7 @@ export default function LoginPage() {
     try {
       const baseUrl = apiUrl.replace(/\/api$/, '');
       const backendOAuthUrl = `${baseUrl}/oauth2/authorization/kakao`;
-      window.location.href = backendOAuthUrl;
+      window.location.replace(backendOAuthUrl);
     } catch {
       setIsLoading(false);
       alert('로그인 연결에 실패했습니다. 다시 시도해주세요.');

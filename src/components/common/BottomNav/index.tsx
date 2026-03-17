@@ -50,6 +50,7 @@ export default function BottomNav() {
   const { navigationGuard, setPendingPath } = useNavigationGuard();
   const { isAuthenticated } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingLoginPath, setPendingLoginPath] = useState<string | null>(null);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--toast-bottom-nav', '88px');
@@ -62,6 +63,7 @@ export default function BottomNav() {
     if (pathname === targetPath) return;
 
     if (!isAuthenticated && PROTECTED_PATHS.includes(targetPath)) {
+      setPendingLoginPath(targetPath);
       setShowLoginModal(true);
       return;
     }
@@ -80,7 +82,12 @@ export default function BottomNav() {
         title="로그인이 필요해요"
         confirmText="로그인하러 가기"
         cancelText="취소"
-        onConfirm={() => router.push('/signin')}
+        onConfirm={() => {
+          if (pendingLoginPath) {
+            sessionStorage.setItem('redirect_after_login', pendingLoginPath);
+          }
+          router.push('/signin');
+        }}
         onClose={() => setShowLoginModal(false)}
       >
         로그인 페이지로 이동할까요?

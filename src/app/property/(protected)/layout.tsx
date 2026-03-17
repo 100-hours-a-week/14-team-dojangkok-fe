@@ -1,6 +1,6 @@
 import { ProtectedRoute } from '@/components/auth';
 
-export default function PropertySearchLayout({
+export default function PropertyProtectedLayout({
   children,
 }: {
   children: React.ReactNode;

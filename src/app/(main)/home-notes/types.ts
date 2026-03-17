@@ -1,7 +1,5 @@
-export interface ImageItem {
-  id: string;
-  url: string;
-}
+import { ImageItem } from '@/types/image';
+export type { ImageItem };
 
 export interface HomeNote {
   id: string;

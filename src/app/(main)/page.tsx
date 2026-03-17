@@ -21,12 +21,7 @@ const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
   ssr: false,
 });
 
-interface ImageItem {
-  id: string;
-  url: string;
-  file: File;
-  fileAssetId?: number; // 업로드된 파일의 서버 ID
-}
+import { ImageItem } from '@/types/image';
 
 export default function HomePage() {
   const router = useRouter();

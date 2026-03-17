@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useState, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
   Header,
   FloatingAddButton,
@@ -9,6 +9,7 @@ import {
   FilterChip,
   PropertyCard,
   StampBadge,
+  Modal,
 } from '@/components/common';
 import BottomNav from '@/components/common/BottomNav';
 import type {
@@ -21,12 +22,17 @@ import { getAllPropertyPosts, searchPropertyPosts } from '@/lib/api/property';
 import { convertToPropertyList } from '@/utils/propertyAdapter';
 import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './property.module.css';
 
 function PropertyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
   const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingLoginPath, setPendingLoginPath] = useState<string | null>(null);
 
   // 필터 활성 상태 - searchParams에서 직접 파생
   const keyword = searchParams.get('keyword') || '';
@@ -164,22 +170,43 @@ function PropertyPageContent() {
       ),
   });
 
+  const openLoginModal = (destinationPath: string) => {
+    setPendingLoginPath(destinationPath);
+    setShowLoginModal(true);
+  };
+
   const handleFavoriteClick = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
+    if (!isAuthenticated) {
+      openLoginModal(pathname);
+      return;
+    }
     const property = properties.find((p) => p.id === id);
     if (!property) return;
     toggleBookmark(Number(id), property.isFavorite);
   };
 
   const handleAddClick = () => {
+    if (!isAuthenticated) {
+      openLoginModal('/property/create');
+      return;
+    }
     router.push('/property/create');
   };
 
   const handleMyClick = () => {
+    if (!isAuthenticated) {
+      openLoginModal('/property/my');
+      return;
+    }
     router.push('/property/my');
   };
 
   const handleSearchClick = () => {
+    if (!isAuthenticated) {
+      openLoginModal('/property/search');
+      return;
+    }
     const currentParams = searchParams.toString();
     router.replace(
       `/property/search${currentParams ? `?${currentParams}` : ''}`
@@ -187,6 +214,10 @@ function PropertyPageContent() {
   };
 
   const handleFilterClick = () => {
+    if (!isAuthenticated) {
+      openLoginModal('/property/filter');
+      return;
+    }
     const currentParams = searchParams.toString();
     router.replace(
       `/property/filter${currentParams ? `?${currentParams}` : ''}`
@@ -302,6 +333,22 @@ function PropertyPageContent() {
 
       <FloatingAddButton onClick={handleAddClick} withBottomNav />
       <BottomNav />
+
+      <Modal
+        isOpen={showLoginModal}
+        title="로그인이 필요해요"
+        confirmText="로그인하러 가기"
+        cancelText="취소"
+        onConfirm={() => {
+          if (pendingLoginPath) {
+            sessionStorage.setItem('redirect_after_login', pendingLoginPath);
+          }
+          router.push('/signin');
+        }}
+        onClose={() => setShowLoginModal(false)}
+      >
+        로그인 페이지로 이동할까요?
+      </Modal>
     </div>
   );
 }

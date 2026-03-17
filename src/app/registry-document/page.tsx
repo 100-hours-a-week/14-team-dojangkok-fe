@@ -24,12 +24,7 @@ const ImageGrid = dynamic(() => import('@/components/common/ImageGrid'), {
   ssr: false,
 });
 
-interface ImageItem {
-  id: string;
-  url: string;
-  file: File;
-  fileAssetId?: number;
-}
+import { ImageItem } from '@/types/image';
 
 export default function RegistryDocumentPage() {
   const router = useRouter();
