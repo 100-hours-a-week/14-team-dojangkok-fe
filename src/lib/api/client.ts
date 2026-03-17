@@ -143,7 +143,11 @@ export async function apiClient<T>(
     let response = await makeRequest(accessToken);
 
     // 401 에러 시 토큰 갱신 시도 (refresh token은 HttpOnly 쿠키라 존재 여부 확인 불가)
-    if (response.status === 401 && (requiresAuth || hasStoredToken) && !skipTokenRefresh) {
+    if (
+      response.status === 401 &&
+      (requiresAuth || hasStoredToken) &&
+      !skipTokenRefresh
+    ) {
       // 에러 데이터 먼저 파싱 (치명적 에러 체크용)
       const errorData = await response.json().catch(() => ({}));
 

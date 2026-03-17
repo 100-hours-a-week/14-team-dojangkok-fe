@@ -40,7 +40,12 @@ export function NavigationGuardProvider({
 
   return (
     <NavigationGuardContext.Provider
-      value={{ navigationGuard, pendingPath, setNavigationGuard, setPendingPath }}
+      value={{
+        navigationGuard,
+        pendingPath,
+        setNavigationGuard,
+        setPendingPath,
+      }}
     >
       {children}
     </NavigationGuardContext.Provider>

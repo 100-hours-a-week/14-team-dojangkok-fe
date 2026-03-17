@@ -93,33 +93,33 @@ export default function BottomNav() {
         로그인 페이지로 이동할까요?
       </Modal>
       <nav className={styles.nav}>
-      <div
-        className={styles.navContainer}
-        style={{ gridTemplateColumns: `repeat(${NAV_ITEMS.length}, 1fr)` }}
-      >
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.path;
-          return (
-            <button
-              key={item.path}
-              className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
-              onClick={() => handleNavClick(item.path)}
-            >
-              <span
-                className={`material-symbols-outlined ${styles.navIcon} ${isActive ? 'filled' : ''}`}
+        <div
+          className={styles.navContainer}
+          style={{ gridTemplateColumns: `repeat(${NAV_ITEMS.length}, 1fr)` }}
+        >
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <button
+                key={item.path}
+                className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
+                onClick={() => handleNavClick(item.path)}
               >
-                {isActive ? item.iconFilled : item.icon}
-              </span>
-              <span
-                className={`${styles.navLabel} ${isActive ? styles.navLabelActive : ''}`}
-              >
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+                <span
+                  className={`material-symbols-outlined ${styles.navIcon} ${isActive ? 'filled' : ''}`}
+                >
+                  {isActive ? item.iconFilled : item.icon}
+                </span>
+                <span
+                  className={`${styles.navLabel} ${isActive ? styles.navLabelActive : ''}`}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </>
   );
 }

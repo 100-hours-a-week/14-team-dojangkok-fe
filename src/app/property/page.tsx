@@ -229,11 +229,7 @@ function PropertyPageContent() {
 
   return (
     <div className={styles.page}>
-      <Header
-        title="매물"
-        rightText="MY"
-        onRightClick={handleMyClick}
-      />
+      <Header title="매물" rightText="MY" onRightClick={handleMyClick} />
 
       <div className={styles.searchSection}>
         <SearchBar

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from './Login.module.css';
 
@@ -95,9 +96,9 @@ export default function LoginPage() {
 
         <div className={styles.divider}>또는</div>
 
-        <a href="/property" className={styles.browseButton}>
+        <Link href="/property" className={styles.browseButton}>
           매물만 먼저 둘러볼게요
-        </a>
+        </Link>
       </div>
     </div>
   );
