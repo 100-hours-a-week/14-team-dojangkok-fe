@@ -29,17 +29,23 @@ export default function MessageBubble({
         {content}
       </div>
       <div className={styles.meta}>
-        {isMine && isRead && (
-          <span className={styles.readStatus}>읽음</span>
-        )}
+        {isMine && isRead && <span className={styles.readStatus}>읽음</span>}
         <span className={styles.time}>{time}</span>
       </div>
       {isFailed && (
         <div className={styles.failedActions}>
-          <button className={styles.retryButton} onClick={onRetry} aria-label="재전송">
+          <button
+            className={styles.retryButton}
+            onClick={onRetry}
+            aria-label="재전송"
+          >
             <span className="material-symbols-outlined">refresh</span>
           </button>
-          <button className={styles.cancelButton} onClick={onCancel} aria-label="취소">
+          <button
+            className={styles.cancelButton}
+            onClick={onCancel}
+            aria-label="취소"
+          >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>

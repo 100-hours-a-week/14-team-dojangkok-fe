@@ -145,11 +145,14 @@ export default function AiChatPage() {
                 <div key={msg.messageId}>
                   {showDate && (
                     <DateDivider
-                      date={new Date(msg.createdAt).toLocaleDateString('ko-KR', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
+                      date={new Date(msg.createdAt).toLocaleDateString(
+                        'ko-KR',
+                        {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        }
+                      )}
                     />
                   )}
                   {msg.role === 'USER' ? (
@@ -160,7 +163,9 @@ export default function AiChatPage() {
                   ) : (
                     <div className={styles.aiBubbleWrapper}>
                       <div className={styles.aiAvatar}>
-                        <span className="material-symbols-outlined">smart_toy</span>
+                        <span className="material-symbols-outlined">
+                          smart_toy
+                        </span>
                       </div>
                       <div className={styles.aiContent}>
                         <div className={styles.aiBubble}>

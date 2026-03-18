@@ -34,7 +34,11 @@ export default function PropertyChatCard({
       <div className={styles.thumbnail}>
         {thumbnailUrl && !isDeleted ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumbnailUrl} alt={title} className={styles.thumbnailImage} />
+          <img
+            src={thumbnailUrl}
+            alt={title}
+            className={styles.thumbnailImage}
+          />
         ) : (
           <span className="material-symbols-outlined">home</span>
         )}
@@ -50,7 +54,10 @@ export default function PropertyChatCard({
       </div>
       <span
         className="material-symbols-outlined"
-        style={{ color: isDeleted ? 'var(--gray-200)' : 'var(--gray-400)', fontSize: 18 }}
+        style={{
+          color: isDeleted ? 'var(--gray-200)' : 'var(--gray-400)',
+          fontSize: 18,
+        }}
       >
         chevron_right
       </span>

@@ -66,15 +66,13 @@ export default function ChatRoomsPage() {
 
   return (
     <div className={styles.page}>
-      <Header
-        title="채팅"
-        showBackButton
-        onBackClick={() => router.back()}
-      />
+      <Header title="채팅" showBackButton onBackClick={() => router.back()} />
       <main className={styles.main}>
         {rooms.length === 0 ? (
           <div className={styles.empty}>
-            <span className="material-symbols-outlined">chat_bubble_outline</span>
+            <span className="material-symbols-outlined">
+              chat_bubble_outline
+            </span>
             <p>아직 채팅방이 없어요</p>
             <span>마음에 드는 매물을 찾아 집주인에게 먼저 연락해보세요</span>
             <button

@@ -3,8 +3,16 @@
 import styles from './Header.module.css';
 
 type RightButtonProps =
-  | { rightIcon: string; rightText?: never; onRightClick?: (e: React.MouseEvent<HTMLButtonElement>) => void }
-  | { rightIcon?: never; rightText: string; onRightClick?: (e: React.MouseEvent<HTMLButtonElement>) => void }
+  | {
+      rightIcon: string;
+      rightText?: never;
+      onRightClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    }
+  | {
+      rightIcon?: never;
+      rightText: string;
+      onRightClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    }
   | { rightIcon?: never; rightText?: never; onRightClick?: never };
 
 type HeaderProps = {

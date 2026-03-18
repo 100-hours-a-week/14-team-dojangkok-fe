@@ -28,7 +28,11 @@ export default function ChatRoomItem({
       <div className={styles.avatar}>
         {opponentProfileUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={opponentProfileUrl} alt={opponentNickname} className={styles.avatarImage} />
+          <img
+            src={opponentProfileUrl}
+            alt={opponentNickname}
+            className={styles.avatarImage}
+          />
         ) : (
           <span className="material-symbols-outlined">person</span>
         )}
@@ -50,7 +54,11 @@ export default function ChatRoomItem({
         <div className={styles.propertyRow}>
           {propertyThumbnailUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={propertyThumbnailUrl} alt="" className={styles.propertyThumb} />
+            <img
+              src={propertyThumbnailUrl}
+              alt=""
+              className={styles.propertyThumb}
+            />
           ) : (
             <div className={styles.propertyThumbEmpty}>
               <span className="material-symbols-outlined">home</span>
