@@ -3,7 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/common/Header';
-import ActionSheet, { ActionSheetOption } from '@/components/common/ActionSheet';
+import ActionSheet, {
+  ActionSheetOption,
+} from '@/components/common/ActionSheet';
 import Modal from '@/components/common/Modal';
 import { useToast } from '@/contexts/ToastContext';
 import PropertyChatCard from '@/components/chat/PropertyChatCard';
@@ -112,7 +114,10 @@ export default function ChatRoomPage() {
   ]);
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
-  const [actionSheetPosition, setActionSheetPosition] = useState({ top: 0, right: 0 });
+  const [actionSheetPosition, setActionSheetPosition] = useState({
+    top: 0,
+    right: 0,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const opponentNickname = '김철수';
@@ -134,6 +139,7 @@ export default function ChatRoomPage() {
   }, [messages]);
 
   const handleSend = (text: string) => {
+    // eslint-disable-next-line react-hooks/purity
     const localId = `local-${Date.now()}`;
     const isForceFail = text.trim() === '!fail';
 
@@ -151,23 +157,30 @@ export default function ChatRoomPage() {
       // 전송 실패 시뮬레이션
       setTimeout(() => {
         setMessages((prev) =>
-          prev.map((m) => (m.localId === localId ? { ...m, isFailed: true } : m))
+          prev.map((m) =>
+            m.localId === localId ? { ...m, isFailed: true } : m
+          )
         );
       }, 800);
       return;
     }
 
     // 상대방 자동 답장 시뮬레이션
-    setTimeout(() => {
-      const reply: Message = {
-        messageId: `reply-${Date.now()}`,
-        senderId: 'opponent',
-        content: AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)],
-        createdAt: new Date().toISOString(),
-        isRead: false,
-      };
-      setMessages((prev) => [...prev, reply]);
-    }, 1500 + Math.random() * 1500);
+    setTimeout(
+      () => {
+        const reply: Message = {
+          messageId: `reply-${Date.now()}`,
+          senderId: 'opponent',
+          content:
+            AUTO_REPLIES[Math.floor(Math.random() * AUTO_REPLIES.length)],
+          createdAt: new Date().toISOString(),
+          isRead: false,
+        };
+        setMessages((prev) => [...prev, reply]);
+      },
+      // eslint-disable-next-line react-hooks/purity
+      1500 + Math.random() * 1500
+    );
   };
 
   const handleLeave = () => {
