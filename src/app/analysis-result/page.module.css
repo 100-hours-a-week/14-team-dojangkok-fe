@@ -1,3 +1,27 @@
+.aiChatButton {
+  position: fixed;
+  bottom: 24px;
+  right: calc(50% - 215px);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  z-index: 10;
+}
+
+@media (max-width: 430px) {
+  .aiChatButton {
+    right: 20px;
+  }
+}
+
 .main {
   padding: 16px;
   padding-bottom: 120px;

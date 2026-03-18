@@ -243,10 +243,6 @@ export default function MyPage() {
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>설정</h3>
           <div className={styles.menuList}>
-            <button className={styles.menuItem} onClick={handleLogout}>
-              <span className={styles.menuText}>로그아웃</span>
-              <span className="material-symbols-outlined">chevron_right</span>
-            </button>
             <button
               className={styles.menuItem}
               onClick={() => router.push('/terms')}
@@ -259,6 +255,10 @@ export default function MyPage() {
               onClick={() => router.push('/privacy')}
             >
               <span className={styles.menuText}>개인정보 처리방침</span>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+            <button className={styles.menuItem} onClick={handleLogout}>
+              <span className={styles.menuText}>로그아웃</span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
             <button className={styles.menuItem} onClick={handleWithdraw}>
