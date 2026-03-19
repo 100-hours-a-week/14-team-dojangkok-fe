@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -36,15 +36,46 @@ export default function AiChatPage() {
   const params = useParams();
   const contractId = params.contractId as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const topSentinelRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const roomIdRef = useRef<string | null>(null);
+  const isFetchingMoreRef = useRef(false);
+  const initialScrollDone = useRef(false);
 
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
 
-  // 방 생성 + 메시지 히스토리 로드
+  // 이전 메시지 로드
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isFetchingMoreRef.current || !nextCursor || !roomIdRef.current) return;
+    isFetchingMoreRef.current = true;
+
+    const scrollContainer = topSentinelRef.current?.parentElement;
+    const prevScrollHeight = scrollContainer?.scrollHeight ?? 0;
+
+    try {
+      const data = await getAiChatMessages(roomIdRef.current, nextCursor);
+      setMessages((prev) => [...data.messages.map(apiMsgToAiMessage), ...prev]);
+      setHasMore(data.hasNext);
+      setNextCursor(data.nextCursor);
+
+      requestAnimationFrame(() => {
+        if (scrollContainer) {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight - prevScrollHeight;
+        }
+      });
+    } catch {
+      // 에러 무시
+    } finally {
+      isFetchingMoreRef.current = false;
+    }
+  }, [hasMore, nextCursor]);
+
+  // 방 생성 + 첫 메시지 로드
   useEffect(() => {
     let cancelled = false;
 
@@ -57,6 +88,8 @@ export default function AiChatPage() {
         const data = await getAiChatMessages(room.roomId);
         if (cancelled) return;
         setMessages(data.messages.map(apiMsgToAiMessage));
+        setHasMore(data.hasNext);
+        setNextCursor(data.nextCursor);
       } catch {
         // 에러 무시
       } finally {
@@ -65,19 +98,44 @@ export default function AiChatPage() {
     }
 
     init();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [contractId]);
 
+  // 초기 로드 완료 후 최하단 스크롤
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingContent]);
+    if (!isLoading && messages.length > 0 && !initialScrollDone.current) {
+      initialScrollDone.current = true;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+    }
+  }, [isLoading, messages.length]);
+
+  // 새 메시지/스트리밍 시 최하단 스크롤
+  useEffect(() => {
+    if (initialScrollDone.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [streamingContent]);
+
+  // 위로 스크롤 감지 (IntersectionObserver)
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMoreRef.current) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
+    return () => { abortRef.current?.abort(); };
   }, []);
 
   const handleSend = async (question: string) => {
@@ -160,6 +218,7 @@ export default function AiChatPage() {
           </div>
         ) : (
           <div className={styles.messages}>
+            <div ref={topSentinelRef} />
             {messages.map((msg, idx) => {
               const prevMsg = messages[idx - 1];
               const showDate =
