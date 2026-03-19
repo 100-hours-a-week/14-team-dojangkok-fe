@@ -250,7 +250,7 @@ export function useStompChat(
       // 상대방 메시지
       setMessages((prev) => [...prev, eventToMessage(event, false)]);
       if (clientRef.current?.connected) {
-        publishRead(clientRef.current, roomId);
+        publishRead(clientRef.current, roomId, event.messageId);
       }
     }
   }
@@ -319,7 +319,7 @@ export function useStompChat(
         body: JSON.stringify({
           roomId,
           contentType: 'TEXT',
-          content: { text },
+          text,
         }),
       });
 

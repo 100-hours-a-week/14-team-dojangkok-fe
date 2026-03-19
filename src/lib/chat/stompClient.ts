@@ -84,14 +84,18 @@ export function publishMessage(
     body: JSON.stringify({
       roomId,
       contentType: 'TEXT',
-      content: { text: content },
+      text: content,
     }),
   });
 }
 
-export function publishRead(client: Client, roomId: string): void {
+export function publishRead(
+  client: Client,
+  roomId: string,
+  lastReadMessageId: string
+): void {
   client.publish({
     destination: '/app/chat.read',
-    body: JSON.stringify({ roomId }),
+    body: JSON.stringify({ roomId, lastReadMessageId }),
   });
 }
