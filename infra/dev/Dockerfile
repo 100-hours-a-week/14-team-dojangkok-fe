@@ -1,12 +1,12 @@
-# 1단계: 의존성 설치
-FROM node:22-alpine AS deps
+# 1단계: 의존성 설치 (러너 네이티브 아키텍처로 실행 — QEMU 미사용)
+FROM --platform=$BUILDPLATFORM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
-# 2단계: 빌드 (환경 변수 주입의 핵심 단계)
-FROM node:22-alpine AS builder
+# 2단계: 빌드 (러너 네이티브 아키텍처로 실행 — QEMU 미사용)
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
