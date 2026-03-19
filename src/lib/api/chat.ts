@@ -13,7 +13,7 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 const CHAT_API_BASE_URL =
-  process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8081/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api';
 
 export interface CreateOrGetChatRoomResponse {
   code: string;
