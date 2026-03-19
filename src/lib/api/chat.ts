@@ -145,15 +145,16 @@ export async function createOrGetAiChatRoom(
   easyContractId: string
 ): Promise<AiChatRoom> {
   await ensureValidToken();
-  const res = await apiClient<{ code: string; message: string; data: AiChatRoom }>(
-    `${CHAT_API_BASE_URL}/chat/v3/ai-chat/rooms`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ easyContractId }),
-      requiresAuth: true,
-      skipTokenRefresh: true,
-    }
-  );
+  const res = await apiClient<{
+    code: string;
+    message: string;
+    data: AiChatRoom;
+  }>(`${CHAT_API_BASE_URL}/chat/v3/ai-chat/rooms`, {
+    method: 'POST',
+    body: JSON.stringify({ easyContractId }),
+    requiresAuth: true,
+    skipTokenRefresh: true,
+  });
   return res.data;
 }
 
@@ -165,7 +166,11 @@ export async function getAiChatMessages(
   await ensureValidToken();
   const params = new URLSearchParams({ size: String(size) });
   if (before) params.set('before', before);
-  const res = await apiClient<{ code: string; message: string; data: AiChatMessagesResponse }>(
+  const res = await apiClient<{
+    code: string;
+    message: string;
+    data: AiChatMessagesResponse;
+  }>(
     `${CHAT_API_BASE_URL}/chat/v3/ai-chat/rooms/${roomId}/messages?${params.toString()}`,
     { requiresAuth: true, skipTokenRefresh: true }
   );
