@@ -12,6 +12,8 @@ import type {
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const CHAT_API_BASE_URL =
+  process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8081/api';
 
 export interface CreateOrGetChatRoomResponse {
   code: string;
@@ -41,31 +43,36 @@ export async function createOrGetChatRoom(
   targetUserId: string,
   propertyId: number
 ): Promise<ChatRoom> {
+  await ensureValidToken();
   const res = await apiClient<CreateOrGetChatRoomResponse>(
-    '/chat/v3/direct-chat/rooms',
+    `${CHAT_API_BASE_URL}/chat/v3/direct-chat/rooms`,
     {
       method: 'POST',
       body: JSON.stringify({ targetUserId, propertyId }),
       requiresAuth: true,
+      skipTokenRefresh: true,
     }
   );
   return res.data;
 }
 
 export async function getChatRooms(): Promise<ChatRoomsResponse> {
+  await ensureValidToken();
   const res = await apiClient<ChatRoomsApiResponse>(
-    '/chat/v3/direct-chat/rooms',
+    `${CHAT_API_BASE_URL}/chat/v3/direct-chat/rooms`,
     {
       requiresAuth: true,
+      skipTokenRefresh: true,
     }
   );
   return res.data;
 }
 
 export async function getChatRoomDetail(roomId: string): Promise<ChatRoom> {
+  await ensureValidToken();
   const res = await apiClient<ChatRoomDetailApiResponse>(
-    `/chat/v3/direct-chat/rooms/${roomId}`,
-    { requiresAuth: true }
+    `${CHAT_API_BASE_URL}/chat/v3/direct-chat/rooms/${roomId}`,
+    { requiresAuth: true, skipTokenRefresh: true }
   );
   return res.data;
 }
@@ -75,11 +82,12 @@ export async function getChatMessages(
   before?: string,
   size = 20
 ): Promise<ChatMessagesResponse> {
+  await ensureValidToken();
   const params = new URLSearchParams({ size: String(size) });
   if (before) params.set('before', before);
   const res = await apiClient<ChatMessagesApiResponse>(
-    `/chat/v3/direct-chat/rooms/${roomId}/messages?${params.toString()}`,
-    { requiresAuth: true }
+    `${CHAT_API_BASE_URL}/chat/v3/direct-chat/rooms/${roomId}/messages?${params.toString()}`,
+    { requiresAuth: true, skipTokenRefresh: true }
   );
   return res.data;
 }
@@ -92,7 +100,7 @@ export async function getPresignedUrls(
     code: string;
     message: string;
     data: PresignedResponse;
-  }>('/chat/v3/direct-chat/files/presigned-urls', {
+  }>(`${CHAT_API_BASE_URL}/chat/v3/direct-chat/files/presigned-urls`, {
     method: 'POST',
     body: JSON.stringify({ roomId, files: fileItems }),
     requiresAuth: true,
@@ -107,7 +115,7 @@ export async function completeUpload(
     code: string;
     message: string;
     data: CompleteResponse;
-  }>('/chat/v3/direct-chat/files/complete', {
+  }>(`${CHAT_API_BASE_URL}/chat/v3/direct-chat/files/complete`, {
     method: 'POST',
     body: JSON.stringify({ fileAssetIds }),
     requiresAuth: true,
