@@ -10,10 +10,8 @@ import type {
   CompleteResponse,
 } from '@/types/chat';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 const CHAT_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081/api';
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 export interface CreateOrGetChatRoomResponse {
   code: string;
@@ -123,12 +121,64 @@ export async function completeUpload(
   return res.data;
 }
 
+export interface AiChatRoom {
+  roomId: string;
+  createdAt: string;
+}
+
+export interface AiChatMessage {
+  messageId: string;
+  roomId: string;
+  senderId: string;
+  contentType: 'TEXT';
+  content: { text: string };
+  createdAt: string;
+}
+
+export interface AiChatMessagesResponse {
+  messages: AiChatMessage[];
+  hasNext: boolean;
+  nextCursor: string | null;
+}
+
+export async function createOrGetAiChatRoom(
+  easyContractId: string
+): Promise<AiChatRoom> {
+  await ensureValidToken();
+  const res = await apiClient<{ code: string; message: string; data: AiChatRoom }>(
+    `${CHAT_API_BASE_URL}/chat/v3/ai-chat/rooms`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ easyContractId }),
+      requiresAuth: true,
+      skipTokenRefresh: true,
+    }
+  );
+  return res.data;
+}
+
+export async function getAiChatMessages(
+  roomId: string,
+  before?: string,
+  size = 20
+): Promise<AiChatMessagesResponse> {
+  await ensureValidToken();
+  const params = new URLSearchParams({ size: String(size) });
+  if (before) params.set('before', before);
+  const res = await apiClient<{ code: string; message: string; data: AiChatMessagesResponse }>(
+    `${CHAT_API_BASE_URL}/chat/v3/ai-chat/rooms/${roomId}/messages?${params.toString()}`,
+    { requiresAuth: true, skipTokenRefresh: true }
+  );
+  return res.data;
+}
+
 /**
  * AI 채팅 SSE 스트리밍
- * ReadableStream을 직접 반환하여 caller가 처리
+ * 스펙: POST /api/chat/v3/ai-chat/rooms/{roomId}/chat
+ * 응답 형식: {"text": "...", "done": false}
  */
 export async function streamAiChat(
-  contractId: string,
+  roomId: string,
   message: string,
   onChunk: (text: string) => void,
   onDone: () => void,
@@ -139,17 +189,20 @@ export async function streamAiChat(
 
   const token = tokenStorage.getAccessToken();
 
-  const response = await fetch(`${API_BASE_URL}/ai/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'text/event-stream',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    credentials: 'include',
-    body: JSON.stringify({ roomId: contractId, message }),
-    signal,
-  });
+  const response = await fetch(
+    `${CHAT_API_BASE_URL}/chat/v3/ai-chat/rooms/${roomId}/chat`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify({ message }),
+      signal,
+    }
+  );
 
   if (!response.ok || !response.body) {
     throw new Error('AI 채팅 연결에 실패했습니다.');
@@ -164,27 +217,21 @@ export async function streamAiChat(
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
-    const parts = buffer.split('\n\n');
-    buffer = parts.pop() ?? '';
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
 
-    for (const part of parts) {
-      if (!part.trim()) continue;
-      for (const line of part.split('\n')) {
-        if (line.startsWith('data:')) {
-          const data = line.slice(5).trim();
-          if (data === '[DONE]') {
-            onDone();
-            return;
-          }
-          try {
-            const parsed = JSON.parse(data);
-            const text = parsed.content ?? parsed.text ?? parsed.delta ?? data;
-            if (text) onChunk(text);
-          } catch {
-            // 파싱 실패 시 raw data 사용
-            if (data) onChunk(data);
-          }
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed.done) {
+          onDone();
+          return;
         }
+        if (parsed.text) onChunk(parsed.text);
+      } catch {
+        // 파싱 실패 시 무시
       }
     }
   }

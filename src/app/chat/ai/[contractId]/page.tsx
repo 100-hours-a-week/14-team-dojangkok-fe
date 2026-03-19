@@ -7,7 +7,12 @@ import remarkGfm from 'remark-gfm';
 import Header from '@/components/common/Header';
 import MessageInput from '@/components/chat/MessageInput';
 import DateDivider from '@/components/chat/DateDivider';
-import { streamAiChat } from '@/lib/api/chat';
+import {
+  streamAiChat,
+  createOrGetAiChatRoom,
+  getAiChatMessages,
+} from '@/lib/api/chat';
+import type { AiChatMessage } from '@/lib/api/chat';
 import styles from './page.module.css';
 
 interface AiMessage {
@@ -17,16 +22,53 @@ interface AiMessage {
   createdAt: string;
 }
 
+function apiMsgToAiMessage(msg: AiChatMessage): AiMessage {
+  return {
+    messageId: msg.messageId,
+    role: msg.senderId === 'AI_ASSISTANT' ? 'ASSISTANT' : 'USER',
+    content: msg.content.text,
+    createdAt: msg.createdAt,
+  };
+}
+
 export default function AiChatPage() {
   const router = useRouter();
   const params = useParams();
   const contractId = params.contractId as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const roomIdRef = useRef<string | null>(null);
 
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 방 생성 + 메시지 히스토리 로드
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      try {
+        const room = await createOrGetAiChatRoom(contractId);
+        if (cancelled) return;
+        roomIdRef.current = room.roomId;
+
+        const data = await getAiChatMessages(room.roomId);
+        if (cancelled) return;
+        setMessages(data.messages.map(apiMsgToAiMessage));
+      } catch {
+        // 에러 무시
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, [contractId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,7 +81,7 @@ export default function AiChatPage() {
   }, []);
 
   const handleSend = async (question: string) => {
-    if (isStreaming) return;
+    if (isStreaming || !roomIdRef.current) return;
 
     const userMsg: AiMessage = {
       messageId: `user-${Date.now()}`,
@@ -58,7 +100,7 @@ export default function AiChatPage() {
 
     try {
       await streamAiChat(
-        contractId,
+        roomIdRef.current,
         question,
         (chunk) => {
           accumulated += chunk;
@@ -82,7 +124,6 @@ export default function AiChatPage() {
       );
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return;
-      // 스트리밍 실패 시 누적된 내용이 있으면 메시지로 추가
       setIsStreaming(false);
       setStreamingContent('');
       if (accumulated) {
@@ -108,7 +149,11 @@ export default function AiChatPage() {
       />
 
       <main className={styles.main}>
-        {messages.length === 0 && !streamingContent ? (
+        {isLoading ? (
+          <div className={styles.empty}>
+            <p>불러오는 중...</p>
+          </div>
+        ) : messages.length === 0 && !streamingContent ? (
           <div className={styles.empty}>
             <span className="material-symbols-outlined">smart_toy</span>
             <p>계약서에 대해 궁금한 점을 물어보세요</p>
@@ -189,7 +234,7 @@ export default function AiChatPage() {
       <div className={styles.inputArea}>
         <MessageInput
           onSend={handleSend}
-          disabled={isStreaming}
+          disabled={isStreaming || isLoading}
           placeholder="계약서에 대해 질문해보세요"
         />
       </div>
