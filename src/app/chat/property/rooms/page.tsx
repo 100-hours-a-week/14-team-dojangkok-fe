@@ -1,74 +1,74 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import ChatRoomItem from '@/components/chat/ChatRoomItem';
+import { getChatRooms } from '@/lib/api/chat';
+import type { ChatRoom } from '@/types/chat';
 import styles from './page.module.css';
 
-const DUMMY_ROOMS = [
-  {
-    roomId: 'room-1',
-    opponentNickname: '김철수',
-    opponentProfileUrl: null,
-    propertyTitle: '강남구 역삼동 원룸 보증금 1000/60',
-    propertyThumbnailUrl: null,
-    lastMessage: '안녕하세요! 방 아직 있나요?',
-    lastMessageAt: '오후 2:30',
-    unreadCount: 3,
-  },
-  {
-    roomId: 'room-2',
-    opponentNickname: '이영희',
-    opponentProfileUrl: null,
-    propertyTitle: '마포구 합정동 투룸 전세 1억 5000',
-    propertyThumbnailUrl: null,
-    lastMessage: '네, 내일 오전에 방문 가능합니다',
-    lastMessageAt: '오전 11:15',
-    unreadCount: 0,
-  },
-  {
-    roomId: 'room-3',
-    opponentNickname: '박지민',
-    opponentProfileUrl: null,
-    propertyTitle: '서대문구 연희동 반지하 월세 500/40',
-    propertyThumbnailUrl: null,
-    lastMessage: '계약서 보내드릴게요',
-    lastMessageAt: '어제',
-    unreadCount: 1,
-  },
-  {
-    roomId: 'room-4',
-    opponentNickname: '최민준',
-    opponentProfileUrl: null,
-    propertyTitle: '송파구 잠실동 오피스텔 월세 2000/80',
-    propertyThumbnailUrl: null,
-    lastMessage: '관리비는 별도인가요?',
-    lastMessageAt: '월요일',
-    unreadCount: 0,
-  },
-  {
-    roomId: 'room-5',
-    opponentNickname: '한수진',
-    opponentProfileUrl: null,
-    propertyTitle: '용산구 이태원동 원룸 보증금 500/55',
-    propertyThumbnailUrl: null,
-    lastMessage: '감사합니다. 연락드릴게요!',
-    lastMessageAt: '3월 8일',
-    unreadCount: 0,
-  },
-];
+function getLastMessageText(room: ChatRoom): string {
+  if (!room.lastMessage) return '';
+  const { contentType, content } = room.lastMessage;
+  if (contentType === 'IMAGE') return '[이미지]';
+  if (contentType === 'VIDEO') return '[동영상]';
+  return content;
+}
+
+function formatLastMessageAt(createdAt: string): string {
+  const date = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } else if (diffDays === 1) {
+    return '어제';
+  } else if (diffDays < 7) {
+    return date.toLocaleDateString('ko-KR', { weekday: 'long' });
+  }
+  return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+}
 
 export default function ChatRoomsPage() {
   const router = useRouter();
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // TODO: useChatRooms 훅으로 교체
-  const rooms = DUMMY_ROOMS;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchRooms() {
+      try {
+        const data = await getChatRooms();
+        if (!cancelled) setRooms(data.rooms);
+      } catch {
+        // 에러 무시 (빈 목록 표시)
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    fetchRooms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className={styles.page}>
       <Header title="채팅" showBackButton onBackClick={() => router.back()} />
       <main className={styles.main}>
-        {rooms.length === 0 ? (
+        {isLoading ? (
+          <div className={styles.empty}>
+            <p>불러오는 중...</p>
+          </div>
+        ) : rooms.length === 0 ? (
           <div className={styles.empty}>
             <span className="material-symbols-outlined">
               chat_bubble_outline
@@ -87,7 +87,17 @@ export default function ChatRoomsPage() {
             {rooms.map((room) => (
               <li key={room.roomId}>
                 <ChatRoomItem
-                  {...room}
+                  opponentNickname={room.partnerInfo.nickname}
+                  opponentProfileUrl={room.partnerInfo.profileImageUrl}
+                  propertyTitle={room.property?.title ?? '삭제된 매물'}
+                  propertyThumbnailUrl={room.property?.imageUrl ?? null}
+                  lastMessage={getLastMessageText(room)}
+                  lastMessageAt={
+                    room.lastMessage
+                      ? formatLastMessageAt(room.lastMessage.createdAt)
+                      : ''
+                  }
+                  unreadCount={room.unreadCount}
                   onClick={() => router.push(`/chat/property/${room.roomId}`)}
                 />
               </li>
