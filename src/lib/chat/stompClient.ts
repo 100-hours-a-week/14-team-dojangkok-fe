@@ -1,11 +1,11 @@
 import { Client } from '@stomp/stompjs';
 import type { StompEvent } from '@/types/chat';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const CHAT_API_BASE_URL =
+  process.env.NEXT_PUBLIC_CHAT_API_URL || 'http://localhost:8081/api';
 
 export function getWsUrl(): string {
-  return API_BASE_URL.replace(/^http/, 'ws') + '/chat/ws';
+  return CHAT_API_BASE_URL.replace(/^http/, 'ws') + '/chat/ws';
 }
 
 interface CreateStompClientParams {
