@@ -13,6 +13,7 @@ const ImageViewerModal = dynamic(
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getPropertyPost, deletePropertyPost } from '@/lib/api/property';
+import { createOrGetChatRoom } from '@/lib/api/chat';
 import { usePropertyBookmark } from '@/hooks/usePropertyBookmark';
 import type { PropertyPostDetailDto } from '@/types/property';
 import { PROPERTY_TYPE_LABELS, RENT_TYPE_LABELS } from '@/types/property';
@@ -72,6 +73,7 @@ export default function PropertyDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
@@ -432,15 +434,27 @@ export default function PropertyDetailPage() {
             </button>
             <button
               className={styles.contactButton}
-              onClick={() => {
+              disabled={isChatLoading}
+              onClick={async () => {
                 if (!isAuthenticated) {
                   setShowLoginModal(true);
                   return;
                 }
-                router.push('/chat/property/rooms');
+                setIsChatLoading(true);
+                try {
+                  const room = await createOrGetChatRoom(
+                    String(property.writer.member_id),
+                    propertyId
+                  );
+                  router.push(`/chat/property/${room.roomId}`);
+                } catch {
+                  showError('채팅방 생성에 실패했습니다.');
+                } finally {
+                  setIsChatLoading(false);
+                }
               }}
             >
-              1:1 채팅하기
+              {isChatLoading ? '연결 중...' : '1:1 채팅하기'}
             </button>
           </>
         )}
