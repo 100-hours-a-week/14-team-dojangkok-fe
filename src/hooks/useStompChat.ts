@@ -142,13 +142,23 @@ export function useStompChat(
     }
   }, [isLoading, messages.length]);
 
-  // 새 메시지 수신 후 최하단 스크롤
+  // 새 메시지 수신 후 최하단 스크롤 (이전 메시지 로드 시는 제외)
+  const lastMessageId = messages[messages.length - 1]?.messageId;
+  const lastLocalId = messages[messages.length - 1]?.localId;
+  const lastMsgKey = lastMessageId || lastLocalId;
+  const prevLastMsgKeyRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (messages.length > prevLengthRef.current && initialScrollDone.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!initialScrollDone.current) return;
+    if (lastMsgKey && lastMsgKey !== prevLastMsgKeyRef.current) {
+      prevLastMsgKeyRef.current = lastMsgKey;
+      // 마지막 메시지가 새로 추가된 경우만 스크롤
+      if (messages.length > prevLengthRef.current) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
     prevLengthRef.current = messages.length;
-  }, [messages.length]);
+  }, [lastMsgKey, messages.length]);
 
   // STOMP 연결
   useEffect(() => {
