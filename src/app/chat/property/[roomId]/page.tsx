@@ -199,7 +199,7 @@ export default function ChatRoomPage() {
               const text = getMessageText(msg.contentType, msg.content);
 
               return (
-                <div key={msg.messageId || msg.localId}>
+                <div key={msg.localId || msg.messageId}>
                   {showDate && (
                     <DateDivider
                       date={new Date(msg.createdAt).toLocaleDateString(

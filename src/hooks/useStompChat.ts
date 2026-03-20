@@ -34,6 +34,10 @@ interface UseStompChatResult {
   topSentinelRef: RefObject<HTMLDivElement | null>;
 }
 
+function sortByCreatedAt(msgs: ChatMessage[]): ChatMessage[] {
+  return [...msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
 function calcIsRead(
   msg: ChatMessage,
   partnerLastReadAt: string | null
@@ -78,7 +82,7 @@ export function useStompChat(
         isRead: calcIsRead(msg, partnerLastReadAtRef.current),
       }));
 
-      setMessages((prev) => [...withRead, ...prev]);
+      setMessages((prev) => sortByCreatedAt([...withRead, ...prev]));
       setHasMore(data.hasNext);
       setNextCursor(data.nextCursor);
 
@@ -118,7 +122,7 @@ export function useStompChat(
           isRead: calcIsRead(msg, partnerLastReadAtRef.current),
         }));
 
-        setMessages(withRead);
+        setMessages(sortByCreatedAt(withRead));
         setHasMore(msgData.hasNext);
         setNextCursor(msgData.nextCursor);
       } catch {
@@ -250,8 +254,10 @@ export function useStompChat(
         return updated;
       });
     } else {
-      // 상대방 메시지
-      setMessages((prev) => [...prev, eventToMessage(event, false)]);
+      // 상대방 메시지 (createdAt 기준 정렬 삽입)
+      setMessages((prev) =>
+        sortByCreatedAt([...prev, eventToMessage(event, false)])
+      );
       if (clientRef.current?.connected) {
         publishRead(clientRef.current, roomId, event.messageId);
       }
