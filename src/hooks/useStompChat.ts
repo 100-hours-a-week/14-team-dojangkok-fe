@@ -225,20 +225,13 @@ export function useStompChat(
     const isMine = event.senderId === myUserId;
 
     if (isMine) {
-      // 에코: localId 매칭하여 messageId 확정
+      // 에코: localId 있는 미확정 메시지에 messageId 업데이트
       setMessages((prev) => {
-        const idx = prev.findIndex(
-          (m) => m.localId && !m.messageId && m.isFailed !== true
-        );
+        const idx = prev.findIndex((m) => m.localId && !m.messageId);
         if (idx === -1) {
-          return [...prev, eventToMessage(event, true)];
+          return prev;
         }
         const updated = [...prev];
-        const timer = pendingRef.current.get(updated[idx].localId!);
-        if (timer) {
-          clearTimeout(timer);
-          pendingRef.current.delete(updated[idx].localId!);
-        }
         updated[idx] = {
           ...updated[idx],
           messageId: event.messageId,
@@ -323,17 +316,13 @@ export function useStompChat(
         }),
       });
 
-      // 5초 타임아웃 후 echo 미수신 시 실패 처리
-      const timer = setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.localId === localId && !m.messageId ? { ...m, isFailed: true } : m
-          )
-        );
-        pendingRef.current.delete(localId);
-      }, SEND_TIMEOUT_MS);
-
-      pendingRef.current.set(localId, timer);
+      // publish 성공 → 즉시 전송 확정 (echo 의존하지 않음)
+      // echo가 오면 handleMessageEvent에서 messageId만 업데이트
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.localId === localId ? { ...m, isFailed: false } : m
+        )
+      );
     },
     [roomId, myUserId]
   );
