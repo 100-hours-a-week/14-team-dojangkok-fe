@@ -1,18 +1,74 @@
-.row {
+.wrapper {
   display: flex;
   align-items: flex-end;
   gap: 6px;
   max-width: 80%;
+  margin-bottom: 2px;
 }
 
-.mine {
+.wrapperMine {
   flex-direction: row-reverse;
   align-self: flex-end;
   margin-left: auto;
 }
 
-.opponent {
+.wrapperOpponent {
   align-self: flex-start;
+}
+
+.avatarSlot {
+  width: 32px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding-top: 20px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatarFallback span {
+  font-size: 18px;
+  color: var(--gray-400);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nickname {
+  font-size: 12px;
+  color: var(--gray-500);
+  padding-left: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.mine {
+  flex-direction: row-reverse;
+}
+
+.opponent {
+  flex-direction: row;
 }
 
 .bubble {

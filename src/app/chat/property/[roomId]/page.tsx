@@ -161,6 +161,8 @@ export default function ChatRoomPage() {
             {messages.map((msg, idx) => {
               const isMine = msg.mine;
               const prevMsg = messages[idx - 1];
+              const nextMsg = messages[idx + 1];
+
               const showDate =
                 idx === 0 ||
                 new Date(msg.createdAt).toDateString() !==
@@ -170,6 +172,23 @@ export default function ChatRoomPage() {
                 hour: '2-digit',
                 minute: '2-digit',
               });
+
+              // 다음 메시지가 같은 발신자 + 같은 분이면 시간 숨김
+              const nextTime = nextMsg
+                ? new Date(nextMsg.createdAt).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : null;
+              const showTime =
+                !nextMsg ||
+                nextMsg.mine !== msg.mine ||
+                nextTime !== time;
+
+              // 상대방 메시지: 이전 메시지가 다른 발신자이면 아바타/닉네임 표시
+              const showAvatar =
+                !isMine &&
+                (!prevMsg || prevMsg.mine || showDate);
 
               const text = getMessageText(msg.contentType, msg.content);
 
@@ -191,6 +210,10 @@ export default function ChatRoomPage() {
                     content={text}
                     isMine={isMine}
                     time={time}
+                    showTime={showTime}
+                    showAvatar={showAvatar}
+                    senderNickname={opponentNickname}
+                    senderProfileImageUrl={roomDetail?.partnerInfo.profileImageUrl ?? null}
                     isRead={msg.isRead}
                     isFailed={msg.isFailed}
                     onRetry={() => retryMessage(msg.localId!)}
