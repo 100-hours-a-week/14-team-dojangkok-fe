@@ -77,6 +77,15 @@ export default function ChatRoomPage() {
   });
 
   const opponentNickname = roomDetail?.partnerInfo.nickname ?? '';
+
+  // 내 메시지 중 마지막으로 읽힌 메시지의 index (해당 메시지에만 "읽음" 표시)
+  let lastReadIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].mine && messages[i].isRead) {
+      lastReadIdx = i;
+      break;
+    }
+  }
   const property = roomDetail?.property ?? null;
   const propertyInfo = property
     ? {
@@ -213,7 +222,7 @@ export default function ChatRoomPage() {
                     senderProfileImageUrl={
                       roomDetail?.partnerInfo.profileImageUrl ?? null
                     }
-                    isRead={msg.isRead}
+                    isRead={idx === lastReadIdx}
                     isFailed={msg.isFailed}
                     onRetry={() => retryMessage(msg.localId!)}
                     onCancel={() => cancelMessage(msg.localId!)}
