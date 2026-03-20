@@ -181,14 +181,11 @@ export default function ChatRoomPage() {
                   })
                 : null;
               const showTime =
-                !nextMsg ||
-                nextMsg.mine !== msg.mine ||
-                nextTime !== time;
+                !nextMsg || nextMsg.mine !== msg.mine || nextTime !== time;
 
               // 상대방 메시지: 이전 메시지가 다른 발신자이면 아바타/닉네임 표시
               const showAvatar =
-                !isMine &&
-                (!prevMsg || prevMsg.mine || showDate);
+                !isMine && (!prevMsg || prevMsg.mine || showDate);
 
               const text = getMessageText(msg.contentType, msg.content);
 
@@ -213,7 +210,9 @@ export default function ChatRoomPage() {
                     showTime={showTime}
                     showAvatar={showAvatar}
                     senderNickname={opponentNickname}
-                    senderProfileImageUrl={roomDetail?.partnerInfo.profileImageUrl ?? null}
+                    senderProfileImageUrl={
+                      roomDetail?.partnerInfo.profileImageUrl ?? null
+                    }
                     isRead={msg.isRead}
                     isFailed={msg.isFailed}
                     onRetry={() => retryMessage(msg.localId!)}

@@ -31,12 +31,14 @@ export default function MessageBubble({
   onCancel,
 }: MessageBubbleProps) {
   return (
-    <div className={`${styles.wrapper} ${isMine ? styles.wrapperMine : styles.wrapperOpponent}`}>
+    <div
+      className={`${styles.wrapper} ${isMine ? styles.wrapperMine : styles.wrapperOpponent}`}
+    >
       {/* 상대방 아바타 */}
       {!isMine && (
         <div className={styles.avatarSlot}>
-          {showAvatar && (
-            senderProfileImageUrl ? (
+          {showAvatar &&
+            (senderProfileImageUrl ? (
               <Image
                 src={senderProfileImageUrl}
                 alt={senderNickname ?? '상대방'}
@@ -48,8 +50,7 @@ export default function MessageBubble({
               <div className={styles.avatarFallback}>
                 <span className="material-symbols-outlined">person</span>
               </div>
-            )
-          )}
+            ))}
         </div>
       )}
 
@@ -59,7 +60,9 @@ export default function MessageBubble({
           <span className={styles.nickname}>{senderNickname}</span>
         )}
 
-        <div className={`${styles.row} ${isMine ? styles.mine : styles.opponent}`}>
+        <div
+          className={`${styles.row} ${isMine ? styles.mine : styles.opponent}`}
+        >
           <div
             className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOpponent} ${isFailed ? styles.bubbleFailed : ''}`}
           >
@@ -67,16 +70,26 @@ export default function MessageBubble({
           </div>
           {showTime && (
             <div className={styles.meta}>
-              {isMine && isRead && <span className={styles.readStatus}>읽음</span>}
+              {isMine && isRead && (
+                <span className={styles.readStatus}>읽음</span>
+              )}
               <span className={styles.time}>{time}</span>
             </div>
           )}
           {isFailed && (
             <div className={styles.failedActions}>
-              <button className={styles.retryButton} onClick={onRetry} aria-label="재전송">
+              <button
+                className={styles.retryButton}
+                onClick={onRetry}
+                aria-label="재전송"
+              >
                 <span className="material-symbols-outlined">refresh</span>
               </button>
-              <button className={styles.cancelButton} onClick={onCancel} aria-label="취소">
+              <button
+                className={styles.cancelButton}
+                onClick={onCancel}
+                aria-label="취소"
+              >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>

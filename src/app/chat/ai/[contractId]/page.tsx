@@ -51,7 +51,13 @@ export default function AiChatPage() {
 
   // 이전 메시지 로드
   const loadMore = useCallback(async () => {
-    if (!hasMore || isFetchingMoreRef.current || !nextCursor || !roomIdRef.current) return;
+    if (
+      !hasMore ||
+      isFetchingMoreRef.current ||
+      !nextCursor ||
+      !roomIdRef.current
+    )
+      return;
     isFetchingMoreRef.current = true;
 
     const scrollContainer = topSentinelRef.current?.parentElement;
@@ -65,7 +71,8 @@ export default function AiChatPage() {
 
       requestAnimationFrame(() => {
         if (scrollContainer) {
-          scrollContainer.scrollTop = scrollContainer.scrollHeight - prevScrollHeight;
+          scrollContainer.scrollTop =
+            scrollContainer.scrollHeight - prevScrollHeight;
         }
       });
     } catch {
@@ -98,7 +105,9 @@ export default function AiChatPage() {
     }
 
     init();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [contractId]);
 
   // 초기 로드 완료 후 최하단 스크롤
@@ -123,7 +132,11 @@ export default function AiChatPage() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isFetchingMoreRef.current) {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isFetchingMoreRef.current
+        ) {
           loadMore();
         }
       },
@@ -135,7 +148,9 @@ export default function AiChatPage() {
   }, [hasMore, loadMore]);
 
   useEffect(() => {
-    return () => { abortRef.current?.abort(); };
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   const handleSend = async (question: string) => {

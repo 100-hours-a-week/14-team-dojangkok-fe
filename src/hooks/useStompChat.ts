@@ -329,9 +329,7 @@ export function useStompChat(
       // publish 성공 → 즉시 전송 확정 (echo 의존하지 않음)
       // echo가 오면 handleMessageEvent에서 messageId만 업데이트
       setMessages((prev) =>
-        prev.map((m) =>
-          m.localId === localId ? { ...m, isFailed: false } : m
-        )
+        prev.map((m) => (m.localId === localId ? { ...m, isFailed: false } : m))
       );
     },
     [roomId, myUserId]

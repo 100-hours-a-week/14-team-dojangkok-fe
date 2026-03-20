@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import Header from '@/components/common/Header';
+import FloatingAddButton from '@/components/common/FloatingAddButton';
 import { getEasyContract } from '@/lib/api/contract';
 import { EasyContractData } from '@/types/contract';
 import styles from './page.module.css';
@@ -98,13 +99,11 @@ export default function AnalysisResultPage() {
       </main>
 
       {contractId && (
-        <button
-          className={styles.aiChatButton}
+        <FloatingAddButton
           onClick={() => router.push(`/chat/ai/${contractId}`)}
-          aria-label="AI 챗봇"
-        >
-          <span className="material-symbols-outlined">smart_toy</span>
-        </button>
+          icon="smart_toy"
+          ariaLabel="AI 챗봇"
+        />
       )}
     </>
   );
