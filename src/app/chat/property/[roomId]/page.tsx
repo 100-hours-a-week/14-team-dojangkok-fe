@@ -61,7 +61,7 @@ export default function ChatRoomPage() {
     messages,
     roomDetail,
     isLoading,
-    hasMore,
+    isFetchingMore,
     sendText,
     retryMessage,
     cancelMessage,
@@ -155,7 +155,7 @@ export default function ChatRoomPage() {
           <div className={styles.messages}>
             {/* 위로 스크롤 감지 센티넬 */}
             <div ref={topSentinelRef} style={{ height: 1 }} />
-            {hasMore && (
+            {isFetchingMore && (
               <div
                 style={{
                   textAlign: 'center',

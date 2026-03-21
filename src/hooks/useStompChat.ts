@@ -26,6 +26,7 @@ interface UseStompChatResult {
   roomDetail: ChatRoom | null;
   isLoading: boolean;
   hasMore: boolean;
+  isFetchingMore: boolean;
   loadMore: () => void;
   sendText: (text: string) => void;
   retryMessage: (localId: string) => void;
@@ -55,6 +56,7 @@ export function useStompChat(
   const [roomDetail, setRoomDetail] = useState<ChatRoom | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   const clientRef = useRef<Client | null>(null);
@@ -73,6 +75,7 @@ export function useStompChat(
   const loadMore = useCallback(async () => {
     if (!hasMore || isFetchingMoreRef.current || !nextCursor) return;
     isFetchingMoreRef.current = true;
+    setIsFetchingMore(true);
 
     const scrollContainer = scrollContainerRef.current;
     const prevScrollHeight = scrollContainer?.scrollHeight ?? 0;
@@ -99,6 +102,7 @@ export function useStompChat(
       // 실패 시 무시
     } finally {
       isFetchingMoreRef.current = false;
+      setIsFetchingMore(false);
     }
   }, [hasMore, nextCursor, roomId]);
 
@@ -149,22 +153,29 @@ export function useStompChat(
   }, [isLoading, messages.length]);
 
   // 새 메시지 수신 후 최하단 스크롤 (이전 메시지 로드 시는 제외)
-  const lastMessageId = messages[messages.length - 1]?.messageId;
-  const lastLocalId = messages[messages.length - 1]?.localId;
-  const lastMsgKey = lastMessageId || lastLocalId;
+  const lastMsg = messages[messages.length - 1];
+  const lastMsgKey = lastMsg?.messageId || lastMsg?.localId;
+  const isLastMsgMine = lastMsg?.mine ?? false;
   const prevLastMsgKeyRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     if (!initialScrollDone.current) return;
     if (lastMsgKey && lastMsgKey !== prevLastMsgKeyRef.current) {
       prevLastMsgKeyRef.current = lastMsgKey;
-      // 마지막 메시지가 새로 추가된 경우만 스크롤
       if (messages.length > prevLengthRef.current) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        const container = scrollContainerRef.current;
+        const nearBottom =
+          !container ||
+          container.scrollHeight - container.scrollTop - container.clientHeight <=
+            100;
+        // 내 메시지이거나, 하단 100px 이내에 있을 때만 자동 스크롤
+        if (isLastMsgMine || nearBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
       }
     }
     prevLengthRef.current = messages.length;
-  }, [lastMsgKey, messages.length]);
+  }, [lastMsgKey, messages.length, isLastMsgMine]);
 
   // STOMP 연결
   useEffect(() => {
@@ -241,12 +252,28 @@ export function useStompChat(
     const isMine = event.senderId === myUserId;
 
     if (isMine) {
-      // 에코: localId 있는 미확정 메시지에 messageId 업데이트
+      // 에코: 텍스트 내용으로 먼저 매칭, 없으면 첫 번째 미확정 메시지에 messageId 업데이트
       setMessages((prev) => {
-        const idx = prev.findIndex((m) => m.localId && !m.messageId);
-        if (idx === -1) {
-          return prev;
+        const echoText =
+          event.contentType === 'TEXT'
+            ? (event.content as TextContent).text
+            : null;
+
+        let idx = -1;
+        if (echoText !== null) {
+          idx = prev.findIndex(
+            (m) =>
+              m.localId &&
+              !m.messageId &&
+              m.contentType === 'TEXT' &&
+              (m.content as TextContent).text === echoText
+          );
         }
+        if (idx === -1) {
+          idx = prev.findIndex((m) => m.localId && !m.messageId);
+        }
+        if (idx === -1) return prev;
+
         const updated = [...prev];
         updated[idx] = {
           ...updated[idx],
@@ -315,13 +342,15 @@ export function useStompChat(
       setMessages((prev) => [...prev, optimistic]);
 
       if (!clientRef.current?.connected) {
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           setMessages((prev) =>
             prev.map((m) =>
               m.localId === localId ? { ...m, isFailed: true } : m
             )
           );
+          pendingRef.current.delete(localId);
         }, SEND_TIMEOUT_MS);
+        pendingRef.current.set(localId, timer);
         return;
       }
 
@@ -368,6 +397,7 @@ export function useStompChat(
     roomDetail,
     isLoading,
     hasMore,
+    isFetchingMore,
     loadMore,
     sendText,
     retryMessage,
