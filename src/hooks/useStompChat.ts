@@ -166,7 +166,9 @@ export function useStompChat(
         const container = scrollContainerRef.current;
         const nearBottom =
           !container ||
-          container.scrollHeight - container.scrollTop - container.clientHeight <=
+          container.scrollHeight -
+            container.scrollTop -
+            container.clientHeight <=
             100;
         // 내 메시지이거나, 하단 100px 이내에 있을 때만 자동 스크롤
         if (isLastMsgMine || nearBottom) {
