@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   ReactNode,
 } from 'react';
 import { EasyContractStatus } from '@/types/contract';
@@ -33,7 +34,7 @@ const initialState: AnalysisState = {
 
 function loadFromStorage(): AnalysisState {
   try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
   return initialState;
@@ -42,9 +43,9 @@ function loadFromStorage(): AnalysisState {
 function saveToStorage(state: AnalysisState) {
   try {
     if (state.status === null) {
-      sessionStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY);
     } else {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
   } catch {}
 }
@@ -56,6 +57,18 @@ const AnalysisContext = createContext<AnalysisContextType | undefined>(
 export function AnalysisProvider({ children }: { children: ReactNode }) {
   const [analysisState, setAnalysisState] =
     useState<AnalysisState>(loadFromStorage);
+
+  // 다른 탭에서 localStorage 변경 시 React 상태 동기화
+  // (탭 A에서 startAnalysis → 탭 B가 SSE 이벤트 수신해도 easyContractId 인식 가능)
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== STORAGE_KEY) return;
+      const next = e.newValue ? JSON.parse(e.newValue) : initialState;
+      setAnalysisState(next);
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const updateState = useCallback((state: AnalysisState) => {
     saveToStorage(state);

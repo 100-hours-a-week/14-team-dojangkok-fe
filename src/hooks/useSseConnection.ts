@@ -7,6 +7,8 @@ import { ensureValidToken } from '@/lib/api/client';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
+const LAST_EVENT_ID_STORAGE_KEY = 'sse_last_event_id';
+
 export interface SseEvent {
   name: string;
   data: string;
@@ -37,8 +39,8 @@ export function useSseConnection(
   isAuthenticated: boolean,
   onEvent: (event: SseEvent) => void
 ) {
-  const lastEventIdRef = useRef<string | null>(null);
   const onEventRef = useRef(onEvent);
+  const lastEventIdRef = useRef<string | null>(null); // 폴백 모드 전용
 
   useEffect(() => {
     onEventRef.current = onEvent;
@@ -47,6 +49,56 @@ export function useSseConnection(
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    // ─── SharedWorker 지원 환경 ───────────────────────────────
+    if (typeof SharedWorker !== 'undefined') {
+      const worker = new SharedWorker('/sse.worker.js');
+      const port = worker.port;
+
+      async function init() {
+        const hasToken = await ensureValidToken();
+        if (!hasToken) return;
+
+        const tok = tokenStorage.getAccessToken();
+        if (!tok) return;
+
+        const lastEventId = localStorage.getItem(LAST_EVENT_ID_STORAGE_KEY);
+        port.postMessage({
+          type: 'INIT',
+          token: tok,
+          apiBaseUrl: API_BASE_URL,
+          ...(lastEventId ? { lastEventId } : {}),
+        });
+      }
+
+      port.onmessage = async (e: MessageEvent) => {
+        const { type, ...data } = e.data as {
+          type: string;
+          [k: string]: unknown;
+        };
+
+        if (type === 'SSE_EVENT') {
+          onEventRef.current(data.event as SseEvent);
+        } else if (type === 'LAST_EVENT_ID') {
+          localStorage.setItem(LAST_EVENT_ID_STORAGE_KEY, data.id as string);
+        } else if (type === 'REQUEST_TOKEN') {
+          const hasToken = await ensureValidToken();
+          if (!hasToken) return;
+          const tok = tokenStorage.getAccessToken();
+          if (tok) {
+            port.postMessage({ type: 'UPDATE_TOKEN', token: tok });
+          }
+        }
+      };
+
+      port.start();
+      init();
+
+      return () => {
+        port.close();
+      };
+    }
+
+    // ─── 폴백: 기존 fetch 방식 (iOS Safari 등 SharedWorker 미지원) ──
     let active = true;
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -62,11 +114,11 @@ export function useSseConnection(
       const hasToken = await ensureValidToken();
       if (!hasToken || !active) return;
 
-      const token = tokenStorage.getAccessToken();
-      if (!token) return;
+      const tok = tokenStorage.getAccessToken();
+      if (!tok) return;
 
       const headers: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${tok}`,
         Accept: 'text/event-stream',
       };
 
