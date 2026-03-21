@@ -67,6 +67,7 @@ export default function ChatRoomPage() {
     cancelMessage,
     messagesEndRef,
     topSentinelRef,
+    scrollContainerRef,
   } = useStompChat(roomId, myUserId);
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
@@ -137,7 +138,7 @@ export default function ChatRoomPage() {
 
       {!isLoading && <PropertyChatCard {...propertyInfo} />}
 
-      <main className={styles.main}>
+      <main className={styles.main} ref={scrollContainerRef}>
         {isLoading ? (
           <div
             style={{

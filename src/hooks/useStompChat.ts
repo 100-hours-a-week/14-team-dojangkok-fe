@@ -32,6 +32,7 @@ interface UseStompChatResult {
   cancelMessage: (localId: string) => void;
   messagesEndRef: RefObject<HTMLDivElement | null>;
   topSentinelRef: RefObject<HTMLDivElement | null>;
+  scrollContainerRef: RefObject<HTMLDivElement | null>;
 }
 
 function sortByCreatedAt(msgs: ChatMessage[]): ChatMessage[] {
@@ -62,6 +63,7 @@ export function useStompChat(
   );
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const partnerLastReadAtRef = useRef<string | null>(null);
   const isFetchingMoreRef = useRef(false);
   const initialScrollDone = useRef(false);
@@ -72,7 +74,7 @@ export function useStompChat(
     if (!hasMore || isFetchingMoreRef.current || !nextCursor) return;
     isFetchingMoreRef.current = true;
 
-    const scrollContainer = topSentinelRef.current?.parentElement;
+    const scrollContainer = scrollContainerRef.current;
     const prevScrollHeight = scrollContainer?.scrollHeight ?? 0;
 
     try {
@@ -86,7 +88,7 @@ export function useStompChat(
       setHasMore(data.hasNext);
       setNextCursor(data.nextCursor);
 
-      // 스크롤 위치 보정
+      // 스크롤 위치 보정 (이전 메시지 로드 후 현재 보던 위치 유지)
       requestAnimationFrame(() => {
         if (scrollContainer) {
           scrollContainer.scrollTop =
@@ -372,5 +374,6 @@ export function useStompChat(
     cancelMessage,
     messagesEndRef,
     topSentinelRef,
+    scrollContainerRef,
   };
 }
