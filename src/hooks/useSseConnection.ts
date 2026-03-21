@@ -71,7 +71,10 @@ export function useSseConnection(
       }
 
       port.onmessage = async (e: MessageEvent) => {
-        const { type, ...data } = e.data as { type: string; [k: string]: unknown };
+        const { type, ...data } = e.data as {
+          type: string;
+          [k: string]: unknown;
+        };
 
         if (type === 'SSE_EVENT') {
           onEventRef.current(data.event as SseEvent);
