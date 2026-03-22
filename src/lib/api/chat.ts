@@ -229,9 +229,10 @@ export async function streamAiChat(
 
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed) continue;
+      if (!trimmed || !trimmed.startsWith('data:')) continue;
+      const jsonStr = trimmed.slice('data:'.length).trim();
       try {
-        const parsed = JSON.parse(trimmed);
+        const parsed = JSON.parse(jsonStr);
         if (parsed.done) {
           onDone();
           return;
