@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 
 type RightButtonProps =
@@ -31,11 +32,16 @@ export default function Header({
   onRightClick,
   rightIconColor,
 }: HeaderProps) {
+  const router = useRouter();
+
   return (
     <header className={styles.header}>
       <div className={styles.leftArea}>
         {showBackButton && (
-          <button className={styles.backButton} onClick={onBackClick}>
+          <button
+            className={styles.backButton}
+            onClick={onBackClick ?? (() => router.back())}
+          >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
         )}

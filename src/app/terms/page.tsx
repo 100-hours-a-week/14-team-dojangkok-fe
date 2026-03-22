@@ -1,19 +1,10 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import styles from './Terms.module.css';
 
 export default function TermsPage() {
-  const router = useRouter();
-
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <div className={styles.container}>
-      <Header title="이용약관" showBackButton={true} onBackClick={handleBack} />
+      <Header title="이용약관" showBackButton={true} />
       <main className={styles.content}>
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>제1조 (목적)</h2>

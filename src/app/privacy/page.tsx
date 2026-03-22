@@ -1,23 +1,10 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import styles from './Privacy.module.css';
 
 export default function PrivacyPage() {
-  const router = useRouter();
-
-  const handleBack = () => {
-    router.back();
-  };
-
   return (
     <div className={styles.container}>
-      <Header
-        title="개인정보 처리방침"
-        showBackButton={true}
-        onBackClick={handleBack}
-      />
+      <Header title="개인정보 처리방침" showBackButton={true} />
       <main className={styles.content}>
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>
