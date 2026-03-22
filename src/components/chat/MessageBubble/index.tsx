@@ -5,12 +5,17 @@ import styles from './MessageBubble.module.css';
 
 interface MessageBubbleProps {
   content: string;
+  children?: React.ReactNode;
+  imageUrl?: string;
+  mediaType?: 'IMAGE' | 'VIDEO';
+  onImageClick?: () => void;
   isMine: boolean;
   time: string;
   showTime?: boolean;
   showAvatar?: boolean;
   senderNickname?: string;
   senderProfileImageUrl?: string | null;
+  avatarIcon?: string;
   isRead?: boolean;
   isFailed?: boolean;
   onRetry?: () => void;
@@ -19,12 +24,17 @@ interface MessageBubbleProps {
 
 export default function MessageBubble({
   content,
+  children,
+  imageUrl,
+  mediaType,
+  onImageClick,
   isMine,
   time,
   showTime = true,
   showAvatar = false,
   senderNickname,
   senderProfileImageUrl,
+  avatarIcon,
   isRead,
   isFailed,
   onRetry,
@@ -48,7 +58,9 @@ export default function MessageBubble({
               />
             ) : (
               <div className={styles.avatarFallback}>
-                <span className="material-symbols-outlined">person</span>
+                <span className="material-symbols-outlined">
+                  {avatarIcon ?? 'person'}
+                </span>
               </div>
             ))}
         </div>
@@ -64,9 +76,37 @@ export default function MessageBubble({
           className={`${styles.row} ${isMine ? styles.mine : styles.opponent}`}
         >
           <div
-            className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOpponent} ${isFailed ? styles.bubbleFailed : ''}`}
+            className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOpponent} ${isFailed ? styles.bubbleFailed : ''} ${imageUrl ? styles.bubbleImage : ''} ${children !== undefined && !imageUrl ? styles.bubbleMarkdown : ''}`}
           >
-            {content}
+            {imageUrl && mediaType === 'VIDEO' ? (
+              <div
+                className={styles.videoWrapper}
+                onClick={onImageClick}
+                style={onImageClick ? { cursor: 'pointer' } : undefined}
+              >
+                <video
+                  src={imageUrl}
+                  className={styles.image}
+                  preload="metadata"
+                />
+                <div className={styles.playIcon}>
+                  <span className="material-symbols-outlined">play_circle</span>
+                </div>
+              </div>
+            ) : imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imageUrl}
+                alt="이미지"
+                className={styles.image}
+                onClick={onImageClick}
+                style={onImageClick ? { cursor: 'pointer' } : undefined}
+              />
+            ) : children !== undefined ? (
+              children
+            ) : (
+              content
+            )}
           </div>
           {showTime && (
             <div className={styles.meta}>

@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import Header from '@/components/common/Header';
 import MessageInput from '@/components/chat/MessageInput';
 import DateDivider from '@/components/chat/DateDivider';
+import MessageBubble from '@/components/chat/MessageBubble';
 import {
   streamAiChat,
   createOrGetAiChatRoom,
@@ -31,12 +32,17 @@ function apiMsgToAiMessage(msg: AiChatMessage): AiMessage {
   };
 }
 
+function sortByCreatedAt(msgs: AiMessage[]): AiMessage[] {
+  return [...msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
 export default function AiChatPage() {
   const router = useRouter();
   const params = useParams();
   const contractId = params.contractId as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const roomIdRef = useRef<string | null>(null);
   const isFetchingMoreRef = useRef(false);
@@ -46,6 +52,7 @@ export default function AiChatPage() {
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
@@ -59,13 +66,16 @@ export default function AiChatPage() {
     )
       return;
     isFetchingMoreRef.current = true;
+    setIsFetchingMore(true);
 
-    const scrollContainer = topSentinelRef.current?.parentElement;
+    const scrollContainer = scrollContainerRef.current;
     const prevScrollHeight = scrollContainer?.scrollHeight ?? 0;
 
     try {
       const data = await getAiChatMessages(roomIdRef.current, nextCursor);
-      setMessages((prev) => [...data.messages.map(apiMsgToAiMessage), ...prev]);
+      setMessages((prev) =>
+        sortByCreatedAt([...data.messages.map(apiMsgToAiMessage), ...prev])
+      );
       setHasMore(data.hasNext);
       setNextCursor(data.nextCursor);
 
@@ -79,6 +89,7 @@ export default function AiChatPage() {
       // 에러 무시
     } finally {
       isFetchingMoreRef.current = false;
+      setIsFetchingMore(false);
     }
   }, [hasMore, nextCursor]);
 
@@ -94,7 +105,7 @@ export default function AiChatPage() {
 
         const data = await getAiChatMessages(room.roomId);
         if (cancelled) return;
-        setMessages(data.messages.map(apiMsgToAiMessage));
+        setMessages(sortByCreatedAt(data.messages.map(apiMsgToAiMessage)));
         setHasMore(data.hasNext);
         setNextCursor(data.nextCursor);
       } catch {
@@ -118,9 +129,9 @@ export default function AiChatPage() {
     }
   }, [isLoading, messages.length]);
 
-  // 새 메시지/스트리밍 시 최하단 스크롤
+  // 스트리밍 중 최하단 스크롤
   useEffect(() => {
-    if (initialScrollDone.current) {
+    if (initialScrollDone.current && streamingContent) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [streamingContent]);
@@ -163,6 +174,9 @@ export default function AiChatPage() {
       createdAt: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    });
     setIsStreaming(true);
     setStreamingContent('');
 
@@ -221,7 +235,7 @@ export default function AiChatPage() {
         onBackClick={() => router.back()}
       />
 
-      <main className={styles.main}>
+      <main className={styles.main} ref={scrollContainerRef}>
         {isLoading ? (
           <div className={styles.empty}>
             <p>불러오는 중...</p>
@@ -233,9 +247,15 @@ export default function AiChatPage() {
           </div>
         ) : (
           <div className={styles.messages}>
-            <div ref={topSentinelRef} />
+            <div ref={topSentinelRef} style={{ height: 1 }} />
+            {isFetchingMore && (
+              <div className={styles.fetchingMore}>이전 메시지 로딩 중...</div>
+            )}
+
             {messages.map((msg, idx) => {
               const prevMsg = messages[idx - 1];
+              const nextMsg = messages[idx + 1];
+
               const showDate =
                 idx === 0 ||
                 new Date(msg.createdAt).toDateString() !==
@@ -245,60 +265,74 @@ export default function AiChatPage() {
                 hour: '2-digit',
                 minute: '2-digit',
               });
+              const nextTime = nextMsg
+                ? new Date(nextMsg.createdAt).toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
+                : null;
+              const showTime =
+                !nextMsg || nextMsg.role !== msg.role || nextTime !== time;
+
+              const showAvatar =
+                msg.role === 'ASSISTANT' &&
+                (!prevMsg || prevMsg.role !== 'ASSISTANT' || showDate);
+
+              const dateStr = new Date(msg.createdAt).toLocaleDateString(
+                'ko-KR',
+                { year: 'numeric', month: 'long', day: 'numeric' }
+              );
 
               return (
                 <div key={msg.messageId}>
-                  {showDate && (
-                    <DateDivider
-                      date={new Date(msg.createdAt).toLocaleDateString(
-                        'ko-KR',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        }
-                      )}
-                    />
-                  )}
-                  {msg.role === 'USER' ? (
-                    <div className={styles.userMessage}>
-                      <div className={styles.userBubble}>{msg.content}</div>
-                      <span className={styles.time}>{time}</span>
-                    </div>
-                  ) : (
-                    <div className={styles.aiBubbleWrapper}>
-                      <div className={styles.aiAvatar}>
-                        <span className="material-symbols-outlined">
-                          smart_toy
-                        </span>
-                      </div>
-                      <div className={styles.aiContent}>
-                        <div className={styles.aiBubble}>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {msg.content}
-                          </ReactMarkdown>
-                        </div>
-                        <span className={styles.time}>{time}</span>
-                      </div>
-                    </div>
-                  )}
+                  {showDate && <DateDivider date={dateStr} />}
+                  <MessageBubble
+                    content={msg.content}
+                    isMine={msg.role === 'USER'}
+                    time={time}
+                    showTime={showTime}
+                    showAvatar={showAvatar}
+                    senderNickname={
+                      msg.role === 'ASSISTANT' ? 'AI 챗봇' : undefined
+                    }
+                    senderProfileImageUrl={
+                      msg.role === 'ASSISTANT' ? null : undefined
+                    }
+                    avatarIcon={
+                      msg.role === 'ASSISTANT' ? 'smart_toy' : undefined
+                    }
+                  >
+                    {msg.role === 'ASSISTANT' ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                      </ReactMarkdown>
+                    ) : undefined}
+                  </MessageBubble>
                 </div>
               );
             })}
 
             {/* 스트리밍 중인 AI 응답 */}
             {(isStreaming || streamingContent) && (
-              <div className={styles.aiBubbleWrapper}>
-                <div className={styles.aiAvatar}>
-                  <span className="material-symbols-outlined">smart_toy</span>
-                </div>
-                <div className={styles.aiContent}>
-                  <div className={styles.aiBubble}>
-                    {streamingContent}
-                    {isStreaming && <span className={styles.cursor} />}
-                  </div>
-                </div>
-              </div>
+              <MessageBubble
+                content=""
+                isMine={false}
+                time={new Date().toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+                showTime={false}
+                showAvatar={
+                  messages.length === 0 ||
+                  messages[messages.length - 1].role === 'USER'
+                }
+                senderNickname="AI 챗봇"
+                senderProfileImageUrl={null}
+                avatarIcon="smart_toy"
+              >
+                {streamingContent}
+                {isStreaming && <span className={styles.cursor} />}
+              </MessageBubble>
             )}
           </div>
         )}

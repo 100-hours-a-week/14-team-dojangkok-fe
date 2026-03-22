@@ -102,7 +102,7 @@ export async function getPresignedUrls(
     data: PresignedResponse;
   }>(`${CHAT_API_BASE_URL}/chat/v3/direct-chat/files/presigned-urls`, {
     method: 'POST',
-    body: JSON.stringify({ roomId, files: fileItems }),
+    body: JSON.stringify({ roomId, fileItems }),
     requiresAuth: true,
   });
   return res.data;

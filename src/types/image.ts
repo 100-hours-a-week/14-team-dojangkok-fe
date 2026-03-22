@@ -3,4 +3,5 @@ export interface ImageItem {
   url: string;
   file?: File;
   fileAssetId?: number;
+  contentType?: 'IMAGE' | 'VIDEO';
 }

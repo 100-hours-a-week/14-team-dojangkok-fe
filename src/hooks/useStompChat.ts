@@ -4,7 +4,12 @@ import { useState, useEffect, useRef, useCallback, RefObject } from 'react';
 import { Client } from '@stomp/stompjs';
 import { ensureValidToken } from '@/lib/api/client';
 import { tokenStorage } from '@/lib/auth/tokenStorage';
-import { getChatRoomDetail, getChatMessages } from '@/lib/api/chat';
+import {
+  getChatRoomDetail,
+  getChatMessages,
+  getPresignedUrls,
+  completeUpload,
+} from '@/lib/api/chat';
 import {
   createStompClient,
   getWsUrl,
@@ -17,9 +22,19 @@ import type {
   StompMessageEvent,
   StompReadEvent,
   TextContent,
+  ImageContent,
+  VideoContent,
 } from '@/types/chat';
 
 const SEND_TIMEOUT_MS = 5000;
+const VIDEO_EXTENSIONS =
+  /\.(mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv|ts|mts|m2ts|ogv)$/i;
+
+function isVideoFile(file: File): boolean {
+  if (file.type.startsWith('video/')) return true;
+  if (!file.type) return VIDEO_EXTENSIONS.test(file.name);
+  return false;
+}
 
 interface UseStompChatResult {
   messages: ChatMessage[];
@@ -29,6 +44,7 @@ interface UseStompChatResult {
   isFetchingMore: boolean;
   loadMore: () => void;
   sendText: (text: string) => void;
+  sendImages: (files: File[]) => void;
   retryMessage: (localId: string) => void;
   cancelMessage: (localId: string) => void;
   messagesEndRef: RefObject<HTMLDivElement | null>;
@@ -38,6 +54,35 @@ interface UseStompChatResult {
 
 function sortByCreatedAt(msgs: ChatMessage[]): ChatMessage[] {
   return [...msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+function getImageDimensions(
+  url: string
+): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () =>
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => resolve({ width: 0, height: 0 });
+    img.src = url;
+  });
+}
+
+function getVideoMeta(
+  url: string
+): Promise<{ width: number; height: number; duration: number }> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () =>
+      resolve({
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: video.duration,
+      });
+    video.onerror = () => resolve({ width: 0, height: 0, duration: 0 });
+    video.src = url;
+  });
 }
 
 function calcIsRead(
@@ -63,6 +108,7 @@ export function useStompChat(
   const pendingRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map()
   );
+  const fileMapRef = useRef<Map<string, File>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const topSentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -374,15 +420,200 @@ export function useStompChat(
     [roomId, myUserId]
   );
 
+  const sendImages = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+
+      const groupId =
+        files.length > 1 ? `group-${Date.now()}-${Math.random()}` : null;
+
+      // 1. 낙관적 메시지 + blob URL 생성
+      const items = files.map((file) => {
+        const localId = `local-${Date.now()}-${Math.random()}`;
+        const localUrl = URL.createObjectURL(file);
+        const isVideo = isVideoFile(file);
+        const optimistic: ChatMessage = {
+          messageId: '',
+          roomId,
+          senderId: myUserId,
+          mine: true,
+          contentType: isVideo ? 'VIDEO' : 'IMAGE',
+          content: isVideo
+            ? ({
+                url: localUrl,
+                thumbnailUrl: localUrl,
+                duration: 0,
+                width: 0,
+                height: 0,
+                size: file.size,
+              } as VideoContent)
+            : ({
+                url: localUrl,
+                thumbnailUrl: localUrl,
+                width: 0,
+                height: 0,
+                size: file.size,
+              } as ImageContent),
+          groupId,
+          createdAt: new Date().toISOString(),
+          localId,
+          isRead: false,
+          isFailed: false,
+        };
+        fileMapRef.current.set(localId, file);
+        return { file, localId, localUrl, optimistic, isVideo };
+      });
+
+      setMessages((prev) => [...prev, ...items.map((i) => i.optimistic)]);
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      try {
+        // 2. dimensions + presigned URL 병렬 처리
+        const [metaList, { fileItems: presignedFiles }] = await Promise.all([
+          Promise.all(
+            items.map((i) =>
+              i.isVideo
+                ? getVideoMeta(i.localUrl)
+                : getImageDimensions(i.localUrl).then((d) => ({
+                    ...d,
+                    duration: 0,
+                  }))
+            )
+          ),
+          getPresignedUrls(
+            roomId,
+            items.map((i) => ({
+              fileType: i.isVideo ? ('VIDEO' as const) : ('IMAGE' as const),
+              fileName: i.file.name,
+              contentType: i.file.type,
+              sizeBytes: i.file.size,
+            }))
+          ),
+        ]);
+
+        // 3. S3 업로드 병렬 처리
+        const uploadResults = await Promise.all(
+          items.map(async (item, idx) => {
+            const res = await fetch(presignedFiles[idx].presignedUrl, {
+              method: 'PUT',
+              body: item.file,
+              headers: { 'Content-Type': item.file.type },
+            });
+            if (!res.ok) throw new Error(`S3 upload failed: ${item.file.name}`);
+            return presignedFiles[idx].fileAssetId;
+          })
+        );
+
+        // 4. complete 한 번에 처리
+        const { fileItems: completedFiles } =
+          await completeUpload(uploadResults);
+
+        if (!clientRef.current?.connected) throw new Error('Not connected');
+
+        // 5. STOMP 전송 + 낙관적 메시지 URL 업데이트
+        items.forEach((item, idx) => {
+          const finalUrl = completedFiles[idx].presignedUrl;
+          const meta = metaList[idx];
+
+          const stompBody = item.isVideo
+            ? {
+                roomId,
+                contentType: 'VIDEO',
+                ...(groupId ? { groupId } : {}),
+                url: finalUrl,
+                width: meta.width,
+                height: meta.height,
+                duration: meta.duration,
+                size: item.file.size,
+              }
+            : {
+                roomId,
+                contentType: 'IMAGE',
+                ...(groupId ? { groupId } : {}),
+                url: finalUrl,
+                width: meta.width,
+                height: meta.height,
+                size: item.file.size,
+              };
+
+          clientRef.current!.publish({
+            destination: '/app/chat.send',
+            body: JSON.stringify(stompBody),
+          });
+
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.localId !== item.localId) return m;
+              if (item.isVideo) {
+                return {
+                  ...m,
+                  content: {
+                    ...(m.content as VideoContent),
+                    url: finalUrl,
+                    thumbnailUrl: finalUrl,
+                    width: meta.width,
+                    height: meta.height,
+                    duration: meta.duration,
+                  },
+                  isFailed: false,
+                };
+              }
+              return {
+                ...m,
+                content: {
+                  ...(m.content as ImageContent),
+                  url: finalUrl,
+                  thumbnailUrl: finalUrl,
+                  width: meta.width,
+                  height: meta.height,
+                },
+                isFailed: false,
+              };
+            })
+          );
+
+          URL.revokeObjectURL(item.localUrl);
+          fileMapRef.current.delete(item.localId);
+        });
+
+        requestAnimationFrame(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        });
+      } catch {
+        items.forEach((item) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.localId === item.localId ? { ...m, isFailed: true } : m
+            )
+          );
+          URL.revokeObjectURL(item.localUrl);
+        });
+      }
+    },
+    [roomId, myUserId]
+  );
+
   const retryMessage = useCallback(
     (localId: string) => {
       const msg = messages.find((m) => m.localId === localId);
       if (!msg) return;
-      const text = (msg.content as TextContent).text;
+
       setMessages((prev) => prev.filter((m) => m.localId !== localId));
-      sendText(text);
+
+      if (msg.contentType === 'IMAGE' || msg.contentType === 'VIDEO') {
+        const file = fileMapRef.current.get(localId);
+        if (file) {
+          fileMapRef.current.delete(localId);
+          sendImages([file]);
+        }
+      } else {
+        const text = (msg.content as TextContent).text;
+        sendText(text);
+      }
     },
-    [messages, sendText]
+    [messages, sendText, sendImages]
   );
 
   const cancelMessage = useCallback((localId: string) => {
@@ -402,6 +633,7 @@ export function useStompChat(
     isFetchingMore,
     loadMore,
     sendText,
+    sendImages,
     retryMessage,
     cancelMessage,
     messagesEndRef,

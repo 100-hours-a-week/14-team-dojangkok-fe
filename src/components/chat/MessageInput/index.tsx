@@ -7,7 +7,7 @@ interface MessageInputProps {
   onSend: (text: string) => void;
   disabled?: boolean;
   showAttachment?: boolean;
-  onAttach?: (file: File) => void;
+  onAttach?: (files: File[]) => void;
   placeholder?: string;
 }
 
@@ -49,9 +49,9 @@ export default function MessageInput({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && onAttach) {
-      onAttach(file);
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length > 0 && onAttach) {
+      onAttach(files);
     }
     e.target.value = '';
   };
@@ -72,6 +72,7 @@ export default function MessageInput({
             ref={fileInputRef}
             type="file"
             accept="image/*,video/*"
+            multiple
             className={styles.hiddenInput}
             onChange={handleFileChange}
           />

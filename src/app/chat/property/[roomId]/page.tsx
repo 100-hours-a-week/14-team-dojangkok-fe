@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useParams } from 'next/navigation';
 import Header from '@/components/common/Header';
 import ActionSheet, {
@@ -11,19 +12,72 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import PropertyChatCard from '@/components/chat/PropertyChatCard';
 import MessageBubble from '@/components/chat/MessageBubble';
+import ImageGroupBubble from '@/components/chat/ImageGroupBubble';
 import DateDivider from '@/components/chat/DateDivider';
 import MessageInput from '@/components/chat/MessageInput';
 import { useStompChat } from '@/hooks/useStompChat';
-import type { TextContent, ImageContent, VideoContent } from '@/types/chat';
+import type {
+  ChatMessage,
+  TextContent,
+  ImageContent,
+  VideoContent,
+} from '@/types/chat';
+import type { ImageItem as ViewerImageItem } from '@/types/image';
 import styles from './page.module.css';
+
+const ImageViewerModal = dynamic(
+  () => import('@/components/common/ImageViewerModal'),
+  { ssr: false }
+);
+
+type RenderSingle = { kind: 'single'; msg: ChatMessage; idx: number };
+type RenderGroup = {
+  kind: 'group';
+  msgs: ChatMessage[];
+  indices: number[];
+};
+type RenderItem = RenderSingle | RenderGroup;
+
+function buildRenderItems(messages: ChatMessage[]): RenderItem[] {
+  const items: RenderItem[] = [];
+  let i = 0;
+  while (i < messages.length) {
+    const msg = messages[i];
+    if (
+      msg.groupId &&
+      (msg.contentType === 'IMAGE' || msg.contentType === 'VIDEO')
+    ) {
+      const groupMsgs = [msg];
+      const groupIndices = [i];
+      let j = i + 1;
+      while (
+        j < messages.length &&
+        messages[j].groupId === msg.groupId &&
+        (messages[j].contentType === 'IMAGE' ||
+          messages[j].contentType === 'VIDEO')
+      ) {
+        groupMsgs.push(messages[j]);
+        groupIndices.push(j);
+        j++;
+      }
+      if (groupMsgs.length > 1) {
+        items.push({ kind: 'group', msgs: groupMsgs, indices: groupIndices });
+        i = j;
+        continue;
+      }
+    }
+    items.push({ kind: 'single', msg, idx: i });
+    i++;
+  }
+  return items;
+}
 
 function getMessageText(
   contentType: string,
   content: TextContent | ImageContent | VideoContent
 ): string {
   if (contentType === 'TEXT') return (content as TextContent).text;
-  if (contentType === 'IMAGE') return '[이미지]';
-  if (contentType === 'VIDEO') return '[동영상]';
+  if (contentType === 'IMAGE' || contentType === 'VIDEO') return '';
   return '';
 }
 
@@ -63,6 +117,7 @@ export default function ChatRoomPage() {
     isLoading,
     isFetchingMore,
     sendText,
+    sendImages,
     retryMessage,
     cancelMessage,
     messagesEndRef,
@@ -72,6 +127,40 @@ export default function ChatRoomPage() {
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [viewerImages, setViewerImages] = useState<ViewerImageItem[]>([]);
+
+  const openSingleViewer = (msg: ChatMessage) => {
+    setViewerImages([
+      {
+        id: msg.localId || msg.messageId,
+        url: (msg.content as ImageContent).url,
+        contentType: msg.contentType as 'IMAGE' | 'VIDEO',
+      },
+    ]);
+    setViewerIndex(0);
+    setViewerOpen(true);
+  };
+
+  const openGroupViewer = (msgs: ChatMessage[], clickedIdx: number) => {
+    const valid = msgs.filter((m) => !m.isFailed);
+    const clickedMsg = msgs[clickedIdx];
+    const idxInValid = valid.findIndex(
+      (m) =>
+        (m.localId || m.messageId) ===
+        (clickedMsg.localId || clickedMsg.messageId)
+    );
+    setViewerImages(
+      valid.map((m) => ({
+        id: m.localId || m.messageId,
+        url: (m.content as ImageContent).url,
+        contentType: m.contentType as 'IMAGE' | 'VIDEO',
+      }))
+    );
+    setViewerIndex(Math.max(0, idxInValid));
+    setViewerOpen(true);
+  };
   const [actionSheetPosition, setActionSheetPosition] = useState({
     top: 0,
     right: 0,
@@ -168,22 +257,32 @@ export default function ChatRoomPage() {
               </div>
             )}
 
-            {messages.map((msg, idx) => {
-              const isMine = msg.mine;
-              const prevMsg = messages[idx - 1];
-              const nextMsg = messages[idx + 1];
+            {buildRenderItems(messages).map((item, renderIdx, arr) => {
+              const prevItem = arr[renderIdx - 1];
+              const nextItem = arr[renderIdx + 1];
+              const prevMsg = prevItem
+                ? prevItem.kind === 'single'
+                  ? prevItem.msg
+                  : prevItem.msgs[prevItem.msgs.length - 1]
+                : undefined;
+              const nextMsg = nextItem
+                ? nextItem.kind === 'single'
+                  ? nextItem.msg
+                  : nextItem.msgs[0]
+                : undefined;
+
+              const firstMsg = item.kind === 'single' ? item.msg : item.msgs[0];
+              const isMine = firstMsg.mine;
 
               const showDate =
-                idx === 0 ||
-                new Date(msg.createdAt).toDateString() !==
+                !prevMsg ||
+                new Date(firstMsg.createdAt).toDateString() !==
                   new Date(prevMsg.createdAt).toDateString();
 
-              const time = new Date(msg.createdAt).toLocaleTimeString('ko-KR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-
-              // 다음 메시지가 같은 발신자 + 같은 분이면 시간 숨김
+              const time = new Date(firstMsg.createdAt).toLocaleTimeString(
+                'ko-KR',
+                { hour: '2-digit', minute: '2-digit' }
+              );
               const nextTime = nextMsg
                 ? new Date(nextMsg.createdAt).toLocaleTimeString('ko-KR', {
                     hour: '2-digit',
@@ -191,30 +290,70 @@ export default function ChatRoomPage() {
                   })
                 : null;
               const showTime =
-                !nextMsg || nextMsg.mine !== msg.mine || nextTime !== time;
-
-              // 상대방 메시지: 이전 메시지가 다른 발신자이면 아바타/닉네임 표시
+                !nextMsg || nextMsg.mine !== isMine || nextTime !== time;
               const showAvatar =
                 !isMine && (!prevMsg || prevMsg.mine || showDate);
 
+              const dateStr = new Date(firstMsg.createdAt).toLocaleDateString(
+                'ko-KR',
+                { year: 'numeric', month: 'long', day: 'numeric' }
+              );
+
+              if (item.kind === 'group') {
+                const isRead = item.indices.includes(lastReadIdx);
+                return (
+                  <div key={item.msgs[0].localId || item.msgs[0].messageId}>
+                    {showDate && <DateDivider date={dateStr} />}
+                    <ImageGroupBubble
+                      images={item.msgs.map((m) => ({
+                        localId: m.localId,
+                        messageId: m.messageId,
+                        url: (m.content as ImageContent).url,
+                        contentType: m.contentType as 'IMAGE' | 'VIDEO',
+                        isFailed: m.isFailed,
+                      }))}
+                      isMine={isMine}
+                      time={time}
+                      showTime={showTime}
+                      showAvatar={showAvatar}
+                      senderNickname={opponentNickname}
+                      senderProfileImageUrl={
+                        roomDetail?.partnerInfo.profileImageUrl ?? null
+                      }
+                      isRead={isRead}
+                      onImageClick={(imgIdx) =>
+                        openGroupViewer(item.msgs, imgIdx)
+                      }
+                      onRetry={(localId) => retryMessage(localId)}
+                      onCancel={(localId) => cancelMessage(localId)}
+                    />
+                  </div>
+                );
+              }
+
+              const { msg, idx } = item;
               const text = getMessageText(msg.contentType, msg.content);
+              const imageUrl =
+                msg.contentType === 'IMAGE' || msg.contentType === 'VIDEO'
+                  ? (msg.content as ImageContent).url
+                  : undefined;
 
               return (
                 <div key={msg.localId || msg.messageId}>
-                  {showDate && (
-                    <DateDivider
-                      date={new Date(msg.createdAt).toLocaleDateString(
-                        'ko-KR',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        }
-                      )}
-                    />
-                  )}
+                  {showDate && <DateDivider date={dateStr} />}
                   <MessageBubble
                     content={text}
+                    imageUrl={imageUrl}
+                    mediaType={
+                      msg.contentType === 'IMAGE' || msg.contentType === 'VIDEO'
+                        ? msg.contentType
+                        : undefined
+                    }
+                    onImageClick={
+                      imageUrl && !msg.isFailed
+                        ? () => openSingleViewer(msg)
+                        : undefined
+                    }
                     isMine={isMine}
                     time={time}
                     showTime={showTime}
@@ -237,11 +376,7 @@ export default function ChatRoomPage() {
       </main>
 
       <div className={styles.inputArea}>
-        <MessageInput
-          onSend={sendText}
-          showAttachment
-          onAttach={(file) => console.log('attach', file)}
-        />
+        <MessageInput onSend={sendText} showAttachment onAttach={sendImages} />
       </div>
 
       <ActionSheet
@@ -249,6 +384,17 @@ export default function ChatRoomPage() {
         onClose={() => setIsActionSheetOpen(false)}
         options={actionSheetOptions}
         position={actionSheetPosition}
+      />
+
+      <ImageViewerModal
+        isOpen={viewerOpen}
+        images={viewerImages}
+        currentIndex={viewerIndex}
+        onClose={() => setViewerOpen(false)}
+        onPrevious={() => setViewerIndex((i) => Math.max(0, i - 1))}
+        onNext={() =>
+          setViewerIndex((i) => Math.min(viewerImages.length - 1, i + 1))
+        }
       />
 
       <Modal
