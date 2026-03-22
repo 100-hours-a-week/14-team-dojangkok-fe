@@ -66,6 +66,7 @@ export default function ImageViewerModal({
     urlLower.includes('/pdf/') ||
     urlLower.includes('.pdf?') ||
     urlLower.endsWith('.pdf');
+  const isVideo = currentItem.contentType === 'VIDEO';
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < images.length - 1;
 
@@ -105,7 +106,14 @@ export default function ImageViewerModal({
         className={styles.imageContainer}
         onClick={(e) => e.stopPropagation()}
       >
-        {isPDF ? (
+        {isVideo ? (
+          <video
+            src={currentItem.url}
+            className={styles.image}
+            controls
+            autoPlay
+          />
+        ) : isPDF ? (
           <div
             style={{
               width: '100%',

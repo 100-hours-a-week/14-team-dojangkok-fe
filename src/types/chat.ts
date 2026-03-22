@@ -107,21 +107,30 @@ export interface ChatMessagesResponse {
 
 // 미디어 업로드 관련
 export interface FileItem {
+  fileType: 'IMAGE' | 'VIDEO';
   fileName: string;
-  fileSize: number;
   contentType: string;
+  sizeBytes: number;
 }
 
 export interface PresignedUrlItem {
   fileAssetId: string;
   presignedUrl: string;
-  fileName: string;
+  fileKey: string;
 }
 
 export interface PresignedResponse {
-  files: PresignedUrlItem[];
+  fileItems: PresignedUrlItem[];
+}
+
+export interface CompleteFileItem {
+  fileAssetId: string;
+  fileKey: string;
+  fileType: string;
+  status: string;
+  presignedUrl: string;
 }
 
 export interface CompleteResponse {
-  fileAssets: { fileAssetId: string; url: string }[];
+  fileItems: CompleteFileItem[];
 }

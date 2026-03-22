@@ -151,3 +151,96 @@
 .cancelButton {
   color: var(--gray-400);
 }
+
+.bubbleMarkdown {
+  white-space: normal;
+}
+
+.bubbleMarkdown :global(p) {
+  margin: 0;
+}
+
+.bubbleMarkdown :global(p + p) {
+  margin-top: 6px;
+}
+
+.bubbleMarkdown :global(ul),
+.bubbleMarkdown :global(ol) {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.bubbleMarkdown :global(li) {
+  margin: 2px 0;
+}
+
+.bubbleMarkdown :global(h1),
+.bubbleMarkdown :global(h2),
+.bubbleMarkdown :global(h3) {
+  font-size: inherit;
+  font-weight: 600;
+  margin: 4px 0 2px;
+}
+
+.bubbleMarkdown :global(code) {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+
+.bubbleMarkdown :global(pre) {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  padding: 8px;
+  overflow-x: auto;
+  margin: 4px 0;
+}
+
+.bubbleMarkdown :global(pre code) {
+  background: none;
+  padding: 0;
+}
+
+.bubbleMarkdown :global(blockquote) {
+  border-left: 3px solid rgba(0, 0, 0, 0.2);
+  margin: 4px 0;
+  padding-left: 8px;
+}
+
+.bubbleImage {
+  padding: 4px;
+}
+
+.image {
+  display: block;
+  width: 200px;
+  height: 200px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.videoWrapper {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 14px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.playIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.playIcon span {
+  font-size: 40px;
+  color: #ffffff;
+}
