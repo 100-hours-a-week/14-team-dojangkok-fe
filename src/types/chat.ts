@@ -93,6 +93,20 @@ export interface StompReadEvent {
 
 export type StompEvent = StompMessageEvent | StompReadEvent;
 
+// SSE 채팅 알림
+export interface ChatNotification {
+  type: 'chat-message';
+  messageId: string;
+  roomId: string;
+  senderId: string;
+  senderNickname: string | null;
+  senderProfileImageUrl: string | null;
+  targetMemberId: number;
+  contentType: ContentType;
+  preview: string;
+  createdAt: string;
+}
+
 // API 응답 래퍼
 export interface ChatRoomsResponse {
   totalCount: number;

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import ChatRoomItem from '@/components/chat/ChatRoomItem';
-import { getChatRooms } from '@/lib/api/chat';
-import type { ChatRoom } from '@/types/chat';
+import { getChatRooms, getChatRoomDetail } from '@/lib/api/chat';
+import { useSseConnection } from '@/hooks/useSseConnection';
+import { useAuth } from '@/contexts/AuthContext';
+import type { ChatRoom, ChatNotification } from '@/types/chat';
 import styles from './page.module.css';
 
 function getLastMessageText(room: ChatRoom): string {
@@ -37,6 +39,7 @@ function formatLastMessageAt(createdAt: string): string {
 
 export default function ChatRoomsPage() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,6 +62,57 @@ export default function ChatRoomsPage() {
       cancelled = true;
     };
   }, []);
+
+  const handleSseEvent = useCallback(
+    async (event: { name: string; data: string }) => {
+      if (event.name !== 'chat-notification') return;
+
+      let notification: ChatNotification;
+      try {
+        notification = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      if (notification.type !== 'chat-message') return;
+
+      const { roomId, contentType, preview, senderId, createdAt } =
+        notification;
+
+      setRooms((prev) => {
+        const existingIndex = prev.findIndex((r) => r.roomId === roomId);
+
+        if (existingIndex !== -1) {
+          const updated = { ...prev[existingIndex] };
+          updated.lastMessage = {
+            content: preview,
+            contentType,
+            senderId,
+            mine: false,
+            createdAt,
+          };
+          updated.unreadCount = updated.unreadCount + 1;
+          const next = [...prev];
+          next.splice(existingIndex, 1);
+          return [updated, ...next];
+        }
+
+        // 새 채팅방 — 비동기로 상세 조회 후 추가
+        getChatRoomDetail(roomId)
+          .then((room) => {
+            setRooms((cur) => {
+              if (cur.some((r) => r.roomId === roomId)) return cur;
+              return [{ ...room, unreadCount: 1 }, ...cur];
+            });
+          })
+          .catch(() => {});
+
+        return prev;
+      });
+    },
+    []
+  );
+
+  useSseConnection(isAuthenticated, handleSseEvent);
 
   return (
     <div className={styles.page}>
