@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/common/Header';
 import ChatRoomItem from '@/components/chat/ChatRoomItem';
 import { getChatRooms, getChatRoomDetail } from '@/lib/api/chat';
-import { useSseConnection } from '@/hooks/useSseConnection';
-import { useAuth } from '@/contexts/AuthContext';
 import type { ChatRoom, ChatNotification } from '@/types/chat';
+import type { SseEvent } from '@/hooks/useSseConnection';
 import styles from './page.module.css';
 
 function getLastMessageText(room: ChatRoom): string {
@@ -39,7 +38,6 @@ function formatLastMessageAt(createdAt: string): string {
 
 export default function ChatRoomsPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,56 +61,58 @@ export default function ChatRoomsPage() {
     };
   }, []);
 
-  const handleSseEvent = useCallback(
-    async (event: { name: string; data: string }) => {
-      if (event.name !== 'chat-notification') return;
+  const handleSseEvent = useCallback(async (event: SseEvent) => {
+    if (event.name !== 'chat-notification') return;
 
-      let notification: ChatNotification;
-      try {
-        notification = JSON.parse(event.data);
-      } catch {
-        return;
+    let notification: ChatNotification;
+    try {
+      notification = JSON.parse(event.data);
+    } catch {
+      return;
+    }
+    if (notification.type !== 'chat-message') return;
+
+    const { roomId, contentType, preview, senderId, createdAt } = notification;
+
+    setRooms((prev) => {
+      const existingIndex = prev.findIndex((r) => r.roomId === roomId);
+
+      if (existingIndex !== -1) {
+        const updated = { ...prev[existingIndex] };
+        updated.lastMessage = {
+          content: preview,
+          contentType,
+          senderId,
+          mine: false,
+          createdAt,
+        };
+        updated.unreadCount = updated.unreadCount + 1;
+        const next = [...prev];
+        next.splice(existingIndex, 1);
+        return [updated, ...next];
       }
-      if (notification.type !== 'chat-message') return;
 
-      const { roomId, contentType, preview, senderId, createdAt } =
-        notification;
+      // 새 채팅방 — 비동기로 상세 조회 후 추가
+      getChatRoomDetail(roomId)
+        .then((room) => {
+          setRooms((cur) => {
+            if (cur.some((r) => r.roomId === roomId)) return cur;
+            return [{ ...room, unreadCount: 1 }, ...cur];
+          });
+        })
+        .catch(() => {});
 
-      setRooms((prev) => {
-        const existingIndex = prev.findIndex((r) => r.roomId === roomId);
+      return prev;
+    });
+  }, []);
 
-        if (existingIndex !== -1) {
-          const updated = { ...prev[existingIndex] };
-          updated.lastMessage = {
-            content: preview,
-            contentType,
-            senderId,
-            mine: false,
-            createdAt,
-          };
-          updated.unreadCount = updated.unreadCount + 1;
-          const next = [...prev];
-          next.splice(existingIndex, 1);
-          return [updated, ...next];
-        }
-
-        // 새 채팅방 — 비동기로 상세 조회 후 추가
-        getChatRoomDetail(roomId)
-          .then((room) => {
-            setRooms((cur) => {
-              if (cur.some((r) => r.roomId === roomId)) return cur;
-              return [{ ...room, unreadCount: 1 }, ...cur];
-            });
-          })
-          .catch(() => {});
-
-        return prev;
-      });
-    },
-    []
-  );
-
-  useSseConnection(isAuthenticated, handleSseEvent);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      handleSseEvent((e as CustomEvent<SseEvent>).detail);
+    };
+    window.addEventListener('sse-event', handler);
+    return () => window.removeEventListener('sse-event', handler);
+  }, [handleSseEvent]);
 
   return (
     <div className={styles.page}>
@@ -138,24 +138,28 @@ export default function ChatRoomsPage() {
           </div>
         ) : (
           <ul className={styles.list}>
-            {rooms.map((room) => (
-              <li key={room.roomId}>
-                <ChatRoomItem
-                  opponentNickname={room.partnerInfo.nickname}
-                  opponentProfileUrl={room.partnerInfo.profileImageUrl}
-                  propertyTitle={room.property?.title ?? '삭제된 매물'}
-                  propertyThumbnailUrl={room.property?.imageUrl ?? null}
-                  lastMessage={getLastMessageText(room)}
-                  lastMessageAt={
-                    room.lastMessage
-                      ? formatLastMessageAt(room.lastMessage.createdAt)
-                      : ''
-                  }
-                  unreadCount={room.unreadCount}
-                  onClick={() => router.push(`/chat/property/${room.roomId}`)}
-                />
-              </li>
-            ))}
+            {rooms
+              .filter((room) => room.partnerInfo)
+              .map((room) => (
+                <li key={room.roomId}>
+                  <ChatRoomItem
+                    opponentNickname={room.partnerInfo?.nickname ?? ''}
+                    opponentProfileUrl={
+                      room.partnerInfo?.profileImageUrl ?? null
+                    }
+                    propertyTitle={room.property?.title ?? '삭제된 매물'}
+                    propertyThumbnailUrl={room.property?.imageUrl ?? null}
+                    lastMessage={getLastMessageText(room)}
+                    lastMessageAt={
+                      room.lastMessage
+                        ? formatLastMessageAt(room.lastMessage.createdAt)
+                        : ''
+                    }
+                    unreadCount={room.unreadCount}
+                    onClick={() => router.push(`/chat/property/${room.roomId}`)}
+                  />
+                </li>
+              ))}
           </ul>
         )}
       </main>

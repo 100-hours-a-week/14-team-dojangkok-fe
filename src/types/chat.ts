@@ -40,7 +40,7 @@ export interface ChatRoom {
     userId: string;
     nickname: string;
     profileImageUrl: string | null;
-  };
+  } | null;
   property: ChatRoomProperty | null;
   lastMessage: {
     content: string;

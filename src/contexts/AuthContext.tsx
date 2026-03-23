@@ -37,6 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleSseEvent = (event: SseEvent) => {
     if (event.name === 'connect') return;
 
+    // 모든 SSE 이벤트를 전역으로 브로드캐스트
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('sse-event', { detail: event }));
+    }
+
     if (event.name === 'easy-contract-result') {
       try {
         const data = JSON.parse(event.data);
