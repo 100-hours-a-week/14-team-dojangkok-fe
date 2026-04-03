@@ -1,0 +1,123 @@
+name: FE CI/CD (V4 EC2)
+
+on:
+  push:
+    branches: [dev]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+concurrency:
+  group: fe-v4-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ECR_REGISTRY: 920624925547.dkr.ecr.ap-northeast-2.amazonaws.com
+  ECR_REPO: dev-dojangkok-fe
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci --ignore-scripts
+      - run: npx prettier --check . || true
+      - run: npm run lint || true
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Download .env from S3
+        run: aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/frontend/v4/dev/.env .env
+
+      - name: Load env vars
+        run: |
+          while IFS= read -r line; do
+            [[ -z "$line" || "$line" == \#* ]] && continue
+            echo "$line" >> $GITHUB_ENV
+          done < .env
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/dev/Dockerfile
+          push: true
+          platforms: linux/arm64
+          provenance: false
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}:${{ steps.meta.outputs.tag }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            set -e
+            cd /home/ubuntu/dojangkok-fe-be
+
+            aws ecr get-login-password --region ap-northeast-2 | \
+              docker login --username AWS --password-stdin 920624925547.dkr.ecr.ap-northeast-2.amazonaws.com
+
+            docker compose pull frontend
+            docker compose up -d frontend
+            docker compose restart nginx
+            docker image prune -f
+          ENDSSH
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 12); do
+            HTTP_STATUS=$(curl -sk -o /dev/null -w "%{http_code}" "https://dojangkok.cloud/health-check" || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Health check OK (HTTP $HTTP_STATUS)"
+              exit 0
+            fi
+            echo "Attempt $i/12: HTTP $HTTP_STATUS - waiting 10s..."
+            sleep 10
+          done
+          echo "Health check FAILED"
+          exit 1
